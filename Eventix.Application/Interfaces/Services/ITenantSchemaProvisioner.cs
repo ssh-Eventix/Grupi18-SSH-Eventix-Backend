@@ -1,4 +1,6 @@
-﻿namespace Eventix.Application.Interfaces.Services;
+﻿using System.Threading;
+using System.Threading.Tasks;
+namespace Eventix.Application.Interfaces.Services;
 
 public interface ITenantSchemaProvisioner
 {

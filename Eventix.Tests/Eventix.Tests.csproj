@@ -27,4 +27,10 @@
     <ProjectReference Include="..\Eventix.Infrastructure\Eventix.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="ApiTests\" />
+    <Folder Include="IntegrationTests\" />
+    <Folder Include="UnitTests\" />
+  </ItemGroup>
+
 </Project>

@@ -22,4 +22,10 @@
     <ProjectReference Include="..\Eventix.Domain\Eventix.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Caching\" />
+    <Folder Include="ExternalServices\" />
+    <Folder Include="Security\" />
+  </ItemGroup>
+
 </Project>
