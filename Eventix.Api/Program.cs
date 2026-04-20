@@ -1,12 +1,12 @@
 using Eventix.API.Middlewares;
 using Eventix.Application.Interfaces.Repositories;
+using Eventix.Application.Interfaces.Services;
 using Eventix.Infrastructure.MultiTenancy;
 using Eventix.Infrastructure.Persistence.Database;
 using Eventix.Infrastructure.Persistence.Repositories;
+using Eventix.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Eventix.Application.Interfaces.Services;
-using Eventix.Infrastructure.MultiTenancy;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +26,7 @@ builder.Services.AddDbContext<TenantDbContext>((serviceProvider, options) =>
     options.ReplaceService<IModelCacheKeyFactory, TenantModelCacheKeyFactory>();
 });
 builder.Services.AddScoped<ITenantSchemaProvisioner, TenantSchemaProvisioner>();
+builder.Services.AddScoped<ITenantService, TenantService>();
 
 builder.Services.AddScoped<ITenantRepository, TenantRepository>();
 builder.Services.AddScoped<IEventCategoryRepository, EventCategoryRepository>();
