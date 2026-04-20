@@ -1,24 +1,57 @@
+using Eventix.API.Middlewares;
+using Eventix.Application.Interfaces.Repositories;
+using Eventix.Infrastructure.MultiTenancy;
+using Eventix.Infrastructure.Persistence.Database;
+using Eventix.Infrastructure.Persistence.Repositories;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Eventix.Application.Interfaces.Services;
+using Eventix.Infrastructure.MultiTenancy;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddScoped<ITenantContext, TenantContext>();
+
+builder.Services.AddDbContext<PublicDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddDbContext<TenantDbContext>((serviceProvider, options) =>
+{
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+    options.ReplaceService<IModelCacheKeyFactory, TenantModelCacheKeyFactory>();
+});
+builder.Services.AddScoped<ITenantSchemaProvisioner, TenantSchemaProvisioner>();
+
+builder.Services.AddScoped<ITenantRepository, TenantRepository>();
+builder.Services.AddScoped<IEventCategoryRepository, EventCategoryRepository>();
+builder.Services.AddScoped<IVenueRepository, VenueRepository>();
+builder.Services.AddScoped<IVenueSectionRepository, VenueSectionRepository>();
+builder.Services.AddScoped<IEventRepository, EventRepository>();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("ReactClient", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173", "http://localhost:3000")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
+app.UseCors("ReactClient");
 
-app.UseAuthorization();
+app.UseMiddleware<TenantResolutionMiddleware>();
 
 app.MapControllers();
 
