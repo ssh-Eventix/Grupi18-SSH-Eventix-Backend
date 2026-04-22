@@ -7,6 +7,8 @@ using Eventix.Infrastructure.Persistence.Repositories;
 using Eventix.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Eventix.Application.Interfaces;
+using Eventix.Application.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,6 +35,9 @@ builder.Services.AddScoped<IEventCategoryRepository, EventCategoryRepository>();
 builder.Services.AddScoped<IVenueRepository, VenueRepository>();
 builder.Services.AddScoped<IVenueSectionRepository, VenueSectionRepository>();
 builder.Services.AddScoped<IEventRepository, EventRepository>();
+builder.Services.AddScoped<ISpeakerService, SpeakerService>(); 
+builder.Services.AddScoped<ISpeakerRepository, SpeakerRepository>();
+
 
 builder.Services.AddCors(options =>
 {
