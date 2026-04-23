@@ -9,10 +9,10 @@
   <ItemGroup>
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.11" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.6">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
+	  <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.11">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+	  </PackageReference>
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
   </ItemGroup>
 
@@ -21,7 +21,7 @@
     <ProjectReference Include="..\Eventix.Domain\Eventix.Domain.csproj" />
     <ProjectReference Include="..\Eventix.Infrastructure\Eventix.Infrastructure.csproj" />
   </ItemGroup>
-
+	
   <ItemGroup>
     <Folder Include="Filters\" />
     <Folder Include="Swagger\" />

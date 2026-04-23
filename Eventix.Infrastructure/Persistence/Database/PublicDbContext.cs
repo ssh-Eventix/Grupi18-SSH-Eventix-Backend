@@ -12,6 +12,7 @@ namespace Eventix.Infrastructure.Persistence.Database
     {
         public PublicDbContext(DbContextOptions<PublicDbContext> options) : base(options) { }
         public DbSet<Tenant> Tenants => Set<Tenant>();
+        public DbSet<Speaker> Speakers => Set<Speaker>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -32,6 +33,35 @@ namespace Eventix.Infrastructure.Persistence.Database
             });
 
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Speaker>(entity =>
+            {
+                entity.ToTable("Speakers");
+
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.TenantId)
+                    .IsRequired();
+
+                entity.Property(x => x.FullName)
+                    .HasMaxLength(200)
+                    .IsRequired();
+
+                entity.Property(x => x.Bio)
+                    .HasMaxLength(1000);
+
+                entity.Property(x => x.Email)
+                    .HasMaxLength(150);
+
+                entity.Property(x => x.Phone)
+                    .HasMaxLength(50);
+
+                entity.Property(x => x.ProfileImageUrl)
+                    .HasMaxLength(500);
+
+                entity.HasIndex(x => x.Email);
+                entity.HasIndex(x => x.TenantId);
+            });
         }
     }
 }
