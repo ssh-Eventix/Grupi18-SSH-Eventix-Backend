@@ -1,13 +1,8 @@
-﻿using System;
-using Eventix.Domain.Common;
-using Eventix.Domain.Enums;
+﻿namespace Eventix.Application.DTOs.Events;
 
-namespace Eventix.Domain.Entities;
-
-public class Event : TenantBaseEntity
+public class UpdateEventDTO
 {
     public Guid VenueId { get; set; }
-    public Venue Venue { get; set; } = default!;
 
     public string Title { get; set; } = default!;
     public string Slug { get; set; } = default!;
@@ -26,30 +21,25 @@ public class Event : TenantBaseEntity
     public DateTime? SalesStartUtc { get; set; }
     public DateTime? SalesEndUtc { get; set; }
 
-    public EventStatus Status { get; set; } = EventStatus.Draft;
-    public EventVisibility Visibility { get; set; } = EventVisibility.Public;
+    public int Status { get; set; }
+    public int Visibility { get; set; }
 
     public string? BannerImageUrl { get; set; }
     public string? ThumbnailImageUrl { get; set; }
 
     public Guid EventCategoryId { get; set; }
-    public EventCategory EventCategory { get; set; } = default!;
     public string? Tags { get; set; }
 
-    public int MaxTicketsPerOrder { get; set; } = 10;
-    public int MinTicketsPerOrder { get; set; } = 1;
+    public int MaxTicketsPerOrder { get; set; }
+    public int MinTicketsPerOrder { get; set; }
 
-    public bool IsFree { get; set; } = false;
-    public bool IsPublished { get; set; } = false;
-    public bool AllowWaitlist { get; set; } = false;
-    public bool RequiresApproval { get; set; } = false;
+    public bool IsFree { get; set; }
+    public bool IsPublished { get; set; }
+    public bool AllowWaitlist { get; set; }
+    public bool RequiresApproval { get; set; }
 
     public string? TermsAndConditions { get; set; }
     public string? RefundPolicy { get; set; }
 
-    public decimal? MinPrice { get; set; }
-    public decimal? MaxPrice { get; set; }
     public string Currency { get; set; } = "EUR";
-
-    public ICollection<EventSection> EventSections { get; set; } = new List<EventSection>();
 }

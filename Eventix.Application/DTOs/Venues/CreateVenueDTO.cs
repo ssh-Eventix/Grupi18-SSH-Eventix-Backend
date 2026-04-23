@@ -1,13 +1,9 @@
-﻿using Eventix.Domain.Common;
-using Eventix.Domain.Enums;
+﻿namespace Eventix.Application.DTOs.Venues;
 
-namespace Eventix.Domain.Entities;
-
-public class Venue : TenantBaseEntity
+public class CreateVenueDTO
 {
     public string Name { get; set; } = default!;
     public string Code { get; set; } = default!;
-
     public string? Description { get; set; }
 
     public string AddressLine1 { get; set; } = default!;
@@ -25,15 +21,9 @@ public class Venue : TenantBaseEntity
     public string? ContactEmail { get; set; }
     public string? ContactPhone { get; set; }
 
-    public VenueStatus Status { get; set; } = VenueStatus.Active;
-
-    public bool HasSeatingMap { get; set; } = false;
+    public bool HasSeatingMap { get; set; }
     public string? SeatingMapImageUrl { get; set; }
 
     public bool IsIndoor { get; set; } = true;
     public bool IsAccessible { get; set; } = true;
-    public Tenant Tenant { get; set; } = default!;
-
-    public ICollection<VenueSection> Sections { get; set; } = new List<VenueSection>();
-    public ICollection<Event> Events { get; set; } = new List<Event>();
 }
