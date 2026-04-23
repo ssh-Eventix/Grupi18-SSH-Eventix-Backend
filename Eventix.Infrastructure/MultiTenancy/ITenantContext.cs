@@ -8,7 +8,7 @@ namespace Eventix.Infrastructure.MultiTenancy
 {
     public interface ITenantContext
     {
-        Guid? TenantId { get; }
+        Guid TenantId { get; }
         string Schema { get; }
         string? TenantSlug { get; }
         void SetTenant(Guid tenantId, string tenantSlug, string schema);

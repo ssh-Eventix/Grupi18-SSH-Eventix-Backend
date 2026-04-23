@@ -37,6 +37,7 @@ builder.Services.AddScoped<IVenueSectionRepository, VenueSectionRepository>();
 builder.Services.AddScoped<IEventRepository, EventRepository>();
 builder.Services.AddScoped<ISpeakerService, SpeakerService>(); 
 builder.Services.AddScoped<ISpeakerRepository, SpeakerRepository>();
+builder.Services.AddScoped<IEventSectionRepository, EventSectionRepository>();
 
 
 builder.Services.AddCors(options =>
