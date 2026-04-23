@@ -13,6 +13,10 @@ namespace Eventix.Infrastructure.Persistence.Database
         public PublicDbContext(DbContextOptions<PublicDbContext> options) : base(options) { }
         public DbSet<Tenant> Tenants => Set<Tenant>();
         public DbSet<Speaker> Speakers => Set<Speaker>();
+        public DbSet<EventSession> EventSessions => Set<EventSession>();
+        public DbSet<CheckIn> CheckIns => Set<CheckIn>();
+        public DbSet<Notification> Notifications => Set<Notification>();
+        public DbSet<Review> Reviews => Set<Review>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -26,7 +30,7 @@ namespace Eventix.Infrastructure.Persistence.Database
                 entity.Property(x => x.Name).HasMaxLength(150).IsRequired();
                 entity.Property(x => x.Slug).HasMaxLength(100).IsRequired();
                 entity.Property(x => x.SchemaName).HasMaxLength(100).IsRequired();
-                entity.Property(x => x.Domain).HasMaxLength(200);
+                //entity.Property(x => x.Domain).HasMaxLength(200);
 
                 entity.HasIndex(x => x.Slug).IsUnique();
                 entity.HasIndex(x => x.SchemaName).IsUnique();
@@ -62,6 +66,8 @@ namespace Eventix.Infrastructure.Persistence.Database
                 entity.HasIndex(x => x.Email);
                 entity.HasIndex(x => x.TenantId);
             });
+
+
         }
     }
 }
