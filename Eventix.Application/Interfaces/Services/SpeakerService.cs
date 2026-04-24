@@ -1,6 +1,6 @@
 ﻿using Eventix.Application.DTOs.Speakers;
-using Eventix.Application.Interfaces;
 using Eventix.Application.Interfaces.Repositories;
+using Eventix.Application.Interfaces.Services;
 using Eventix.Domain.Entities;
 using System;
 using System.Collections.Generic;
