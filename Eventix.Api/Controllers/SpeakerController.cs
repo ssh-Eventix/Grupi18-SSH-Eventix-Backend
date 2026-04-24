@@ -1,5 +1,5 @@
 ﻿using Eventix.Application.DTOs.Speakers;
-using Eventix.Application.Interfaces;
+using Eventix.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Mvc;
 using System;
 

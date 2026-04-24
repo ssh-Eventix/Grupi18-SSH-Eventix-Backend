@@ -32,8 +32,6 @@ public class Venue : TenantBaseEntity
 
     public bool IsIndoor { get; set; } = true;
     public bool IsAccessible { get; set; } = true;
-    public Tenant Tenant { get; set; } = default!;
-
     public ICollection<VenueSection> Sections { get; set; } = new List<VenueSection>();
     public ICollection<Event> Events { get; set; } = new List<Event>();
 }

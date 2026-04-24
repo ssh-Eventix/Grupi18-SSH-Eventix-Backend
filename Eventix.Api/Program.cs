@@ -1,4 +1,3 @@
-using Eventix.API.Middlewares;
 using Eventix.Application.Interfaces.Repositories;
 using Eventix.Application.Interfaces.Services;
 using Eventix.Infrastructure.MultiTenancy;
@@ -7,7 +6,6 @@ using Eventix.Infrastructure.Persistence.Repositories;
 using Eventix.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Eventix.Application.Interfaces;
 using Eventix.Application.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,6 +16,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddScoped<ITenantContext, TenantContext>();
+builder.Services.AddScoped<ITenantResolver, TenantResolver>();
+builder.Services.AddScoped<TenantMiddleware>();
 
 builder.Services.AddDbContext<PublicDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -58,7 +58,7 @@ app.UseSwaggerUI();
 app.UseHttpsRedirection();
 app.UseCors("ReactClient");
 
-app.UseMiddleware<TenantResolutionMiddleware>();
+app.UseMiddleware<TenantMiddleware>();
 
 app.MapControllers();
 

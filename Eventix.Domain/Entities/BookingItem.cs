@@ -17,8 +17,6 @@ namespace Eventix.Domain.Entities
 
         public decimal Subtotal => Quantity * UnitPrice;
 
-
-        // Navigation properties
         public Booking Booking { get; set; } = default!;
         public TicketType TicketType { get; set; } = default!;
         public ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
