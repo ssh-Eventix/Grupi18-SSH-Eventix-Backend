@@ -21,7 +21,7 @@ public class EventRepository : IEventRepository
     {
         var tenantId = _tenantContext.TenantId;
 
-        IQueryable<Event> query = _context.Events
+        var query = _context.Events
             .AsNoTracking()
             .Include(x => x.Venue)
             .Include(x => x.EventCategory)
@@ -33,9 +33,9 @@ public class EventRepository : IEventRepository
 
             query = query.Where(x =>
                 x.Title.ToLower().Contains(normalizedSearch) ||
-                (x.Subtitle != null && x.Subtitle.ToLower().Contains(normalizedSearch)) ||
-                (x.EventCategory != null && x.EventCategory.Name.ToLower().Contains(normalizedSearch)) ||
-                (x.Venue != null && x.Venue.Name.ToLower().Contains(normalizedSearch)));
+                (x.Description != null && x.Description.ToLower().Contains(normalizedSearch)) ||
+                x.EventCategory.Name.ToLower().Contains(normalizedSearch) ||
+                x.Venue.Name.ToLower().Contains(normalizedSearch));
         }
 
         return await query
@@ -53,7 +53,8 @@ public class EventRepository : IEventRepository
             .FirstOrDefaultAsync(x =>
                 x.Id == id &&
                 x.TenantId == tenantId &&
-                !x.IsDeleted, cancellationToken);
+                !x.IsDeleted,
+                cancellationToken);
     }
 
     public async Task AddAsync(Event entity, CancellationToken cancellationToken = default)
@@ -62,12 +63,6 @@ public class EventRepository : IEventRepository
     public Task UpdateAsync(Event entity)
     {
         _context.Events.Update(entity);
-        return Task.CompletedTask;
-    }
-
-    public Task DeleteAsync(Event entity)
-    {
-        _context.Events.Remove(entity);
         return Task.CompletedTask;
     }
 
