@@ -1,6 +1,7 @@
 ﻿using Eventix.Application.DTOs.Venues;
 using Eventix.Application.Interfaces.Repositories;
 using Eventix.Application.Interfaces.Services;
+using Eventix.Application.Services;
 using Eventix.Domain.Entities;
 using Eventix.Infrastructure.MultiTenancy;
 using Microsoft.AspNetCore.Mvc;

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Eventix.Application.DTOs.UserRoles;
 using Eventix.Application.Interfaces.Repositories;
 using Eventix.Domain.Entities;
-using Eventix.Infrastructure.MultiTenancy;
+using Eventix.Application.Interfaces.Common;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Eventix.API.Controllers
