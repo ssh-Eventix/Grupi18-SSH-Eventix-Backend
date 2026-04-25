@@ -32,7 +32,7 @@ public class DiscountCouponService : IDiscountCouponService
         return items.Where(x => !x.IsDeleted).Select(Map).ToList();
     }
 
-    public async Task<DiscountCouponResponseDTO> CreateAsync(CreateDiscountCouponDTO dto, CancellationToken cancellationToken = default)
+    public async Task<DiscountCouponResponseDTO> CreateAsync(CreateDiscountCouponDTO dto, Guid tenantId, CancellationToken cancellationToken = default)
     {
         if (await _repository.ExistsByEventAndCodeAsync(dto.EventId, dto.Code, cancellationToken))
             throw new InvalidOperationException("A coupon with the same code already exists for this event");
@@ -48,6 +48,7 @@ public class DiscountCouponService : IDiscountCouponService
             ValidTo = dto.ValidTo,
             UsageLimit = dto.UsageLimit,
             UsageCount = 0,
+            TenantId = tenantId,
             CreatedAtUtc = DateTime.UtcNow
         };
 

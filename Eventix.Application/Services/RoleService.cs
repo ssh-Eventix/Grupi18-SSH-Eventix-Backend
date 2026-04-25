@@ -26,11 +26,12 @@ public class RoleService : IRoleService
         return role is null || role.IsDeleted ? null : Map(role);
     }
 
-    public async Task<RoleResponseDTO> CreateAsync(CreateRoleDTO dto, CancellationToken cancellationToken = default)
+    public async Task<RoleResponseDTO> CreateAsync(CreateRoleDTO dto, Guid tenantId, CancellationToken cancellationToken = default)
     {
         var entity = new Role
         {
             Id = Guid.NewGuid(),
+            TenantId = tenantId,
             Name = dto.Name,
             Description = dto.Description,
             CreatedAtUtc = DateTime.UtcNow

@@ -32,7 +32,7 @@ public class UserService : IUserService
         return user is null || user.IsDeleted ? null : MapToDto(user);
     }
 
-    public async Task<UserResponseDTO> CreateAsync(CreateUserDTO dto, CancellationToken cancellationToken = default)
+    public async Task<UserResponseDTO> CreateAsync(CreateUserDTO dto, Guid tenantId, CancellationToken cancellationToken = default)
     {
         var existing = await _userRepository.GetByEmailAsync(dto.Email, cancellationToken);
         if (existing is not null && !existing.IsDeleted)
@@ -41,6 +41,7 @@ public class UserService : IUserService
         var entity = new User
         {
             Id = Guid.NewGuid(),
+            TenantId = tenantId,
             FirstName = dto.FirstName,
             LastName = dto.LastName,
             Email = dto.Email,
