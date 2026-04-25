@@ -18,7 +18,10 @@ public class TenantDbContext : DbContext
     }
 
     public DbSet<User> Users => Set<User>();
+    public DbSet<Role> Roles => Set<Role>();
+    public DbSet<UserRole> UserRoles => Set<UserRole>();
     public DbSet<Venue> Venues => Set<Venue>();
+    public DbSet<DiscountCoupon> DiscountCoupons => Set<DiscountCoupon>();
     public DbSet<VenueSection> VenueSections => Set<VenueSection>();
     public DbSet<EventCategory> EventCategories => Set<EventCategory>();
     public DbSet<Event> Events => Set<Event>();
@@ -311,6 +314,25 @@ public class TenantDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(x => x.EventId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<DiscountCoupon>(entity =>
+        {
+            entity.ToTable("DiscountCoupons");
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Code).HasMaxLength(100).IsRequired();
+            entity.Property(x => x.DiscountValue).HasColumnType("numeric(18,2)");
+            entity.Property(x => x.ValidFrom).IsRequired();
+            entity.Property(x => x.ValidTo).IsRequired();
+
+            entity.HasOne(x => x.Event)
+                .WithMany()
+                .HasForeignKey(x => x.EventId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => x.TenantId);
+            entity.HasIndex(x => new { x.EventId, x.Code }).IsUnique();
         });
 
         modelBuilder.Entity<Review>(entity =>
