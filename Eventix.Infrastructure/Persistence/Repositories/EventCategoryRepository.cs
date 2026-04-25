@@ -3,6 +3,7 @@ using Eventix.Domain.Entities;
 using Eventix.Infrastructure.MultiTenancy;
 using Eventix.Infrastructure.Persistence.Database;
 using Microsoft.EntityFrameworkCore;
+using Eventix.Application.Interfaces.Common;
 
 namespace Eventix.Infrastructure.Persistence.Repositories;
 

@@ -2,26 +2,42 @@
 using Eventix.Domain.Entities;
 using Eventix.Infrastructure.Persistence.Database;
 using Microsoft.EntityFrameworkCore;
+using Eventix.Infrastructure.MultiTenancy;
+using Eventix.Application.Interfaces.Common;
 
 namespace Eventix.Infrastructure.Persistence.Repositories;
 
 public class VenueSectionRepository : IVenueSectionRepository
 {
     private readonly TenantDbContext _context;
+    private readonly ITenantContext _tenantContext;
 
-    public VenueSectionRepository(TenantDbContext context)
+    public VenueSectionRepository(TenantDbContext context, ITenantContext tenantContext)
     {
         _context = context;
+        _tenantContext = tenantContext;
     }
 
-    public Task<List<VenueSection>> GetAllAsync(CancellationToken cancellationToken = default)
-        => _context.VenueSections.AsNoTracking().ToListAsync(cancellationToken);
+    public async Task<List<VenueSection>> GetAllAsync(CancellationToken cancellationToken = default)
+        => await _context.VenueSections
+            .AsNoTracking()
+            .Where(x => x.TenantId == _tenantContext.TenantId && !x.IsDeleted)
+            .OrderBy(x => x.DisplayOrder)
+            .ToListAsync(cancellationToken);
 
-    public Task<List<VenueSection>> GetByVenueIdAsync(Guid venueId, CancellationToken cancellationToken = default)
-        => _context.VenueSections.Where(x => x.VenueId == venueId).AsNoTracking().ToListAsync(cancellationToken);
+    public async Task<List<VenueSection>> GetByVenueIdAsync(Guid venueId, CancellationToken cancellationToken = default)
+        => await _context.VenueSections
+            .AsNoTracking()
+            .Where(x => x.TenantId == _tenantContext.TenantId &&
+                        x.VenueId == venueId &&
+                        !x.IsDeleted)
+            .ToListAsync(cancellationToken);
 
-    public Task<VenueSection?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
-        => _context.VenueSections.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+    public async Task<VenueSection?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+        => await _context.VenueSections
+            .FirstOrDefaultAsync(x => x.Id == id &&
+                                     x.TenantId == _tenantContext.TenantId &&
+                                     !x.IsDeleted, cancellationToken);
 
     public async Task AddAsync(VenueSection entity, CancellationToken cancellationToken = default)
         => await _context.VenueSections.AddAsync(entity, cancellationToken);
@@ -29,12 +45,6 @@ public class VenueSectionRepository : IVenueSectionRepository
     public Task UpdateAsync(VenueSection entity)
     {
         _context.VenueSections.Update(entity);
-        return Task.CompletedTask;
-    }
-
-    public Task DeleteAsync(VenueSection entity)
-    {
-        _context.VenueSections.Remove(entity);
         return Task.CompletedTask;
     }
 

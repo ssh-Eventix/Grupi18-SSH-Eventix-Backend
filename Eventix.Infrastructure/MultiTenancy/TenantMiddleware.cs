@@ -1,6 +1,5 @@
-﻿using System.Net.Http;
+﻿using Eventix.Application.Interfaces.Common;
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 
 namespace Eventix.Infrastructure.MultiTenancy;
 
@@ -47,7 +46,8 @@ public class TenantMiddleware
             return;
         }
 
-        tenantContext.SetTenant(tenant.Id, tenant.Slug, tenant.SchemaName);
+        tenantContext.TenantId = tenant.Id;
+        tenantContext.SchemaName = tenant.SchemaName;
 
         await _next(httpContext);
     }

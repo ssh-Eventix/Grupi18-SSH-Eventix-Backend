@@ -7,6 +7,7 @@ using Eventix.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Eventix.Application.Services;
+using Eventix.Application.Interfaces.Common;
 
 var builder = WebApplication.CreateBuilder(args);
 

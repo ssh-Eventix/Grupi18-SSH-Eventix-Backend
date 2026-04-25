@@ -5,7 +5,10 @@ namespace Eventix.Infrastructure.Persistence.Database;
 
 public class PublicDbContext : DbContext
 {
-    public PublicDbContext(DbContextOptions<PublicDbContext> options) : base(options) { }
+    public PublicDbContext(DbContextOptions<PublicDbContext> options)
+        : base(options)
+    {
+    }
 
     public DbSet<Tenant> Tenants => Set<Tenant>();
 
@@ -13,33 +16,60 @@ public class PublicDbContext : DbContext
     {
         modelBuilder.HasDefaultSchema("public");
 
+        ConfigureTenant(modelBuilder);
+
+        base.OnModelCreating(modelBuilder);
+    }
+
+    private static void ConfigureTenant(ModelBuilder modelBuilder)
+    {
         modelBuilder.Entity<Tenant>(entity =>
         {
             entity.ToTable("Tenants");
+
             entity.HasKey(x => x.Id);
 
-            entity.Property(x => x.Name).HasMaxLength(150).IsRequired();
-            entity.Property(x => x.Slug).HasMaxLength(100).IsRequired();
-            entity.Property(x => x.SchemaName).HasMaxLength(100).IsRequired();
+            entity.Property(x => x.Name)
+                .HasMaxLength(200)
+                .IsRequired();
 
-            entity.Property(x => x.Description).HasMaxLength(1000);
-            entity.Property(x => x.ContactEmail).HasMaxLength(200);
-            entity.Property(x => x.ContactPhone).HasMaxLength(50);
+            entity.Property(x => x.Slug)
+                .HasMaxLength(100)
+                .IsRequired();
 
-            entity.Property(x => x.AddressLine1).HasMaxLength(200);
-            entity.Property(x => x.AddressLine2).HasMaxLength(200);
-            entity.Property(x => x.City).HasMaxLength(100);
-            entity.Property(x => x.State).HasMaxLength(100);
-            entity.Property(x => x.PostalCode).HasMaxLength(30);
-            entity.Property(x => x.Country).HasMaxLength(100);
+            entity.Property(x => x.SchemaName)
+                .HasMaxLength(100)
+                .IsRequired();
 
-            entity.Property(x => x.LogoUrl).HasMaxLength(500);
-            entity.Property(x => x.WebsiteUrl).HasMaxLength(500);
+            entity.Property(x => x.Description)
+                .HasMaxLength(500);
 
-            entity.HasIndex(x => x.Slug).IsUnique();
-            entity.HasIndex(x => x.SchemaName).IsUnique();
+            entity.Property(x => x.ContactEmail)
+                .HasMaxLength(200);
+
+            entity.Property(x => x.City)
+                .HasMaxLength(100);
+
+            entity.Property(x => x.Country)
+                .HasMaxLength(100);
+
+            entity.Property(x => x.LogoUrl)
+                .HasMaxLength(500);
+
+            entity.Property(x => x.Status)
+                .HasConversion<int>();
+
+            entity.Property(x => x.IsTrial)
+                .HasDefaultValue(false);
+
+            entity.Property(x => x.IsActive)
+                .HasDefaultValue(true);
+
+            entity.HasIndex(x => x.Slug)
+                .IsUnique();
+
+            entity.HasIndex(x => x.SchemaName)
+                .IsUnique();
         });
-
-        base.OnModelCreating(modelBuilder);
     }
 }

@@ -14,42 +14,30 @@ public class TenantRepository : ITenantRepository
         _context = context;
     }
 
-    public async Task<IReadOnlyList<Tenant>> GetAllAsync(CancellationToken cancellationToken = default)
-        => await _context.Tenants
-            .AsNoTracking()
-            .Where(x => !x.IsDeleted)
-            .OrderBy(x => x.Name)
-            .ToListAsync(cancellationToken);
+    public Task<List<Tenant>> GetAllAsync(CancellationToken ct)
+        => _context.Tenants.AsNoTracking().ToListAsync(ct);
 
-    public async Task<Tenant?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
-        => await _context.Tenants
-            .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, cancellationToken);
+    public Task<Tenant?> GetByIdAsync(Guid id, CancellationToken ct)
+        => _context.Tenants.FirstOrDefaultAsync(x => x.Id == id, ct);
 
-    public async Task<Tenant?> GetBySlugAsync(string slug, CancellationToken cancellationToken = default)
-        => await _context.Tenants
-            .FirstOrDefaultAsync(x => x.Slug == slug && !x.IsDeleted, cancellationToken);
+    public Task<Tenant?> GetBySlugAsync(string slug, CancellationToken ct)
+        => _context.Tenants.FirstOrDefaultAsync(x => x.Slug == slug, ct);
 
-    public async Task<bool> ExistsBySlugAsync(string slug, CancellationToken cancellationToken = default)
-        => await _context.Tenants
-            .AnyAsync(x => x.Slug == slug && !x.IsDeleted, cancellationToken);
+    public async Task AddAsync(Tenant entity, CancellationToken ct)
+        => await _context.Tenants.AddAsync(entity, ct);
 
-    public async Task AddAsync(Tenant tenant, CancellationToken cancellationToken = default)
+    public Task UpdateAsync(Tenant entity)
     {
-        await _context.Tenants.AddAsync(tenant, cancellationToken);
-        await _context.SaveChangesAsync(cancellationToken);
+        _context.Tenants.Update(entity);
+        return Task.CompletedTask;
     }
 
-    public async Task UpdateAsync(Tenant tenant, CancellationToken cancellationToken = default)
+    public Task DeleteAsync(Tenant entity)
     {
-        _context.Tenants.Update(tenant);
-        await _context.SaveChangesAsync(cancellationToken);
+        _context.Tenants.Remove(entity);
+        return Task.CompletedTask;
     }
 
-    public async Task DeleteAsync(Tenant tenant, CancellationToken cancellationToken = default)
-    {
-        tenant.IsDeleted = true;
-        tenant.UpdatedAtUtc = DateTime.UtcNow;
-        _context.Tenants.Update(tenant);
-        await _context.SaveChangesAsync(cancellationToken);
-    }
+    public Task SaveChangesAsync(CancellationToken ct)
+        => _context.SaveChangesAsync(ct);
 }
