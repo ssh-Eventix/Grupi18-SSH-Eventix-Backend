@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Eventix.Application.DTOs.UserRoles;
 using Eventix.Application.Interfaces.Repositories;
 using Eventix.Domain.Entities;
 using Eventix.Infrastructure.MultiTenancy;
@@ -32,20 +33,29 @@ namespace Eventix.API.Controllers
         }
 
         [HttpGet("by-user/{userId:guid}")]
-        public async Task<ActionResult<List<UserRole>>> GetByUserId(Guid userId, CancellationToken cancellationToken)
+        public async Task<ActionResult<List<UserRoleResponseDTO>>> GetByUserId(Guid userId, CancellationToken cancellationToken)
         {
             var user = await _userRepo.GetByIdAsync(userId, cancellationToken);
             if (user is null || user.TenantId != _tenantContext.TenantId || user.IsDeleted)
                 return NotFound();
 
             var roles = await _userRoleRepo.GetByUserIdAsync(userId, cancellationToken);
-            return Ok(roles.Where(ur => !ur.IsDeleted).ToList());
+            var response = roles
+                .Where(ur => !ur.IsDeleted)
+                .Select(ur => new UserRoleResponseDTO
+                {
+                    Id = ur.Id,
+                    UserId = ur.UserId,
+                    RoleId = ur.RoleId,
+                    AssignedAt = ur.AssignedAt
+                })
+                .ToList();
+
+            return Ok(response);
         }
 
-        public record AssignRequest(Guid UserId, Guid RoleId);
-
         [HttpPost]
-        public async Task<IActionResult> Assign([FromBody] AssignRequest dto, CancellationToken cancellationToken)
+        public async Task<IActionResult> Assign([FromBody] CreateUserRoleDTO dto, CancellationToken cancellationToken)
         {
             var user = await _userRepo.GetByIdAsync(dto.UserId, cancellationToken);
             if (user is null || user.TenantId != _tenantContext.TenantId || user.IsDeleted)
@@ -69,7 +79,15 @@ namespace Eventix.API.Controllers
             await _userRoleRepo.AddAsync(entity, cancellationToken);
             await _userRoleRepo.SaveChangesAsync(cancellationToken);
 
-            return CreatedAtAction(nameof(GetByUserId), new { userId = dto.UserId }, entity);
+            var response = new UserRoleResponseDTO
+            {
+                Id = entity.Id,
+                UserId = entity.UserId,
+                RoleId = entity.RoleId,
+                AssignedAt = entity.AssignedAt
+            };
+
+            return CreatedAtAction(nameof(GetByUserId), new { userId = dto.UserId }, response);
         }
 
         [HttpDelete("{id:guid}")]

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Eventix.Application.DTOs.Roles;
 using Eventix.Application.Interfaces.Repositories;
 using Eventix.Domain.Entities;
 using Eventix.Infrastructure.MultiTenancy;
@@ -24,28 +25,47 @@ namespace Eventix.API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Role>>> GetAll(CancellationToken cancellationToken)
+        public async Task<ActionResult<IEnumerable<RoleResponseDTO>>> GetAll(CancellationToken cancellationToken)
         {
             var roles = await _repository.GetAllAsync(cancellationToken);
             var response = roles
                 .Where(r => r.TenantId == _tenantContext.TenantId && !r.IsDeleted)
+                .Select(r => new RoleResponseDTO
+                {
+                    Id = r.Id,
+                    TenantId = r.TenantId,
+                    Name = r.Name,
+                    Description = r.Description,
+                    CreatedAtUtc = r.CreatedAtUtc,
+                    UpdatedAtUtc = r.UpdatedAtUtc
+                })
                 .ToList();
 
             return Ok(response);
         }
 
         [HttpGet("{id:guid}")]
-        public async Task<ActionResult<Role>> GetById(Guid id, CancellationToken cancellationToken)
+        public async Task<ActionResult<RoleResponseDTO>> GetById(Guid id, CancellationToken cancellationToken)
         {
             var role = await _repository.GetByIdAsync(id, cancellationToken);
             if (role is null || role.TenantId != _tenantContext.TenantId || role.IsDeleted)
                 return NotFound();
 
-            return Ok(role);
+            var dto = new RoleResponseDTO
+            {
+                Id = role.Id,
+                TenantId = role.TenantId,
+                Name = role.Name,
+                Description = role.Description,
+                CreatedAtUtc = role.CreatedAtUtc,
+                UpdatedAtUtc = role.UpdatedAtUtc
+            };
+
+            return Ok(dto);
         }
 
         [HttpPost]
-        public async Task<ActionResult<Role>> Create([FromBody] Role dto, CancellationToken cancellationToken)
+        public async Task<ActionResult<RoleResponseDTO>> Create([FromBody] CreateRoleDTO dto, CancellationToken cancellationToken)
         {
             var entity = new Role
             {
@@ -58,11 +78,20 @@ namespace Eventix.API.Controllers
             await _repository.AddAsync(entity, cancellationToken);
             await _repository.SaveChangesAsync(cancellationToken);
 
-            return CreatedAtAction(nameof(GetById), new { id = entity.Id }, entity);
+            var response = new RoleResponseDTO
+            {
+                Id = entity.Id,
+                TenantId = entity.TenantId,
+                Name = entity.Name,
+                Description = entity.Description,
+                CreatedAtUtc = entity.CreatedAtUtc
+            };
+
+            return CreatedAtAction(nameof(GetById), new { id = entity.Id }, response);
         }
 
         [HttpPut("{id:guid}")]
-        public async Task<IActionResult> Update(Guid id, [FromBody] Role dto, CancellationToken cancellationToken)
+        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateRoleDTO dto, CancellationToken cancellationToken)
         {
             var entity = await _repository.GetByIdAsync(id, cancellationToken);
             if (entity is null || entity.TenantId != _tenantContext.TenantId || entity.IsDeleted)
