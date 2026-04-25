@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Eventix.Application.DTOs.DiscountCoupons;
 using Eventix.Application.Interfaces.Repositories;
 using Eventix.Domain.Entities;
 using Eventix.Infrastructure.MultiTenancy;
@@ -24,33 +25,83 @@ namespace Eventix.API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<DiscountCoupon>>> GetAll(CancellationToken cancellationToken)
+        public async Task<ActionResult<IEnumerable<DiscountCouponResponseDTO>>> GetAll(CancellationToken cancellationToken)
         {
             var items = await _repository.GetAllAsync(cancellationToken);
-            var response = items.Where(x => x.TenantId == _tenantContext.TenantId && !x.IsDeleted).ToList();
+            var response = items.Where(x => x.TenantId == _tenantContext.TenantId && !x.IsDeleted)
+                .Select(x => new DiscountCouponResponseDTO
+                {
+                    Id = x.Id,
+                    TenantId = x.TenantId,
+                    EventId = x.EventId,
+                    Code = x.Code,
+                    Type = x.Type,
+                    DiscountValue = x.DiscountValue,
+                    ValidFrom = x.ValidFrom,
+                    ValidTo = x.ValidTo,
+                    UsageLimit = x.UsageLimit,
+                    UsageCount = x.UsageCount,
+                    CreatedAtUtc = x.CreatedAtUtc,
+                    UpdatedAtUtc = x.UpdatedAtUtc
+                })
+                .ToList();
+
             return Ok(response);
         }
 
         [HttpGet("{id:guid}")]
-        public async Task<ActionResult<DiscountCoupon>> GetById(Guid id, CancellationToken cancellationToken)
+        public async Task<ActionResult<DiscountCouponResponseDTO>> GetById(Guid id, CancellationToken cancellationToken)
         {
             var entity = await _repository.GetByIdAsync(id, cancellationToken);
             if (entity is null || entity.TenantId != _tenantContext.TenantId || entity.IsDeleted)
                 return NotFound();
 
-            return Ok(entity);
+            var dto = new DiscountCouponResponseDTO
+            {
+                Id = entity.Id,
+                TenantId = entity.TenantId,
+                EventId = entity.EventId,
+                Code = entity.Code,
+                Type = entity.Type,
+                DiscountValue = entity.DiscountValue,
+                ValidFrom = entity.ValidFrom,
+                ValidTo = entity.ValidTo,
+                UsageLimit = entity.UsageLimit,
+                UsageCount = entity.UsageCount,
+                CreatedAtUtc = entity.CreatedAtUtc,
+                UpdatedAtUtc = entity.UpdatedAtUtc
+            };
+
+            return Ok(dto);
         }
 
         [HttpGet("by-event/{eventId:guid}")]
-        public async Task<ActionResult<List<DiscountCoupon>>> GetByEventId(Guid eventId, CancellationToken cancellationToken)
+        public async Task<ActionResult<List<DiscountCouponResponseDTO>>> GetByEventId(Guid eventId, CancellationToken cancellationToken)
         {
             var items = await _repository.GetByEventIdAsync(eventId, cancellationToken);
-            var response = items.Where(x => x.TenantId == _tenantContext.TenantId && !x.IsDeleted).ToList();
+            var response = items.Where(x => x.TenantId == _tenantContext.TenantId && !x.IsDeleted)
+                .Select(x => new DiscountCouponResponseDTO
+                {
+                    Id = x.Id,
+                    TenantId = x.TenantId,
+                    EventId = x.EventId,
+                    Code = x.Code,
+                    Type = x.Type,
+                    DiscountValue = x.DiscountValue,
+                    ValidFrom = x.ValidFrom,
+                    ValidTo = x.ValidTo,
+                    UsageLimit = x.UsageLimit,
+                    UsageCount = x.UsageCount,
+                    CreatedAtUtc = x.CreatedAtUtc,
+                    UpdatedAtUtc = x.UpdatedAtUtc
+                })
+                .ToList();
+
             return Ok(response);
         }
 
         [HttpPost]
-        public async Task<ActionResult<DiscountCoupon>> Create([FromBody] DiscountCoupon dto, CancellationToken cancellationToken)
+        public async Task<ActionResult<DiscountCouponResponseDTO>> Create([FromBody] CreateDiscountCouponDTO dto, CancellationToken cancellationToken)
         {
             if (await _repository.ExistsByEventAndCodeAsync(dto.EventId, dto.Code, cancellationToken))
                 return Conflict("A coupon with the same code already exists for this event");
@@ -65,7 +116,7 @@ namespace Eventix.API.Controllers
                 ValidFrom = dto.ValidFrom,
                 ValidTo = dto.ValidTo,
                 UsageLimit = dto.UsageLimit,
-                UsageCount = dto.UsageCount,
+                UsageCount = 0,
                 TenantId = _tenantContext.TenantId,
                 CreatedAtUtc = DateTime.UtcNow
             };
@@ -73,11 +124,26 @@ namespace Eventix.API.Controllers
             await _repository.AddAsync(entity, cancellationToken);
             await _repository.SaveChangesAsync(cancellationToken);
 
-            return CreatedAtAction(nameof(GetById), new { id = entity.Id }, entity);
+            var response = new DiscountCouponResponseDTO
+            {
+                Id = entity.Id,
+                TenantId = entity.TenantId,
+                EventId = entity.EventId,
+                Code = entity.Code,
+                Type = entity.Type,
+                DiscountValue = entity.DiscountValue,
+                ValidFrom = entity.ValidFrom,
+                ValidTo = entity.ValidTo,
+                UsageLimit = entity.UsageLimit,
+                UsageCount = entity.UsageCount,
+                CreatedAtUtc = entity.CreatedAtUtc
+            };
+
+            return CreatedAtAction(nameof(GetById), new { id = entity.Id }, response);
         }
 
         [HttpPut("{id:guid}")]
-        public async Task<IActionResult> Update(Guid id, [FromBody] DiscountCoupon dto, CancellationToken cancellationToken)
+        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateDiscountCouponDTO dto, CancellationToken cancellationToken)
         {
             var entity = await _repository.GetByIdAsync(id, cancellationToken);
             if (entity is null || entity.TenantId != _tenantContext.TenantId || entity.IsDeleted)
