@@ -16,49 +16,52 @@ public class PublicDbContext : DbContext
     {
         modelBuilder.HasDefaultSchema("public");
 
-        modelBuilder.Entity<Tenant>(entity =>
-        {
-            entity.ToTable("Tenants");
+            modelBuilder.Entity<Tenant>(entity =>
+            {
+                entity.ToTable("Tenants");
+                entity.HasKey(x => x.Id);
 
-            entity.HasKey(x => x.Id);
+                entity.Property(x => x.Name).HasMaxLength(150).IsRequired();
+                entity.Property(x => x.Slug).HasMaxLength(100).IsRequired();
+                entity.Property(x => x.SchemaName).HasMaxLength(100).IsRequired();
+                //entity.Property(x => x.Domain).HasMaxLength(200);
 
-            entity.Property(x => x.Name)
-                .HasMaxLength(150)
-                .IsRequired();
+                entity.HasIndex(x => x.Slug).IsUnique();
+                entity.HasIndex(x => x.SchemaName).IsUnique();
+            });
 
-            entity.Property(x => x.Slug)
-                .HasMaxLength(100)
-                .IsRequired();
+            base.OnModelCreating(modelBuilder);
 
-            entity.Property(x => x.SchemaName)
-                .HasMaxLength(100)
-                .IsRequired();
+            modelBuilder.Entity<Speaker>(entity =>
+            {
+                entity.ToTable("Speakers");
 
-            entity.Property(x => x.Description)
-                .HasMaxLength(1000);
+                entity.HasKey(x => x.Id);
 
-            entity.Property(x => x.ContactEmail)
-                .HasMaxLength(200);
+                entity.Property(x => x.TenantId)
+                    .IsRequired();
 
-            entity.Property(x => x.City)
-                .HasMaxLength(100);
+                entity.Property(x => x.FullName)
+                    .HasMaxLength(200)
+                    .IsRequired();
 
-            entity.Property(x => x.Country)
-                .HasMaxLength(100);
+                entity.Property(x => x.Bio)
+                    .HasMaxLength(1000);
 
-            entity.Property(x => x.LogoUrl)
-                .HasMaxLength(500);
+                entity.Property(x => x.Email)
+                    .HasMaxLength(150);
 
-            entity.Property(x => x.Status)
-                .HasConversion<int>();
+                entity.Property(x => x.Phone)
+                    .HasMaxLength(50);
 
-            entity.HasIndex(x => x.Slug)
-                .IsUnique();
+                entity.Property(x => x.ProfileImageUrl)
+                    .HasMaxLength(500);
 
-            entity.HasIndex(x => x.SchemaName)
-                .IsUnique();
-        });
+                entity.HasIndex(x => x.Email);
+                entity.HasIndex(x => x.TenantId);
+            });
 
-        base.OnModelCreating(modelBuilder);
+
+        }
     }
 }
