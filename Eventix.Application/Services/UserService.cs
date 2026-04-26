@@ -8,9 +8,9 @@ namespace Eventix.Application.Services;
 public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
-    private readonly Eventix.Application.Interfaces.Common.IPasswordHasher _passwordHasher;
+    private readonly Interfaces.Common.IPasswordHasher _passwordHasher;
 
-    public UserService(IUserRepository userRepository, Eventix.Application.Interfaces.Common.IPasswordHasher passwordHasher)
+    public UserService(IUserRepository userRepository, Interfaces.Common.IPasswordHasher passwordHasher)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
@@ -40,7 +40,7 @@ public class UserService : IUserService
         if (existing is not null && !existing.IsDeleted)
             throw new InvalidOperationException("A user with this email already exists.");
 
-            var entity = new User
+        var entity = new User
         {
             Id = Guid.NewGuid(),
             TenantId = tenantId,

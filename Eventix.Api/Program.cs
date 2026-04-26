@@ -18,8 +18,6 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddScoped<ITenantContext, TenantContext>();
 builder.Services.AddScoped<ITenantResolver, TenantResolver>();
-builder.Services.AddScoped<TenantMiddleware>();
-
 builder.Services.AddDbContext<PublicDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -39,11 +37,14 @@ builder.Services.AddScoped<IEventRepository, EventRepository>();
 builder.Services.AddScoped<ISpeakerService, SpeakerService>(); 
 builder.Services.AddScoped<ISpeakerRepository, SpeakerRepository>();
 builder.Services.AddScoped<IEventSectionRepository, EventSectionRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IRoleRepository, RoleRepository>();
+builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();
+builder.Services.AddScoped<IDiscountCouponRepository, DiscountCouponRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IUserRoleService, UserRoleService>();
 builder.Services.AddScoped<IDiscountCouponService, DiscountCouponService>();
-builder.Services.AddSingleton<Eventix.Application.Interfaces.Common.IPasswordHasher, Eventix.Infrastructure.Services.BCryptPasswordHasher>();
 
 
 builder.Services.AddCors(options =>
