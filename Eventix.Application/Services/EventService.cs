@@ -35,7 +35,7 @@ public class EventService : IEventService
         var entity = new Event
         {
             Id = Guid.NewGuid(),
-            TenantId = _tenantContext.TenantId!.Value,
+            TenantId = _tenantContext.TenantId,
 
             VenueId = dto.VenueId,
             EventCategoryId = dto.EventCategoryId,

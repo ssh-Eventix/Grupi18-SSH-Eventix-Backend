@@ -46,4 +46,3 @@ public class VenueSectionsController : ControllerBase
     public async Task<IActionResult> Delete(Guid id)
         => await _service.DeleteAsync(id) ? NoContent() : NotFound();
 }
-}
