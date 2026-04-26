@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Eventix.Application.Interfaces.Repositories;
+using Eventix.Application.DTOs.Users;
+using Eventix.Application.Interfaces.Services;
 using Eventix.Domain.Entities;
-using Eventix.Infrastructure.MultiTenancy;
+using Eventix.Application.Interfaces.Common;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Eventix.API.Controllers
@@ -14,105 +15,59 @@ namespace Eventix.API.Controllers
     [Route("api/[controller]")]
     public class UserController : ControllerBase
     {
-        private readonly IUserRepository _repository;
-        private readonly ITenantContext _tenantContext;
+            private readonly IUserService _service;
+            private readonly ITenantContext _tenantContext;
 
-        public UserController(IUserRepository repository, ITenantContext tenantContext)
-        {
-            _repository = repository;
-            _tenantContext = tenantContext;
-        }
+            public UserController(IUserService service, ITenantContext tenantContext)
+            {
+                _service = service;
+                _tenantContext = tenantContext;
+            }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<User>>> GetAll(CancellationToken cancellationToken)
+        public async Task<ActionResult<IEnumerable<UserResponseDTO>>> GetAll(CancellationToken cancellationToken)
         {
-            var users = await _repository.GetAllAsync(cancellationToken);
-            var response = users
-                .Where(u => u.TenantId == _tenantContext.TenantId && !u.IsDeleted)
-                .ToList();
-
+            var users = await _service.GetAllAsync(cancellationToken);
+            var response = users.Where(u => u.TenantId == _tenantContext.TenantId).ToList();
             return Ok(response);
         }
 
         [HttpGet("{id:guid}")]
-        public async Task<ActionResult<User>> GetById(Guid id, CancellationToken cancellationToken)
+        public async Task<ActionResult<UserResponseDTO>> GetById(Guid id, CancellationToken cancellationToken)
         {
-            var user = await _repository.GetByIdAsync(id, cancellationToken);
-            if (user is null || user.TenantId != _tenantContext.TenantId || user.IsDeleted)
+            var dto = await _service.GetByIdAsync(id, cancellationToken);
+            if (dto is null || dto.TenantId != _tenantContext.TenantId)
                 return NotFound();
 
-            return Ok(user);
+            return Ok(dto);
         }
 
         [HttpGet("by-email")]
-        public async Task<ActionResult<User>> GetByEmail([FromQuery] string email, CancellationToken cancellationToken)
+        public async Task<ActionResult<UserResponseDTO>> GetByEmail([FromQuery] string email, CancellationToken cancellationToken)
         {
-            var user = await _repository.GetByEmailAsync(email, cancellationToken);
-            if (user is null || user.TenantId != _tenantContext.TenantId || user.IsDeleted)
+            var dto = await _service.GetByEmailAsync(email, cancellationToken);
+            if (dto is null || dto.TenantId != _tenantContext.TenantId)
                 return NotFound();
 
-            return Ok(user);
+            return Ok(dto);
         }
 
         [HttpPost]
-        public async Task<ActionResult<User>> Create([FromBody] User dto, CancellationToken cancellationToken)
+        public async Task<ActionResult<UserResponseDTO>> Create([FromBody] CreateUserDTO dto, CancellationToken cancellationToken)
         {
-            // Note: dto.PasswordHash should contain the already-hashed password.
-            var entity = new User
-            {
-                Id = Guid.NewGuid(),
-                TenantId = _tenantContext.TenantId,
-                FirstName = dto.FirstName,
-                LastName = dto.LastName,
-                Email = dto.Email,
-                PasswordHash = dto.PasswordHash,
-                IsActive = dto.IsActive,
-                CreatedAtUtc = DateTime.UtcNow
-            };
-
-            await _repository.AddAsync(entity, cancellationToken);
-            await _repository.SaveChangesAsync(cancellationToken);
-
-            return CreatedAtAction(nameof(GetById), new { id = entity.Id }, entity);
+            var response = await _service.CreateAsync(dto, _tenantContext.TenantId, cancellationToken);
+            return CreatedAtAction(nameof(GetById), new { id = response.Id }, response);
         }
 
         [HttpPut("{id:guid}")]
-        public async Task<IActionResult> Update(Guid id, [FromBody] User dto, CancellationToken cancellationToken)
+        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateUserDTO dto, CancellationToken cancellationToken)
         {
-            var entity = await _repository.GetByIdAsync(id, cancellationToken);
-            if (entity is null || entity.TenantId != _tenantContext.TenantId || entity.IsDeleted)
+            var existing = await _service.GetByIdAsync(id, cancellationToken);
+            if (existing is null || existing.TenantId != _tenantContext.TenantId)
                 return NotFound();
 
-            entity.FirstName = dto.FirstName;
-            entity.LastName = dto.LastName;
-            entity.Email = dto.Email;
-            // If you want to update password, set PasswordHash explicitly
-            if (!string.IsNullOrWhiteSpace(dto.PasswordHash))
-                entity.PasswordHash = dto.PasswordHash;
-
-            entity.IsActive = dto.IsActive;
-            entity.UpdatedAtUtc = DateTime.UtcNow;
-
-            await _repository.UpdateAsync(entity);
-            await _repository.SaveChangesAsync(cancellationToken);
-
-            return NoContent();
-        }
-
-        [HttpDelete("{id:guid}")]
-        public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
-        {
-            var entity = await _repository.GetByIdAsync(id, cancellationToken);
-            if (entity is null || entity.TenantId != _tenantContext.TenantId || entity.IsDeleted)
-                return NotFound();
-
-            entity.IsDeleted = true;
-            entity.UpdatedAtUtc = DateTime.UtcNow;
-
-            await _repository.UpdateAsync(entity);
-            await _repository.SaveChangesAsync(cancellationToken);
-
-            return NoContent();
+            var updated = await _service.UpdateAsync(id, dto, cancellationToken);
+            return updated ? NoContent() : NotFound();
         }
     }
 }
