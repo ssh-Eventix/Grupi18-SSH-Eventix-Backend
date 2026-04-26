@@ -14,5 +14,7 @@ namespace Eventix.Domain.Entities
         public bool IsActive { get; set; }
 
         public virtual ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
+        public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+
     }
 }

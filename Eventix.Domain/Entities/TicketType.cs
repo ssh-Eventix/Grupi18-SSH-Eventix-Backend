@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Eventix.Domain.Entities
 {
-    public class TicketType : BaseEntity
+    public class TicketType : TenantBaseEntity
     {
         public Guid EventId { get; set; }
         public string Name { get; set; } = string.Empty;

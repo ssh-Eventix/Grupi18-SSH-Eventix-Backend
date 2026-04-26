@@ -45,6 +45,11 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IUserRoleService, UserRoleService>();
 builder.Services.AddScoped<IDiscountCouponService, DiscountCouponService>();
+builder.Services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
+builder.Services.AddScoped<IBookingRepository, BookingRepository>();
+builder.Services.AddScoped<IBookingItemRepository, BookingItemRepository>();
+builder.Services.AddScoped<ITicketRepository, TicketRepository>();
+builder.Services.AddScoped<ITicketTypeRepository, TicketTypeRepository>();
 
 
 builder.Services.AddCors(options =>
