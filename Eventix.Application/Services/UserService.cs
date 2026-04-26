@@ -8,10 +8,12 @@ namespace Eventix.Application.Services;
 public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
+    private readonly Eventix.Application.Interfaces.Common.IPasswordHasher _passwordHasher;
 
-    public UserService(IUserRepository userRepository)
+    public UserService(IUserRepository userRepository, Eventix.Application.Interfaces.Common.IPasswordHasher passwordHasher)
     {
         _userRepository = userRepository;
+        _passwordHasher = passwordHasher;
     }
 
     public async Task<List<UserResponseDTO>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -38,14 +40,14 @@ public class UserService : IUserService
         if (existing is not null && !existing.IsDeleted)
             throw new InvalidOperationException("A user with this email already exists.");
 
-        var entity = new User
+            var entity = new User
         {
             Id = Guid.NewGuid(),
             TenantId = tenantId,
             FirstName = dto.FirstName,
             LastName = dto.LastName,
             Email = dto.Email,
-            PasswordHash = dto.Password, // TODO: hash password before storing
+                PasswordHash = _passwordHasher.Hash(dto.Password),
             IsActive = dto.IsActive,
             CreatedAtUtc = DateTime.UtcNow
         };
@@ -64,7 +66,7 @@ public class UserService : IUserService
         entity.FirstName = dto.FirstName;
         entity.LastName = dto.LastName;
         if (!string.IsNullOrWhiteSpace(dto.Password))
-            entity.PasswordHash = dto.Password; // TODO: hash password
+            entity.PasswordHash = _passwordHasher.Hash(dto.Password);
 
         entity.IsActive = dto.IsActive;
         entity.UpdatedAtUtc = DateTime.UtcNow;
