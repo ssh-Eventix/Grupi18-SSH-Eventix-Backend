@@ -23,3 +23,4 @@ namespace Eventix.Application.DTOs.Venues
         public DateTime? UpdatedAtUtc { get; set; }
     }
 }
+//
