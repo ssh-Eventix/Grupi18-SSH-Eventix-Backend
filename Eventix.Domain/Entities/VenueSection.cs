@@ -6,22 +6,14 @@ namespace Eventix.Domain.Entities;
 public class VenueSection : TenantBaseEntity
 {
     public Guid VenueId { get; set; }
-    public Venue Venue { get; set; } = default!;
 
     public string Name { get; set; } = default!;
     public string Code { get; set; } = default!;
-    public string? Description { get; set; }
 
     public int Capacity { get; set; }
-
-    public SeatType SeatType { get; set; } = SeatType.GeneralAdmission;
-
-    public int? RowCount { get; set; }
-    public int? SeatsPerRow { get; set; }
+    public SeatType SeatType { get; set; }
 
     public int DisplayOrder { get; set; } = 0;
-
-    public bool IsAccessibleSection { get; set; } = false;
     public bool IsActive { get; set; } = true;
 
     public decimal? DefaultBasePrice { get; set; }

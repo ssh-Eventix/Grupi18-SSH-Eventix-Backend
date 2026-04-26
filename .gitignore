@@ -16,3 +16,9 @@ TestResults/
 # OS
 .DS_Store
 Thumbs.db
+
+# JetBrains
+.idea
+
+desktop.ini
+$RECYCLE.BIN/

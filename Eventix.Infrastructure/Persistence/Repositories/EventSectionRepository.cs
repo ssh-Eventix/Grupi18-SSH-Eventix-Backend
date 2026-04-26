@@ -3,6 +3,7 @@ using Eventix.Domain.Entities;
 using Eventix.Infrastructure.MultiTenancy;
 using Eventix.Infrastructure.Persistence.Database;
 using Microsoft.EntityFrameworkCore;
+using Eventix.Application.Interfaces.Common;
 
 namespace Eventix.Infrastructure.Persistence.Repositories;
 
@@ -17,54 +18,55 @@ public class EventSectionRepository : IEventSectionRepository
         _tenantContext = tenantContext;
     }
 
-    public async Task<IReadOnlyList<EventSection>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<EventSection>> GetAllAsync(CancellationToken ct = default)
         => await _context.EventSections
             .AsNoTracking()
             .Where(x => x.TenantId == _tenantContext.TenantId && !x.IsDeleted)
-            .OrderBy(x => x.Name)
-            .ToListAsync(cancellationToken);
+            .ToListAsync(ct);
 
-    public async Task<IReadOnlyList<EventSection>> GetByEventIdAsync(Guid eventId, CancellationToken cancellationToken = default)
+    public async Task<EventSection?> GetByIdAsync(Guid id, CancellationToken ct = default)
         => await _context.EventSections
+            .FirstOrDefaultAsync(x =>
+                x.Id == id &&
+                x.TenantId == _tenantContext.TenantId &&
+                !x.IsDeleted, ct);
+
+    public async Task<IReadOnlyList<EventSection>> GetByEventIdAsync(
+    Guid eventId,
+    CancellationToken ct = default)
+    {
+        return await _context.EventSections
             .AsNoTracking()
-            .Where(x => x.TenantId == _tenantContext.TenantId &&
-                        x.EventId == eventId &&
-                        !x.IsDeleted)
+            .Where(x =>
+                x.EventId == eventId &&
+                x.TenantId == _tenantContext.TenantId &&
+                !x.IsDeleted)
             .OrderBy(x => x.Name)
-            .ToListAsync(cancellationToken);
+            .ToListAsync(ct);
+    }
 
-    public async Task<EventSection?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
-        => await _context.EventSections
-            .FirstOrDefaultAsync(x => x.Id == id &&
-                                      x.TenantId == _tenantContext.TenantId &&
-                                      !x.IsDeleted, cancellationToken);
-
-    public async Task<bool> ExistsByEventAndVenueSectionAsync(Guid eventId, Guid venueSectionId, CancellationToken cancellationToken = default)
-        => await _context.EventSections
-            .AnyAsync(x => x.TenantId == _tenantContext.TenantId &&
-                           x.EventId == eventId &&
-                           x.VenueSectionId == venueSectionId &&
-                           !x.IsDeleted, cancellationToken);
-
-    public async Task AddAsync(EventSection entity, CancellationToken cancellationToken = default)
+    public async Task AddAsync(EventSection entity, CancellationToken ct = default)
     {
         entity.TenantId = _tenantContext.TenantId;
-        await _context.EventSections.AddAsync(entity, cancellationToken);
-        await _context.SaveChangesAsync(cancellationToken);
+        await _context.EventSections.AddAsync(entity, ct);
     }
 
-    public async Task UpdateAsync(EventSection entity, CancellationToken cancellationToken = default)
+    public Task UpdateAsync(EventSection entity)
     {
-        entity.UpdatedAtUtc = DateTime.UtcNow;
         _context.EventSections.Update(entity);
-        await _context.SaveChangesAsync(cancellationToken);
+        return Task.CompletedTask;
     }
 
-    public async Task DeleteAsync(EventSection entity, CancellationToken cancellationToken = default)
+    public Task DeleteAsync(EventSection entity)
     {
         entity.IsDeleted = true;
-        entity.UpdatedAtUtc = DateTime.UtcNow;
-        _context.EventSections.Update(entity);
-        await _context.SaveChangesAsync(cancellationToken);
+        return Task.CompletedTask;
     }
+
+    public Task<bool> ExistsByEventAndVenueSectionAsync(Guid eventId, Guid venueSectionId, CancellationToken ct = default)
+        => _context.EventSections.AnyAsync(x =>
+            x.EventId == eventId &&
+            x.VenueSectionId == venueSectionId &&
+            x.TenantId == _tenantContext.TenantId &&
+            !x.IsDeleted, ct);
 }
