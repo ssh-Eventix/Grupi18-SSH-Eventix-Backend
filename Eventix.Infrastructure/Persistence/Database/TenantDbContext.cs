@@ -49,6 +49,10 @@ public class TenantDbContext : DbContext
         ConfigureEventCategory(modelBuilder);
         ConfigureEvent(modelBuilder);
         ConfigureEventSection(modelBuilder);
+        ConfigureBooking(modelBuilder);
+        ConfigureBookingItem(modelBuilder);
+        ConfigureTicketType(modelBuilder);
+        ConfigureTicket(modelBuilder);
 
         base.OnModelCreating(modelBuilder);
     }
@@ -275,6 +279,143 @@ public class TenantDbContext : DbContext
 
             entity.HasIndex(x => new { x.TenantId, x.EventId, x.Code })
                 .IsUnique();
+        });
+    }
+
+    protected static void ConfigureBooking(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Booking>(entity =>
+        {
+            entity.ToTable("Bookings");
+
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.ReferenceNumber)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entity.Property(x => x.TotalAmount)
+                .HasColumnType("decimal(18,2)");
+
+            entity.Property(x => x.Status)
+                .HasConversion<int>();
+
+            entity.Property(x => x.BookingDate)
+                .HasColumnType("datetime");
+
+            entity.HasOne(x => x.User)
+                .WithMany(u => u.Bookings)
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.Event)
+                .WithMany(e => e.Bookings)
+                .HasForeignKey(x => x.EventId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(x => x.UserId);
+            entity.HasIndex(x => x.EventId);
+
+            entity.HasIndex(x => x.TenantId);
+        });
+    }
+
+    private static void ConfigureBookingItem(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<BookingItem>(entity =>
+        {
+            entity.ToTable("BookingItems");
+
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.UnitPrice)
+                .HasColumnType("decimal(18,2)");
+
+            entity.HasOne(x => x.Booking)
+                .WithMany(b => b.BookingItems)
+                .HasForeignKey(x => x.BookingId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.TicketType)
+                .WithMany(t => t.BookingItems)
+                .HasForeignKey(x => x.TicketTypeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(x => x.BookingId);
+            entity.HasIndex(x => x.TicketTypeId);
+
+            entity.HasIndex(x => x.TenantId);
+        });
+    }
+
+    private static void ConfigureTicketType(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<TicketType>(entity =>
+        {
+            entity.ToTable("TicketTypes");
+
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Name)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entity.Property(x => x.Price)
+                .HasColumnType("decimal(18,2)");
+
+            entity.Property(x => x.QuantityAvailable)
+                .IsRequired();
+
+            entity.Property(x => x.SoldQuantity)
+                .HasDefaultValue(0);
+
+            entity.Property(x => x.SaleStartDate)
+                .HasColumnType("datetime");
+
+            entity.Property(x => x.SaleEndDate)
+                .HasColumnType("datetime");
+
+            entity.HasOne(x => x.Event)
+                .WithMany(e => e.TicketTypes)
+                .HasForeignKey(x => x.EventId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => x.EventId);
+            entity.HasIndex(x => x.TenantId);
+        });
+    }
+
+    private static void ConfigureTicket(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Ticket>(entity =>
+        {
+            entity.ToTable("Tickets");
+
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.TicketCode)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entity.HasIndex(x => x.TicketCode)
+                .IsUnique();
+
+            entity.Property(x => x.QRCode)
+                .IsRequired();
+
+            entity.Property(x => x.Status)
+                .HasConversion<int>();
+
+            entity.Property(x => x.IssuedAt)
+                .HasColumnType("datetime");
+
+            entity.HasOne(x => x.BookingItem)
+                .WithMany(bi => bi.Tickets)
+                .HasForeignKey(x => x.BookingItemId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => x.BookingItemId);
+            entity.HasIndex(x => x.TenantId);
         });
     }
 }

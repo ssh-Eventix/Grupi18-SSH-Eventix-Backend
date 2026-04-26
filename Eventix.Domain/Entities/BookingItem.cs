@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Eventix.Domain.Entities
 {
-    public class BookingItem : BaseEntity
+    public class BookingItem : TenantBaseEntity
     {
         public Guid BookingId { get; set; }
         public Guid TicketTypeId { get; set; }
