@@ -9,7 +9,7 @@ using Eventix.Domain.Enums;
 
 namespace Eventix.Domain.Entities
 {
-    public class Booking : BaseEntity
+    public class Booking : TenantBaseEntity
     {
         public Guid UserId { get; set; }
         public Guid EventId { get; set; }

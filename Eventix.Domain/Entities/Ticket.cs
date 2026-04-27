@@ -8,7 +8,7 @@ using Eventix.Domain.Enums;
 
 namespace Eventix.Domain.Entities
 {
-    public class Ticket : BaseEntity
+    public class Ticket : TenantBaseEntity
     {
         public Guid BookingItemId { get; set; }
         public string TicketCode { get; set; } = string.Empty;

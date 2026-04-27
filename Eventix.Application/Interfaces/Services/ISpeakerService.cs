@@ -1,4 +1,4 @@
-﻿using Eventix.Application.DTOs.Speakers;
+﻿using Eventix.Application.DTOs.Speaker;
 using System;
 using System.Collections.Generic;
 using System.Threading;
