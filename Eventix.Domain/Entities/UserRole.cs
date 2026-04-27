@@ -4,7 +4,7 @@ using Eventix.Domain.Common;
 namespace Eventix.Domain.Entities
 {
 
-    public class UserRole : BaseEntity
+    public class UserRole : TenantBaseEntity
     {
         public Guid UserId { get; set; }
         public Guid RoleId { get; set; }

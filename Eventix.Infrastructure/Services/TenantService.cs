@@ -1,5 +1,4 @@
-﻿using System.Text.RegularExpressions;
-using Eventix.Application.DTOs.Tenants;
+﻿using Eventix.Application.DTOs.Tenants;
 using Eventix.Application.Interfaces.Repositories;
 using Eventix.Application.Interfaces.Services;
 using Eventix.Domain.Entities;
@@ -40,21 +39,26 @@ public class TenantService : ITenantService
 
     public async Task<TenantResponseDTO> CreateAsync(CreateTenantDTO dto, CancellationToken ct)
     {
-        var schemaName = $"tenant_{dto.Slug}";
+        var cleanSlug = dto.Slug.Trim().ToLower();
+        var schemaName = $"tenant_{cleanSlug.Replace("-", "_")}";
 
         var entity = new Tenant
         {
             Id = Guid.NewGuid(),
             Name = dto.Name,
-            Slug = dto.Slug,
+            Slug = cleanSlug,
             SchemaName = schemaName,
+
             Description = dto.Description,
             ContactEmail = dto.ContactEmail,
             City = dto.City,
             Country = dto.Country,
             LogoUrl = dto.LogoUrl,
+
+            Status = dto.Status,
             IsTrial = dto.IsTrial,
-            IsActive = true,
+            IsActive = dto.IsActive,
+
             CreatedAtUtc = DateTime.UtcNow
         };
 
@@ -69,7 +73,9 @@ public class TenantService : ITenantService
     public async Task<TenantResponseDTO?> UpdateAsync(Guid id, UpdateTenantDTO dto, CancellationToken ct)
     {
         var tenant = await _repository.GetByIdAsync(id, ct);
-        if (tenant is null) return null;
+
+        if (tenant is null)
+            return null;
 
         tenant.Name = dto.Name;
         tenant.Description = dto.Description;
@@ -77,7 +83,12 @@ public class TenantService : ITenantService
         tenant.City = dto.City;
         tenant.Country = dto.Country;
         tenant.LogoUrl = dto.LogoUrl;
+
+        tenant.Status = dto.Status;
+        tenant.IsTrial = dto.IsTrial;
         tenant.IsActive = dto.IsActive;
+
+        tenant.UpdatedAtUtc = DateTime.UtcNow;
 
         await _repository.UpdateAsync(tenant);
         await _repository.SaveChangesAsync(ct);
@@ -88,7 +99,9 @@ public class TenantService : ITenantService
     public async Task<bool> DeleteAsync(Guid id, CancellationToken ct)
     {
         var tenant = await _repository.GetByIdAsync(id, ct);
-        if (tenant is null) return false;
+
+        if (tenant is null)
+            return false;
 
         await _repository.DeleteAsync(tenant);
         await _repository.SaveChangesAsync(ct);
@@ -97,20 +110,26 @@ public class TenantService : ITenantService
     }
 
     private static TenantResponseDTO Map(Tenant t)
-        => new()
+    {
+        return new TenantResponseDTO
         {
             Id = t.Id,
             Name = t.Name,
             Slug = t.Slug,
             SchemaName = t.SchemaName,
+
             Description = t.Description,
             ContactEmail = t.ContactEmail,
             City = t.City,
             Country = t.Country,
             LogoUrl = t.LogoUrl,
-            Status = t.Status.ToString(),
+
+            Status = t.Status,
             IsTrial = t.IsTrial,
             IsActive = t.IsActive,
-            CreatedAtUtc = t.CreatedAtUtc
+
+            CreatedAtUtc = t.CreatedAtUtc,
+            UpdatedAtUtc = t.UpdatedAtUtc
         };
+    }
 }

@@ -2,6 +2,7 @@
 using Eventix.Domain.Entities;
 using Eventix.Domain.Enums;
 
+namespace Eventix.Domain.Entities;
 public class Tenant : BaseEntity
 {
     public string Name { get; set; } = default!;

@@ -28,15 +28,14 @@ namespace Eventix.API.Controllers
         public async Task<ActionResult<IEnumerable<UserResponseDTO>>> GetAll(CancellationToken cancellationToken)
         {
             var users = await _service.GetAllAsync(cancellationToken);
-            var response = users.Where(u => u.TenantId == _tenantContext.TenantId).ToList();
-            return Ok(response);
+            return Ok(users);
         }
 
         [HttpGet("{id:guid}")]
         public async Task<ActionResult<UserResponseDTO>> GetById(Guid id, CancellationToken cancellationToken)
         {
             var dto = await _service.GetByIdAsync(id, cancellationToken);
-            if (dto is null || dto.TenantId != _tenantContext.TenantId)
+            if (dto is null)
                 return NotFound();
 
             return Ok(dto);
@@ -46,7 +45,7 @@ namespace Eventix.API.Controllers
         public async Task<ActionResult<UserResponseDTO>> GetByEmail([FromQuery] string email, CancellationToken cancellationToken)
         {
             var dto = await _service.GetByEmailAsync(email, cancellationToken);
-            if (dto is null || dto.TenantId != _tenantContext.TenantId)
+            if (dto is null)
                 return NotFound();
 
             return Ok(dto);
@@ -63,7 +62,7 @@ namespace Eventix.API.Controllers
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateUserDTO dto, CancellationToken cancellationToken)
         {
             var existing = await _service.GetByIdAsync(id, cancellationToken);
-            if (existing is null || existing.TenantId != _tenantContext.TenantId)
+            if (existing is null)
                 return NotFound();
 
             var updated = await _service.UpdateAsync(id, dto, cancellationToken);

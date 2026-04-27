@@ -1,4 +1,5 @@
 using Eventix.Application.DTOs.Roles;
+using Eventix.Application.Interfaces.Common;
 using Eventix.Application.Interfaces.Repositories;
 using Eventix.Application.Interfaces.Services;
 using Eventix.Domain.Entities;
@@ -8,10 +9,13 @@ namespace Eventix.Application.Services;
 public class RoleService : IRoleService
 {
     private readonly IRoleRepository _roleRepository;
+    private readonly ITenantContext _tenantContext;
 
-    public RoleService(IRoleRepository roleRepository)
+
+    public RoleService(IRoleRepository roleRepository, ITenantContext tenantContext)
     {
         _roleRepository = roleRepository;
+        _tenantContext = tenantContext;
     }
 
     public async Task<List<RoleResponseDTO>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -31,7 +35,7 @@ public class RoleService : IRoleService
         var entity = new Role
         {
             Id = Guid.NewGuid(),
-            TenantId = tenantId,
+            TenantId = _tenantContext.TenantId,
             Name = dto.Name,
             Description = dto.Description,
             CreatedAtUtc = DateTime.UtcNow
@@ -75,7 +79,6 @@ public class RoleService : IRoleService
     private static RoleResponseDTO Map(Role r) => new()
     {
         Id = r.Id,
-        TenantId = r.TenantId,
         Name = r.Name,
         Description = r.Description,
         CreatedAtUtc = r.CreatedAtUtc,

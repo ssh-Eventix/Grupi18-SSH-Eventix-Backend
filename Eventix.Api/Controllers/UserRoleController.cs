@@ -36,7 +36,7 @@ namespace Eventix.API.Controllers
         public async Task<ActionResult<List<UserRoleResponseDTO>>> GetByUserId(Guid userId, CancellationToken cancellationToken)
         {
             var user = await _userService.GetByIdAsync(userId, cancellationToken);
-            if (user is null || user.TenantId != _tenantContext.TenantId)
+            if (user is null)
                 return NotFound();
 
             var roles = await _userRoleService.GetByUserIdAsync(userId, cancellationToken);
@@ -47,11 +47,11 @@ namespace Eventix.API.Controllers
         public async Task<IActionResult> Assign([FromBody] CreateUserRoleDTO dto, CancellationToken cancellationToken)
         {
             var user = await _userService.GetByIdAsync(dto.UserId, cancellationToken);
-            if (user is null || user.TenantId != _tenantContext.TenantId)
+            if (user is null)
                 return BadRequest("Invalid user");
 
             var role = await _roleService.GetByIdAsync(dto.RoleId, cancellationToken);
-            if (role is null || role.TenantId != _tenantContext.TenantId)
+            if (role is null)
                 return BadRequest("Invalid role");
 
             var entity = await _userRoleService.AssignAsync(dto, cancellationToken);

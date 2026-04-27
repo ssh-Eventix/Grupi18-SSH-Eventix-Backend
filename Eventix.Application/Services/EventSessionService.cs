@@ -1,13 +1,16 @@
 ﻿using Eventix.Application.DTOs.EventSessions;
+using Eventix.Application.Interfaces.Common;
 using Eventix.Domain.Entities;
 
 public class EventSessionService : IEventSessionService
 {
     private readonly IEventSessionRepository _repository;
+    private readonly ITenantContext _tenantContext;
 
-    public EventSessionService(IEventSessionRepository repository)
+    public EventSessionService(IEventSessionRepository repository, ITenantContext tenantContext)
     {
         _repository = repository;
+        _tenantContext = tenantContext;
     }
 
     public async Task<List<EventSessionResponseDTO>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -33,7 +36,7 @@ public class EventSessionService : IEventSessionService
         var entity = new EventSession
         {
             Id = Guid.NewGuid(),
-            TenantId = tenantId,
+            TenantId = _tenantContext.TenantId,
             EventId = dto.EventId,
             SpeakerId = dto.SpeakerId,
             Title = dto.Title,
@@ -85,7 +88,6 @@ public class EventSessionService : IEventSessionService
     private static EventSessionResponseDTO Map(EventSession x) => new()
     {
         Id = x.Id,
-        TenantId = x.TenantId,
         EventId = x.EventId,
         Title = x.Title,
         Description = x.Description,

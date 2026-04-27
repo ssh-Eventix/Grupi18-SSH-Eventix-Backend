@@ -107,7 +107,6 @@ public class EventSectionService : IEventSectionService
     private static EventSectionResponseDTO Map(EventSection x) => new()
     {
         Id = x.Id,
-        TenantId = x.TenantId,
 
         EventId = x.EventId,
         EventTitle = x.Event?.Title,

@@ -3,8 +3,6 @@
 public class EventSectionResponseDTO
 {
     public Guid Id { get; set; }
-    public Guid TenantId { get; set; }
-
     public Guid EventId { get; set; }
     public string? EventTitle { get; set; }
 

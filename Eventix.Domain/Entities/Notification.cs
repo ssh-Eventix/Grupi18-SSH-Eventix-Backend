@@ -5,10 +5,11 @@ using System.Text;
 using System.Threading.Tasks;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Eventix.Domain.Common;
 
 namespace Eventix.Domain.Entities
 {
-    public class Notification
+    public class Notification : TenantBaseEntity
     {
         [Key]
         public Guid Id { get; set; }

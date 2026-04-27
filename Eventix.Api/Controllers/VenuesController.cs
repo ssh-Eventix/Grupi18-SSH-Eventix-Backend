@@ -12,9 +12,9 @@ namespace Eventix.API.Controllers;
 [Route("api/[controller]")]
 public class VenuesController : ControllerBase
 {
-    private readonly VenueService _service;
+    private readonly IVenueService _service;
 
-    public VenuesController(VenueService service)
+    public VenuesController(IVenueService service)
     {
         _service = service;
     }

@@ -101,7 +101,6 @@ public class VenueService : IVenueService
     private static VenueResponseDTO Map(Venue v) => new()
     {
         Id = v.Id,
-        TenantId = v.TenantId,
 
         Name = v.Name,
         Code = v.Code,

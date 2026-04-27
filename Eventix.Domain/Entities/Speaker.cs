@@ -1,8 +1,8 @@
 ﻿using System;
-
+using Eventix.Domain.Common;
 namespace Eventix.Domain.Entities;
 
-public class Speaker
+public class Speaker : TenantBaseEntity
 {
     public Guid Id { get; set; }
 
