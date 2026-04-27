@@ -3,7 +3,6 @@
 public class EventSessionResponseDTO
 {
     public Guid Id { get; set; }
-    public Guid TenantId { get; set; }
     public Guid EventId { get; set; }
 
     public string Title { get; set; } = string.Empty;

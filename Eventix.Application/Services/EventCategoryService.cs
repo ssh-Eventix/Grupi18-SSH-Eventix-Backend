@@ -108,7 +108,6 @@ public class EventCategoryService : IEventCategoryService
         return new EventCategoryResponseDTO
         {
             Id = entity.Id,
-            TenantId = entity.TenantId,
             Name = entity.Name,
             Description = entity.Description,
             Icon = entity.Icon,

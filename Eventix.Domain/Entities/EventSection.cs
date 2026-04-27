@@ -1,6 +1,7 @@
 ﻿using Eventix.Domain.Common;
 using Eventix.Domain.Entities;
 
+namespace Eventix.Domain.Entities;
 public class EventSection : TenantBaseEntity
 {
     public Guid EventId { get; set; }

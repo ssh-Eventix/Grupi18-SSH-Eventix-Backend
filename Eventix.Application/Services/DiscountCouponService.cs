@@ -1,4 +1,5 @@
 using Eventix.Application.DTOs.DiscountCoupons;
+using Eventix.Application.Interfaces.Common;
 using Eventix.Application.Interfaces.Repositories;
 using Eventix.Application.Interfaces.Services;
 using Eventix.Domain.Entities;
@@ -8,10 +9,12 @@ namespace Eventix.Application.Services;
 public class DiscountCouponService : IDiscountCouponService
 {
     private readonly IDiscountCouponRepository _repository;
+    private readonly ITenantContext _tenantContext;
 
-    public DiscountCouponService(IDiscountCouponRepository repository)
+    public DiscountCouponService(IDiscountCouponRepository repository, ITenantContext tenantContext)
     {
         _repository = repository;
+        _tenantContext = tenantContext;
     }
 
     public async Task<List<DiscountCouponResponseDTO>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -40,6 +43,7 @@ public class DiscountCouponService : IDiscountCouponService
         var entity = new DiscountCoupon
         {
             Id = Guid.NewGuid(),
+            TenantId = _tenantContext.TenantId,
             EventId = dto.EventId,
             Code = dto.Code,
             Type = dto.Type,
@@ -48,7 +52,6 @@ public class DiscountCouponService : IDiscountCouponService
             ValidTo = dto.ValidTo,
             UsageLimit = dto.UsageLimit,
             UsageCount = 0,
-            TenantId = tenantId,
             CreatedAtUtc = DateTime.UtcNow
         };
 
@@ -101,7 +104,6 @@ public class DiscountCouponService : IDiscountCouponService
     private static DiscountCouponResponseDTO Map(DiscountCoupon x) => new()
     {
         Id = x.Id,
-        TenantId = x.TenantId,
         EventId = x.EventId,
         Code = x.Code,
         Type = x.Type,

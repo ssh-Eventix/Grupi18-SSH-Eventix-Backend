@@ -132,7 +132,6 @@ public class EventService : IEventService
         return new EventResponseDTO
         {
             Id = entity.Id,
-            TenantId = entity.TenantId,
 
             VenueId = entity.VenueId,
             VenueName = entity.Venue?.Name,
@@ -149,8 +148,8 @@ public class EventService : IEventService
             StartUtc = entity.StartUtc,
             EndUtc = entity.EndUtc,
 
-            Status = entity.Status.ToString(),
-            Visibility = entity.Visibility.ToString(),
+            Status = entity.Status,
+            Visibility = entity.Visibility,
 
             BannerImageUrl = entity.BannerImageUrl,
 

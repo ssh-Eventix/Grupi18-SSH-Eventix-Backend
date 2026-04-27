@@ -5,7 +5,6 @@ namespace Eventix.Application.DTOs.DiscountCoupons;
 public class DiscountCouponResponseDTO
 {
     public Guid Id { get; set; }
-    public Guid TenantId { get; set; }
     public Guid EventId { get; set; }
     public string Code { get; set; } = string.Empty;
     public DiscountType Type { get; set; }

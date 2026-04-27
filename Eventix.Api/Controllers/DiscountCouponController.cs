@@ -28,15 +28,14 @@ namespace Eventix.API.Controllers
         public async Task<ActionResult<IEnumerable<DiscountCouponResponseDTO>>> GetAll(CancellationToken cancellationToken)
         {
             var items = await _service.GetAllAsync(cancellationToken);
-            var response = items.Where(x => x.TenantId == _tenantContext.TenantId).ToList();
-            return Ok(response);
+            return Ok(items);
         }
 
         [HttpGet("{id:guid}")]
         public async Task<ActionResult<DiscountCouponResponseDTO>> GetById(Guid id, CancellationToken cancellationToken)
         {
             var dto = await _service.GetByIdAsync(id, cancellationToken);
-            if (dto is null || dto.TenantId != _tenantContext.TenantId)
+            if (dto is null)
                 return NotFound();
 
             return Ok(dto);
@@ -46,8 +45,7 @@ namespace Eventix.API.Controllers
         public async Task<ActionResult<List<DiscountCouponResponseDTO>>> GetByEventId(Guid eventId, CancellationToken cancellationToken)
         {
             var items = await _service.GetByEventIdAsync(eventId, cancellationToken);
-            var response = items.Where(x => x.TenantId == _tenantContext.TenantId).ToList();
-            return Ok(response);
+            return Ok(items);
         }
 
         [HttpPost]
@@ -61,7 +59,7 @@ namespace Eventix.API.Controllers
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateDiscountCouponDTO dto, CancellationToken cancellationToken)
         {
             var existing = await _service.GetByIdAsync(id, cancellationToken);
-            if (existing is null || existing.TenantId != _tenantContext.TenantId)
+            if (existing is null)
                 return NotFound();
 
             var updated = await _service.UpdateAsync(id, dto, cancellationToken);
@@ -72,7 +70,7 @@ namespace Eventix.API.Controllers
         public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
         {
             var existing = await _service.GetByIdAsync(id, cancellationToken);
-            if (existing is null || existing.TenantId != _tenantContext.TenantId)
+            if (existing is null)
                 return NotFound();
 
             var deleted = await _service.DeleteAsync(id, cancellationToken);

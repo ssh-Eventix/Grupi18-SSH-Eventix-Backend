@@ -32,7 +32,7 @@ public class PublicDbContext : DbContext
             entity.Property(x => x.Name)
                 .HasMaxLength(200)
                 .IsRequired();
-
+                
             entity.Property(x => x.Slug)
                 .HasMaxLength(100)
                 .IsRequired();

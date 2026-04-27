@@ -99,7 +99,6 @@ public class VenueSectionService : IVenueSectionService
     private static VenueSectionResponseDTO Map(VenueSection x) => new()
     {
         Id = x.Id,
-        TenantId = x.TenantId,
 
         VenueId = x.VenueId,
         VenueName = x.Venue?.Name,

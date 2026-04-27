@@ -1,22 +1,25 @@
-﻿using Eventix.Application.DTOs.Speaker;
-using Eventix.Application.Interfaces.Repositories;
-using Eventix.Application.Interfaces.Services;
-using Eventix.Domain.Entities;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Eventix.Application.DTOs.Speaker;
+using Eventix.Application.Interfaces.Common;
+using Eventix.Application.Interfaces.Repositories;
+using Eventix.Application.Interfaces.Services;
+using Eventix.Domain.Entities;
 
 namespace Eventix.Application.Services;
 
 public class SpeakerService : ISpeakerService
 {
     private readonly ISpeakerRepository _speakerRepository;
+    private readonly ITenantContext _tenantContext;
 
-    public SpeakerService(ISpeakerRepository speakerRepository)
+    public SpeakerService(ISpeakerRepository speakerRepository, ITenantContext tenantContext)
     {
         _speakerRepository = speakerRepository;
+        _tenantContext = tenantContext;
     }
 
     public async Task<List<SpeakerDto>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -36,7 +39,7 @@ public class SpeakerService : ISpeakerService
         var speaker = new Speaker
         {
             Id = Guid.NewGuid(),
-            TenantId = dto.TenantId,
+            TenantId = _tenantContext.TenantId,
             FullName = dto.FullName,
             Bio = dto.Bio,
             Email = dto.Email,
@@ -88,7 +91,6 @@ public class SpeakerService : ISpeakerService
         return new SpeakerDto
         {
             Id = speaker.Id,
-            TenantId = speaker.TenantId,
             FullName = speaker.FullName,
             Bio = speaker.Bio,
             Email = speaker.Email,

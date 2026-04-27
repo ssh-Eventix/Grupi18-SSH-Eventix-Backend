@@ -19,8 +19,7 @@ public class EventSessionController : ControllerBase
     public async Task<ActionResult<IEnumerable<EventSessionResponseDTO>>> GetAll(CancellationToken cancellationToken)
     {
         var items = await _service.GetAllAsync(cancellationToken);
-        var response = items.Where(x => x.TenantId == _tenantContext.TenantId).ToList();
-        return Ok(response);
+        return Ok(items);
     }
 
     [HttpPost]

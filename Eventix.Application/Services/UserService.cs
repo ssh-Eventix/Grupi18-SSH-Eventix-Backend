@@ -1,4 +1,5 @@
 using Eventix.Application.DTOs.Users;
+using Eventix.Application.Interfaces.Common;
 using Eventix.Application.Interfaces.Repositories;
 using Eventix.Application.Interfaces.Services;
 using Eventix.Domain.Entities;
@@ -9,11 +10,13 @@ public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
     private readonly Interfaces.Common.IPasswordHasher _passwordHasher;
+    private readonly ITenantContext _tenantContext;
 
-    public UserService(IUserRepository userRepository, Interfaces.Common.IPasswordHasher passwordHasher)
+    public UserService(IUserRepository userRepository, Interfaces.Common.IPasswordHasher passwordHasher, ITenantContext tenantContext)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
+        _tenantContext = tenantContext;
     }
 
     public async Task<List<UserResponseDTO>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -43,7 +46,7 @@ public class UserService : IUserService
         var entity = new User
         {
             Id = Guid.NewGuid(),
-            TenantId = tenantId,
+            TenantId = _tenantContext.TenantId,
             FirstName = dto.FirstName,
             LastName = dto.LastName,
             Email = dto.Email,
@@ -94,7 +97,6 @@ public class UserService : IUserService
     private static UserResponseDTO MapToDto(User u) => new()
     {
         Id = u.Id,
-        TenantId = u.TenantId,
         FirstName = u.FirstName,
         LastName = u.LastName,
         Email = u.Email,

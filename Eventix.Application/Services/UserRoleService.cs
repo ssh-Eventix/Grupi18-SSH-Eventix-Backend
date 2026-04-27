@@ -1,4 +1,5 @@
 using Eventix.Application.DTOs.UserRoles;
+using Eventix.Application.Interfaces.Common;
 using Eventix.Application.Interfaces.Repositories;
 using Eventix.Application.Interfaces.Services;
 using Eventix.Domain.Entities;
@@ -10,6 +11,7 @@ public class UserRoleService : IUserRoleService
     private readonly IUserRoleRepository _userRoleRepository;
     private readonly IUserRepository _userRepository;
     private readonly IRoleRepository _roleRepository;
+
 
     public UserRoleService(IUserRoleRepository userRoleRepository, IUserRepository userRepository, IRoleRepository roleRepository)
     {
