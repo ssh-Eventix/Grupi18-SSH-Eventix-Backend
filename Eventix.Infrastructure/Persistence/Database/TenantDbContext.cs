@@ -53,7 +53,7 @@ public class TenantDbContext : DbContext
         ConfigureBookingItem(modelBuilder);
         ConfigureTicketType(modelBuilder);
         ConfigureTicket(modelBuilder);
-
+        ConfigureEventSession(modelBuilder);
         base.OnModelCreating(modelBuilder);
     }
 
@@ -416,6 +416,41 @@ public class TenantDbContext : DbContext
 
             entity.HasIndex(x => x.BookingItemId);
             entity.HasIndex(x => x.TenantId);
+        });
+    }
+    private static void ConfigureEventSession(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<EventSession>(entity =>
+        {
+            entity.ToTable("EventSessions");
+
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Title)
+                .HasMaxLength(200)
+                .IsRequired();
+
+            entity.Property(x => x.Description)
+                .HasMaxLength(1000);
+
+            entity.Property(x => x.StartTime)
+                .IsRequired();
+
+            entity.Property(x => x.EndTime)
+                .IsRequired();
+
+            entity.HasOne(x => x.Event)
+                .WithMany(e => e.Sessions)
+                .HasForeignKey(x => x.EventId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.Speaker)
+                .WithMany(s => s.Sessions)
+                .HasForeignKey(x => x.SpeakerId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasIndex(x => x.TenantId);
+            entity.HasIndex(x => x.EventId);
         });
     }
 }

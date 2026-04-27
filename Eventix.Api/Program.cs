@@ -50,6 +50,8 @@ builder.Services.AddScoped<IBookingRepository, BookingRepository>();
 builder.Services.AddScoped<IBookingItemRepository, BookingItemRepository>();
 builder.Services.AddScoped<ITicketRepository, TicketRepository>();
 builder.Services.AddScoped<ITicketTypeRepository, TicketTypeRepository>();
+builder.Services.AddScoped<IEventSessionRepository, EventSessionRepository>();
+builder.Services.AddScoped<IEventSessionService, EventSessionService>();
 
 
 builder.Services.AddCors(options =>

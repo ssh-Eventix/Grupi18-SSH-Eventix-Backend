@@ -1,4 +1,4 @@
-﻿using Eventix.Application.DTOs.Speakers;
+﻿using Eventix.Application.DTOs.Speaker;
 using Eventix.Application.Interfaces.Repositories;
 using Eventix.Application.Interfaces.Services;
 using Eventix.Domain.Entities;

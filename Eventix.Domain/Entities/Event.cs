@@ -36,6 +36,5 @@ public class Event : TenantBaseEntity
     public ICollection<EventSection> EventSections { get; set; } = new List<EventSection>();
     public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
     public ICollection<TicketType> TicketTypes { get; set; } = new List<TicketType>();
-
-
+    public ICollection<EventSession> Sessions { get; set; } = new List<EventSession>();
 }

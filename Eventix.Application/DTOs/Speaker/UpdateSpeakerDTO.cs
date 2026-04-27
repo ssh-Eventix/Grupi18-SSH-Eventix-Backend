@@ -1,11 +1,7 @@
-﻿using System;
+﻿namespace Eventix.Application.DTOs.Speaker;
 
-namespace Eventix.Application.DTOs.Speakers;
-
-public class CreateSpeakerDto
+public class UpdateSpeakerDto
 {
-    public Guid TenantId { get; set; }
-
     public string FullName { get; set; } = string.Empty;
     public string? Bio { get; set; }
 
