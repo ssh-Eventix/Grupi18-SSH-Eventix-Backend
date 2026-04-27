@@ -300,8 +300,8 @@ public class TenantDbContext : DbContext
             entity.Property(x => x.Status)
                 .HasConversion<int>();
 
-            entity.Property(x => x.BookingDate)
-                .HasColumnType("datetime");
+            entity.Property(x => x.BookingDate); 
+              
 
             entity.HasOne(x => x.User)
                 .WithMany(u => u.Bookings)
@@ -370,10 +370,10 @@ public class TenantDbContext : DbContext
                 .HasDefaultValue(0);
 
             entity.Property(x => x.SaleStartDate)
-                .HasColumnType("datetime");
+                .HasColumnType("timestamp with time zone");
 
             entity.Property(x => x.SaleEndDate)
-                .HasColumnType("datetime");
+                .HasColumnType("timestamp with time zone");
 
             entity.HasOne(x => x.Event)
                 .WithMany(e => e.TicketTypes)
@@ -407,7 +407,7 @@ public class TenantDbContext : DbContext
                 .HasConversion<int>();
 
             entity.Property(x => x.IssuedAt)
-                .HasColumnType("datetime");
+                .HasColumnType("timestamp with time zone");
 
             entity.HasOne(x => x.BookingItem)
                 .WithMany(bi => bi.Tickets)
