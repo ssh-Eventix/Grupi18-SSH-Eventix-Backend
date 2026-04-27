@@ -20,6 +20,4 @@ public class Tenant : BaseEntity
     public bool IsTrial { get; set; } = false;
     public bool IsActive { get; set; } = true;
 
-    public ICollection<Venue> Venues { get; set; } = new List<Venue>();
-    public ICollection<Event> Events { get; set; } = new List<Event>();
 }

@@ -45,7 +45,8 @@ public class EventCategoryRepository : IEventCategoryRepository
 
     public Task DeleteAsync(EventCategory entity)
     {
-        _context.EventCategories.Remove(entity);
+        entity.IsDeleted = true;
+        entity.UpdatedAtUtc = DateTime.UtcNow;
         return Task.CompletedTask;
     }
 

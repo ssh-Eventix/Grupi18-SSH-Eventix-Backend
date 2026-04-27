@@ -50,6 +50,7 @@ public class EventRepository : IEventRepository
         return _context.Events
             .Include(x => x.Venue)
             .Include(x => x.EventCategory)
+            .Include(x => x.EventSections)
             .FirstOrDefaultAsync(x =>
                 x.Id == id &&
                 x.TenantId == tenantId &&

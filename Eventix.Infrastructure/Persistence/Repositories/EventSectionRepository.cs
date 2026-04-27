@@ -1,9 +1,8 @@
-﻿using Eventix.Application.Interfaces.Repositories;
+﻿using Eventix.Application.Interfaces.Common;
+using Eventix.Application.Interfaces.Repositories;
 using Eventix.Domain.Entities;
-using Eventix.Infrastructure.MultiTenancy;
 using Eventix.Infrastructure.Persistence.Database;
 using Microsoft.EntityFrameworkCore;
-using Eventix.Application.Interfaces.Common;
 
 namespace Eventix.Infrastructure.Persistence.Repositories;
 
@@ -18,37 +17,55 @@ public class EventSectionRepository : IEventSectionRepository
         _tenantContext = tenantContext;
     }
 
-    public async Task<IReadOnlyList<EventSection>> GetAllAsync(CancellationToken ct = default)
+    private Guid TenantId => _tenantContext.TenantId;
+
+    public async Task<IReadOnlyList<EventSection>> GetAllAsync(CancellationToken cancellationToken = default)
         => await _context.EventSections
             .AsNoTracking()
-            .Where(x => x.TenantId == _tenantContext.TenantId && !x.IsDeleted)
-            .ToListAsync(ct);
+            .Include(x => x.Event)
+            .Include(x => x.VenueSection)
+            .Where(x => x.TenantId == TenantId && !x.IsDeleted)
+            .OrderBy(x => x.Name)
+            .ToListAsync(cancellationToken);
 
-    public async Task<EventSection?> GetByIdAsync(Guid id, CancellationToken ct = default)
+    public async Task<EventSection?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         => await _context.EventSections
+            .Include(x => x.Event)
+            .Include(x => x.VenueSection)
             .FirstOrDefaultAsync(x =>
                 x.Id == id &&
-                x.TenantId == _tenantContext.TenantId &&
-                !x.IsDeleted, ct);
+                x.TenantId == TenantId &&
+                !x.IsDeleted,
+                cancellationToken);
 
     public async Task<IReadOnlyList<EventSection>> GetByEventIdAsync(
-    Guid eventId,
-    CancellationToken ct = default)
-    {
-        return await _context.EventSections
+        Guid eventId,
+        CancellationToken cancellationToken = default)
+        => await _context.EventSections
             .AsNoTracking()
+            .Include(x => x.VenueSection)
             .Where(x =>
                 x.EventId == eventId &&
-                x.TenantId == _tenantContext.TenantId &&
+                x.TenantId == TenantId &&
                 !x.IsDeleted)
             .OrderBy(x => x.Name)
-            .ToListAsync(ct);
-    }
+            .ToListAsync(cancellationToken);
 
-    public async Task AddAsync(EventSection entity, CancellationToken ct = default)
+    public Task<bool> ExistsByEventAndVenueSectionAsync(
+        Guid eventId,
+        Guid venueSectionId,
+        CancellationToken cancellationToken = default)
+        => _context.EventSections.AnyAsync(x =>
+            x.EventId == eventId &&
+            x.VenueSectionId == venueSectionId &&
+            x.TenantId == TenantId &&
+            !x.IsDeleted,
+            cancellationToken);
+
+    public async Task AddAsync(EventSection entity, CancellationToken cancellationToken = default)
     {
-        entity.TenantId = _tenantContext.TenantId;
-        await _context.EventSections.AddAsync(entity, ct);
+        entity.TenantId = TenantId;
+        await _context.EventSections.AddAsync(entity, cancellationToken);
     }
 
     public Task UpdateAsync(EventSection entity)
@@ -60,13 +77,10 @@ public class EventSectionRepository : IEventSectionRepository
     public Task DeleteAsync(EventSection entity)
     {
         entity.IsDeleted = true;
+        entity.UpdatedAtUtc = DateTime.UtcNow;
         return Task.CompletedTask;
     }
 
-    public Task<bool> ExistsByEventAndVenueSectionAsync(Guid eventId, Guid venueSectionId, CancellationToken ct = default)
-        => _context.EventSections.AnyAsync(x =>
-            x.EventId == eventId &&
-            x.VenueSectionId == venueSectionId &&
-            x.TenantId == _tenantContext.TenantId &&
-            !x.IsDeleted, ct);
+    public Task SaveChangesAsync(CancellationToken cancellationToken = default)
+        => _context.SaveChangesAsync(cancellationToken);
 }
