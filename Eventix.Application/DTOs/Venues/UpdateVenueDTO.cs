@@ -11,6 +11,6 @@ public class UpdateVenueDTO
 
     public int TotalCapacity { get; set; }
 
-    public bool IsIndoor { get; set; } = true;
-    public bool IsAccessible { get; set; } = true;
+    public bool IsIndoor { get; set; }
+    public bool IsAccessible { get; set; }
 }

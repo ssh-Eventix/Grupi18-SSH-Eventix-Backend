@@ -1,4 +1,5 @@
 ﻿using Eventix.Domain.Common;
+using Eventix.Domain.Entities;
 
 public class EventSection : TenantBaseEntity
 {
@@ -16,4 +17,7 @@ public class EventSection : TenantBaseEntity
 
     public DateTime? SalesStartUtc { get; set; }
     public DateTime? SalesEndUtc { get; set; }
+
+    public Event Event { get; set; } = default!;
+    public VenueSection VenueSection { get; set; } = default!;
 }

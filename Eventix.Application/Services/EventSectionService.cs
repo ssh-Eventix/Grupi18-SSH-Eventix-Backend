@@ -3,7 +3,6 @@ using Eventix.Application.Interfaces.Common;
 using Eventix.Application.Interfaces.Repositories;
 using Eventix.Application.Interfaces.Services;
 using Eventix.Domain.Entities;
-using Eventix.Application.Interfaces.Common;
 
 namespace Eventix.Application.Services;
 
@@ -32,6 +31,12 @@ public class EventSectionService : IEventSectionService
         return entity is null ? null : Map(entity);
     }
 
+    public async Task<IEnumerable<EventSectionResponseDTO>> GetByEventIdAsync(Guid eventId)
+    {
+        var entities = await _repository.GetByEventIdAsync(eventId);
+        return entities.Select(Map);
+    }
+
     public async Task<EventSectionResponseDTO> CreateAsync(CreateEventSectionDTO dto)
     {
         var exists = await _repository.ExistsByEventAndVenueSectionAsync(
@@ -39,22 +44,31 @@ public class EventSectionService : IEventSectionService
             dto.VenueSectionId);
 
         if (exists)
-            throw new Exception("EventSection already exists for this Event + VenueSection");
+            throw new Exception("Event section already exists for this event and venue section.");
 
         var entity = new EventSection
         {
-            TenantId = _tenantContext.TenantId, 
+            Id = Guid.NewGuid(),
+            TenantId = _tenantContext.TenantId,
+
             EventId = dto.EventId,
             VenueSectionId = dto.VenueSectionId,
+
             Name = dto.Name,
             Code = dto.Code,
             Capacity = dto.Capacity,
             Price = dto.Price,
+            IsActive = dto.IsActive,
+
             SalesStartUtc = dto.SalesStartUtc,
-            SalesEndUtc = dto.SalesEndUtc
+            SalesEndUtc = dto.SalesEndUtc,
+
+            CreatedAtUtc = DateTime.UtcNow,
+            IsDeleted = false
         };
 
         await _repository.AddAsync(entity);
+        await _repository.SaveChangesAsync();
 
         return Map(entity);
     }
@@ -69,8 +83,12 @@ public class EventSectionService : IEventSectionService
         entity.Capacity = dto.Capacity;
         entity.Price = dto.Price;
         entity.IsActive = dto.IsActive;
+        entity.SalesStartUtc = dto.SalesStartUtc;
+        entity.SalesEndUtc = dto.SalesEndUtc;
+        entity.UpdatedAtUtc = DateTime.UtcNow;
 
         await _repository.UpdateAsync(entity);
+        await _repository.SaveChangesAsync();
 
         return Map(entity);
     }
@@ -81,6 +99,7 @@ public class EventSectionService : IEventSectionService
         if (entity is null) return false;
 
         await _repository.DeleteAsync(entity);
+        await _repository.SaveChangesAsync();
 
         return true;
     }
@@ -88,12 +107,22 @@ public class EventSectionService : IEventSectionService
     private static EventSectionResponseDTO Map(EventSection x) => new()
     {
         Id = x.Id,
+        TenantId = x.TenantId,
+
         EventId = x.EventId,
+        EventTitle = x.Event?.Title,
+
         VenueSectionId = x.VenueSectionId,
+        VenueSectionName = x.VenueSection?.Name,
+
         Name = x.Name,
         Code = x.Code,
         Capacity = x.Capacity,
         Price = x.Price,
-        IsActive = x.IsActive
+        IsActive = x.IsActive,
+
+        SalesStartUtc = x.SalesStartUtc,
+        SalesEndUtc = x.SalesEndUtc,
+        CreatedAtUtc = x.CreatedAtUtc
     };
 }

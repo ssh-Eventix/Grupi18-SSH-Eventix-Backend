@@ -1,11 +1,11 @@
 ﻿using Eventix.Domain.Common;
+using Eventix.Domain.Entities;
 using Eventix.Domain.Enums;
-
-namespace Eventix.Domain.Entities;
 
 public class VenueSection : TenantBaseEntity
 {
     public Guid VenueId { get; set; }
+    public Venue Venue { get; set; } = default!;
 
     public string Name { get; set; } = default!;
     public string Code { get; set; } = default!;
@@ -17,6 +17,5 @@ public class VenueSection : TenantBaseEntity
     public bool IsActive { get; set; } = true;
 
     public decimal? DefaultBasePrice { get; set; }
-
     public ICollection<EventSection> EventSections { get; set; } = new List<EventSection>();
 }

@@ -11,9 +11,7 @@ public class VenueRepository : IVenueRepository
     private readonly TenantDbContext _context;
     private readonly ITenantContext _tenantContext;
 
-    public VenueRepository(
-        TenantDbContext context,
-        ITenantContext tenantContext)
+    public VenueRepository(TenantDbContext context, ITenantContext tenantContext)
     {
         _context = context;
         _tenantContext = tenantContext;
@@ -30,23 +28,23 @@ public class VenueRepository : IVenueRepository
 
     public async Task<Venue?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         => await _context.Venues
-            .FirstOrDefaultAsync(
-                x => x.Id == id &&
-                     x.TenantId == TenantId &&
-                     !x.IsDeleted,
+            .Include(x => x.Sections)
+            .FirstOrDefaultAsync(x =>
+                x.Id == id &&
+                x.TenantId == TenantId &&
+                !x.IsDeleted,
                 cancellationToken);
 
     public async Task<bool> ExistsByCodeAsync(
         string code,
         Guid? excludeId = null,
         CancellationToken cancellationToken = default)
-        => await _context.Venues
-            .AnyAsync(x =>
-                x.TenantId == TenantId &&
-                x.Code == code &&
-                !x.IsDeleted &&
-                (excludeId == null || x.Id != excludeId),
-                cancellationToken);
+        => await _context.Venues.AnyAsync(x =>
+            x.TenantId == TenantId &&
+            x.Code == code &&
+            !x.IsDeleted &&
+            (excludeId == null || x.Id != excludeId),
+            cancellationToken);
 
     public async Task AddAsync(Venue venue, CancellationToken cancellationToken = default)
     {

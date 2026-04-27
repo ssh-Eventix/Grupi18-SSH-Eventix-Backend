@@ -42,13 +42,19 @@ public class VenueSectionService : IVenueSectionService
         {
             Id = Guid.NewGuid(),
             TenantId = _tenantContext.TenantId,
+
             VenueId = dto.VenueId,
             Name = dto.Name,
             Code = dto.Code,
             Capacity = dto.Capacity,
             SeatType = (SeatType)dto.SeatType,
+
+            DisplayOrder = dto.DisplayOrder,
+            IsActive = dto.IsActive,
             DefaultBasePrice = dto.DefaultBasePrice,
-            CreatedAtUtc = DateTime.UtcNow
+
+            CreatedAtUtc = DateTime.UtcNow,
+            IsDeleted = false
         };
 
         await _repository.AddAsync(entity);
@@ -90,18 +96,24 @@ public class VenueSectionService : IVenueSectionService
         return true;
     }
 
-    private static VenueSectionResponseDTO Map(VenueSection x)
+    private static VenueSectionResponseDTO Map(VenueSection x) => new()
     {
-        return new VenueSectionResponseDTO
-        {
-            Id = x.Id,
-            VenueId = x.VenueId,
-            Name = x.Name,
-            Code = x.Code,
-            Capacity = x.Capacity,
-            SeatType = (int)x.SeatType,
-            IsActive = x.IsActive,
-            DefaultBasePrice = x.DefaultBasePrice
-        };
-    }
+        Id = x.Id,
+        TenantId = x.TenantId,
+
+        VenueId = x.VenueId,
+        VenueName = x.Venue?.Name,
+
+        Name = x.Name,
+        Code = x.Code,
+
+        Capacity = x.Capacity,
+        SeatType = x.SeatType,
+
+        DisplayOrder = x.DisplayOrder,
+        IsActive = x.IsActive,
+
+        DefaultBasePrice = x.DefaultBasePrice,
+        CreatedAtUtc = x.CreatedAtUtc
+    };
 }

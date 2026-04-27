@@ -101,10 +101,20 @@ public class VenueService : IVenueService
     private static VenueResponseDTO Map(Venue v) => new()
     {
         Id = v.Id,
+        TenantId = v.TenantId,
+
         Name = v.Name,
         Code = v.Code,
+
+        AddressLine1 = v.AddressLine1,
         City = v.City,
         Country = v.Country,
-        TotalCapacity = v.TotalCapacity
+
+        TotalCapacity = v.TotalCapacity,
+
+        IsIndoor = v.IsIndoor,
+        IsAccessible = v.IsAccessible,
+
+        CreatedAtUtc = v.CreatedAtUtc
     };
 }
