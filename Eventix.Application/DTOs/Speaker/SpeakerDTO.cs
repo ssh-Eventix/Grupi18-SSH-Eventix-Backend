@@ -1,10 +1,10 @@
 ﻿using System;
 
-namespace Eventix.Application.DTOs.Speakers;
+namespace Eventix.Application.DTOs.Speaker;
 
-public class CreateSpeakerDto
+public class SpeakerDto
 {
-    public Guid TenantId { get; set; }
+    public Guid Id { get; set; }
 
     public string FullName { get; set; } = string.Empty;
     public string? Bio { get; set; }
@@ -13,4 +13,6 @@ public class CreateSpeakerDto
     public string? Phone { get; set; }
 
     public string? ProfileImageUrl { get; set; }
+
+    public DateTime CreatedAt { get; set; }
 }

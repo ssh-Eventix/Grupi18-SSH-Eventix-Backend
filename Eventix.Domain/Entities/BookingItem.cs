@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Eventix.Domain.Entities
 {
-    public class BookingItem : BaseEntity
+    public class BookingItem : TenantBaseEntity
     {
         public Guid BookingId { get; set; }
         public Guid TicketTypeId { get; set; }
@@ -17,8 +17,6 @@ namespace Eventix.Domain.Entities
 
         public decimal Subtotal => Quantity * UnitPrice;
 
-
-        // Navigation properties
         public Booking Booking { get; set; } = default!;
         public TicketType TicketType { get; set; } = default!;
         public ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();

@@ -4,11 +4,13 @@ namespace Eventix.Application.Interfaces.Repositories;
 
 public interface ITenantRepository
 {
-    Task<IReadOnlyList<Tenant>> GetAllAsync(CancellationToken cancellationToken = default);
-    Task<Tenant?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
-    Task<Tenant?> GetBySlugAsync(string slug, CancellationToken cancellationToken = default);
-    Task AddAsync(Tenant tenant, CancellationToken cancellationToken = default);
-    Task UpdateAsync(Tenant tenant, CancellationToken cancellationToken = default);
-    Task DeleteAsync(Tenant tenant, CancellationToken cancellationToken = default);
-    Task<bool> ExistsBySlugAsync(string slug, CancellationToken cancellationToken = default);
+    Task<List<Tenant>> GetAllAsync(CancellationToken ct);
+    Task<Tenant?> GetByIdAsync(Guid id, CancellationToken ct);
+    Task<Tenant?> GetBySlugAsync(string slug, CancellationToken ct);
+
+    Task AddAsync(Tenant entity, CancellationToken ct);
+    Task UpdateAsync(Tenant entity);
+    Task DeleteAsync(Tenant entity);
+
+    Task SaveChangesAsync(CancellationToken ct);
 }

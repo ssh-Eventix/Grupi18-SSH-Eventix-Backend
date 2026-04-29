@@ -3,6 +3,7 @@ using Eventix.Domain.Entities;
 using Eventix.Infrastructure.MultiTenancy;
 using Eventix.Infrastructure.Persistence.Database;
 using Microsoft.EntityFrameworkCore;
+using Eventix.Application.Interfaces.Common;
 
 namespace Eventix.Infrastructure.Persistence.Repositories;
 
@@ -44,7 +45,8 @@ public class EventCategoryRepository : IEventCategoryRepository
 
     public Task DeleteAsync(EventCategory entity)
     {
-        _context.EventCategories.Remove(entity);
+        entity.IsDeleted = true;
+        entity.UpdatedAtUtc = DateTime.UtcNow;
         return Task.CompletedTask;
     }
 

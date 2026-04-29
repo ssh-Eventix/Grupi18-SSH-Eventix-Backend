@@ -1,73 +1,75 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Eventix.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
-using Eventix.Domain.Entities;
 
-namespace Eventix.Infrastructure.Persistence.Database
+namespace Eventix.Infrastructure.Persistence.Database;
+
+public class PublicDbContext : DbContext
 {
-    public class PublicDbContext : DbContext
+    public PublicDbContext(DbContextOptions<PublicDbContext> options)
+        : base(options)
     {
-        public PublicDbContext(DbContextOptions<PublicDbContext> options) : base(options) { }
-        public DbSet<Tenant> Tenants => Set<Tenant>();
-        public DbSet<Speaker> Speakers => Set<Speaker>();
-        public DbSet<EventSession> EventSessions => Set<EventSession>();
-        public DbSet<CheckIn> CheckIns => Set<CheckIn>();
-        public DbSet<Notification> Notifications => Set<Notification>();
-        public DbSet<Review> Reviews => Set<Review>();
+    }
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
+    public DbSet<Tenant> Tenants => Set<Tenant>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.HasDefaultSchema("public");
+
+        ConfigureTenant(modelBuilder);
+
+        base.OnModelCreating(modelBuilder);
+    }
+
+    private static void ConfigureTenant(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Tenant>(entity =>
         {
-            modelBuilder.HasDefaultSchema("public");
+            entity.ToTable("Tenants");
 
-            modelBuilder.Entity<Tenant>(entity =>
-            {
-                entity.ToTable("Tenants");
-                entity.HasKey(x => x.Id);
+            entity.HasKey(x => x.Id);
 
-                entity.Property(x => x.Name).HasMaxLength(150).IsRequired();
-                entity.Property(x => x.Slug).HasMaxLength(100).IsRequired();
-                entity.Property(x => x.SchemaName).HasMaxLength(100).IsRequired();
-                //entity.Property(x => x.Domain).HasMaxLength(200);
+            entity.Property(x => x.Name)
+                .HasMaxLength(200)
+                .IsRequired();
+                
+            entity.Property(x => x.Slug)
+                .HasMaxLength(100)
+                .IsRequired();
 
-                entity.HasIndex(x => x.Slug).IsUnique();
-                entity.HasIndex(x => x.SchemaName).IsUnique();
-            });
+            entity.Property(x => x.SchemaName)
+                .HasMaxLength(100)
+                .IsRequired();
 
-            base.OnModelCreating(modelBuilder);
+            entity.Property(x => x.Description)
+                .HasMaxLength(500);
 
-            modelBuilder.Entity<Speaker>(entity =>
-            {
-                entity.ToTable("Speakers");
+            entity.Property(x => x.ContactEmail)
+                .HasMaxLength(200);
 
-                entity.HasKey(x => x.Id);
+            entity.Property(x => x.City)
+                .HasMaxLength(100);
 
-                entity.Property(x => x.TenantId)
-                    .IsRequired();
+            entity.Property(x => x.Country)
+                .HasMaxLength(100);
 
-                entity.Property(x => x.FullName)
-                    .HasMaxLength(200)
-                    .IsRequired();
+            entity.Property(x => x.LogoUrl)
+                .HasMaxLength(500);
 
-                entity.Property(x => x.Bio)
-                    .HasMaxLength(1000);
+            entity.Property(x => x.Status)
+                .HasConversion<int>();
 
-                entity.Property(x => x.Email)
-                    .HasMaxLength(150);
+            entity.Property(x => x.IsTrial)
+                .HasDefaultValue(false);
 
-                entity.Property(x => x.Phone)
-                    .HasMaxLength(50);
+            entity.Property(x => x.IsActive)
+                .HasDefaultValue(true);
 
-                entity.Property(x => x.ProfileImageUrl)
-                    .HasMaxLength(500);
+            entity.HasIndex(x => x.Slug)
+                .IsUnique();
 
-                entity.HasIndex(x => x.Email);
-                entity.HasIndex(x => x.TenantId);
-            });
-
-
-        }
+            entity.HasIndex(x => x.SchemaName)
+                .IsUnique();
+        });
     }
 }

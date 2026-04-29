@@ -10,7 +10,11 @@ public class TenantModelCacheKeyFactory : IModelCacheKeyFactory
     {
         if (context is TenantDbContext tenantDbContext)
         {
-            return (context.GetType(), tenantDbContext.CurrentSchema, designTime);
+            return (
+                context.GetType(),
+                tenantDbContext.SchemaName,
+                designTime
+            );
         }
 
         return (context.GetType(), designTime);

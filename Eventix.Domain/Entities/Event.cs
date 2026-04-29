@@ -1,5 +1,4 @@
-﻿using System;
-using Eventix.Domain.Common;
+﻿using Eventix.Domain.Common;
 using Eventix.Domain.Enums;
 
 namespace Eventix.Domain.Entities;
@@ -9,47 +8,33 @@ public class Event : TenantBaseEntity
     public Guid VenueId { get; set; }
     public Venue Venue { get; set; } = default!;
 
+    public Guid EventCategoryId { get; set; }
+    public EventCategory EventCategory { get; set; } = default!;
+
     public string Title { get; set; } = default!;
     public string Slug { get; set; } = default!;
-    public string? Subtitle { get; set; }
     public string? Description { get; set; }
-    public string? ShortDescription { get; set; }
 
     public string? OrganizerName { get; set; }
-    public string? OrganizerEmail { get; set; }
-    public string? OrganizerPhone { get; set; }
 
     public DateTime StartUtc { get; set; }
     public DateTime EndUtc { get; set; }
-
-    public DateTime? DoorsOpenUtc { get; set; }
-    public DateTime? SalesStartUtc { get; set; }
-    public DateTime? SalesEndUtc { get; set; }
 
     public EventStatus Status { get; set; } = EventStatus.Draft;
     public EventVisibility Visibility { get; set; } = EventVisibility.Public;
 
     public string? BannerImageUrl { get; set; }
-    public string? ThumbnailImageUrl { get; set; }
-
-    public Guid EventCategoryId { get; set; }
-    public EventCategory EventCategory { get; set; } = default!;
-    public string? Tags { get; set; }
 
     public int MaxTicketsPerOrder { get; set; } = 10;
     public int MinTicketsPerOrder { get; set; } = 1;
 
     public bool IsFree { get; set; } = false;
     public bool IsPublished { get; set; } = false;
-    public bool AllowWaitlist { get; set; } = false;
-    public bool RequiresApproval { get; set; } = false;
 
-    public string? TermsAndConditions { get; set; }
-    public string? RefundPolicy { get; set; }
-
-    public decimal? MinPrice { get; set; }
-    public decimal? MaxPrice { get; set; }
     public string Currency { get; set; } = "EUR";
 
     public ICollection<EventSection> EventSections { get; set; } = new List<EventSection>();
+    public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+    public ICollection<TicketType> TicketTypes { get; set; } = new List<TicketType>();
+    public ICollection<EventSession> Sessions { get; set; } = new List<EventSession>();
 }

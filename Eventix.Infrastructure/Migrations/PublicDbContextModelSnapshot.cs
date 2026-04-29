@@ -23,6 +23,62 @@ namespace Eventix.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("EventSection", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Capacity")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("EventId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime?>("SalesEndUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("SalesStartUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("VenueSectionId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EventId");
+
+                    b.HasIndex("VenueSectionId");
+
+                    b.ToTable("EventSection", "public");
+                });
+
             modelBuilder.Entity("Eventix.Domain.Entities.Booking", b =>
                 {
                     b.Property<Guid>("Id")
@@ -47,6 +103,9 @@ namespace Eventix.Infrastructure.Migrations
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
 
                     b.Property<decimal>("TotalAmount")
                         .HasColumnType("numeric");
@@ -84,6 +143,9 @@ namespace Eventix.Infrastructure.Migrations
                     b.Property<int>("Quantity")
                         .HasColumnType("integer");
 
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("TicketTypeId")
                         .HasColumnType("uuid");
 
@@ -102,42 +164,11 @@ namespace Eventix.Infrastructure.Migrations
                     b.ToTable("BookingItem", "public");
                 });
 
-            modelBuilder.Entity("Eventix.Domain.Entities.CheckIn", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CheckInTime")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("CheckedInByUserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Notes")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("TicketId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CheckedInByUserId");
-
-                    b.HasIndex("TicketId");
-
-                    b.ToTable("CheckIns", "public");
-                });
-
             modelBuilder.Entity("Eventix.Domain.Entities.Event", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
-
-                    b.Property<bool>("AllowWaitlist")
-                        .HasColumnType("boolean");
 
                     b.Property<string>("BannerImageUrl")
                         .HasColumnType("text");
@@ -151,9 +182,6 @@ namespace Eventix.Infrastructure.Migrations
 
                     b.Property<string>("Description")
                         .HasColumnType("text");
-
-                    b.Property<DateTime?>("DoorsOpenUtc")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("EndUtc")
                         .HasColumnType("timestamp with time zone");
@@ -170,40 +198,13 @@ namespace Eventix.Infrastructure.Migrations
                     b.Property<bool>("IsPublished")
                         .HasColumnType("boolean");
 
-                    b.Property<decimal?>("MaxPrice")
-                        .HasColumnType("numeric");
-
                     b.Property<int>("MaxTicketsPerOrder")
                         .HasColumnType("integer");
-
-                    b.Property<decimal?>("MinPrice")
-                        .HasColumnType("numeric");
 
                     b.Property<int>("MinTicketsPerOrder")
                         .HasColumnType("integer");
 
-                    b.Property<string>("OrganizerEmail")
-                        .HasColumnType("text");
-
                     b.Property<string>("OrganizerName")
-                        .HasColumnType("text");
-
-                    b.Property<string>("OrganizerPhone")
-                        .HasColumnType("text");
-
-                    b.Property<string>("RefundPolicy")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("RequiresApproval")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime?>("SalesEndUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("SalesStartUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("ShortDescription")
                         .HasColumnType("text");
 
                     b.Property<string>("Slug")
@@ -216,20 +217,8 @@ namespace Eventix.Infrastructure.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
-                    b.Property<string>("Subtitle")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Tags")
-                        .HasColumnType("text");
-
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
-
-                    b.Property<string>("TermsAndConditions")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ThumbnailImageUrl")
-                        .HasColumnType("text");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -294,95 +283,14 @@ namespace Eventix.Infrastructure.Migrations
                     b.ToTable("EventCategory", "public");
                 });
 
-            modelBuilder.Entity("Eventix.Domain.Entities.EventSection", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Benefits")
-                        .HasColumnType("text");
-
-                    b.Property<int>("Capacity")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("EventId")
-                        .HasColumnType("uuid");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsHidden")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("MaxTicketsPerOrder")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("MinTicketsPerOrder")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Notes")
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("Price")
-                        .HasColumnType("numeric");
-
-                    b.Property<int>("ReservedSeats")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("SalesEnabled")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime?>("SalesEndUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("SalesStartUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("SoldSeats")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("UpdatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("VenueSectionId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EventId");
-
-                    b.HasIndex("VenueSectionId");
-
-                    b.ToTable("EventSection", "public");
-                });
-
             modelBuilder.Entity("Eventix.Domain.Entities.EventSession", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -394,16 +302,24 @@ namespace Eventix.Infrastructure.Migrations
                     b.Property<Guid>("EventId")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
                     b.Property<Guid?>("SpeakerId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("StartTime")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -411,80 +327,37 @@ namespace Eventix.Infrastructure.Migrations
 
                     b.HasIndex("SpeakerId");
 
-                    b.ToTable("EventSessions", "public");
+                    b.ToTable("EventSession", "public");
                 });
 
-            modelBuilder.Entity("Eventix.Domain.Entities.Notification", b =>
+            modelBuilder.Entity("Eventix.Domain.Entities.Role", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("EventId")
-                        .HasColumnType("uuid");
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
 
-                    b.Property<bool>("IsRead")
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("Message")
+                    b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("SentAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<Guid>("UserId")
+                    b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("EventId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Notifications", "public");
-                });
-
-            modelBuilder.Entity("Eventix.Domain.Entities.Review", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Comment")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("EventId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Rating")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EventId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Reviews", "public");
+                    b.ToTable("Role", "public");
                 });
 
             modelBuilder.Entity("Eventix.Domain.Entities.Speaker", b =>
@@ -494,134 +367,30 @@ namespace Eventix.Infrastructure.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("Bio")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Email")
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)");
+                        .HasColumnType("text");
 
                     b.Property<string>("FullName")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Phone")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasColumnType("text");
 
                     b.Property<string>("ProfileImageUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasColumnType("text");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Email");
-
-                    b.HasIndex("TenantId");
-
-                    b.ToTable("Speakers", "public");
-                });
-
-            modelBuilder.Entity("Eventix.Domain.Entities.Tenant", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("AddressLine1")
-                        .HasColumnType("text");
-
-                    b.Property<string>("AddressLine2")
-                        .HasColumnType("text");
-
-                    b.Property<string>("City")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ContactEmail")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ContactPhone")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Country")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsTrial")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("LogoUrl")
-                        .HasColumnType("text");
-
-                    b.Property<int>("MaxEvents")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("MaxUsers")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)");
-
-                    b.Property<string>("PostalCode")
-                        .HasColumnType("text");
-
-                    b.Property<string>("SchemaName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("Slug")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("State")
-                        .HasColumnType("text");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("SubscriptionEndUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("SubscriptionStartUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("UpdatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("WebsiteUrl")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("SchemaName")
-                        .IsUnique();
-
-                    b.HasIndex("Slug")
-                        .IsUnique();
-
-                    b.ToTable("Tenants", "public");
+                    b.ToTable("Speaker", "public");
                 });
 
             modelBuilder.Entity("Eventix.Domain.Entities.Ticket", b =>
@@ -648,6 +417,9 @@ namespace Eventix.Infrastructure.Migrations
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("TicketCode")
                         .IsRequired()
@@ -697,6 +469,9 @@ namespace Eventix.Infrastructure.Migrations
                     b.Property<int>("SoldQuantity")
                         .HasColumnType("integer");
 
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime?>("UpdatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -713,6 +488,9 @@ namespace Eventix.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("text");
@@ -722,6 +500,9 @@ namespace Eventix.Infrastructure.Migrations
                         .HasColumnType("text");
 
                     b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
                     b.Property<string>("LastName")
@@ -735,9 +516,45 @@ namespace Eventix.Infrastructure.Migrations
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.HasKey("Id");
 
                     b.ToTable("User", "public");
+                });
+
+            modelBuilder.Entity("Eventix.Domain.Entities.UserRole", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("AssignedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoleId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserRole", "public");
                 });
 
             modelBuilder.Entity("Eventix.Domain.Entities.Venue", b =>
@@ -750,9 +567,6 @@ namespace Eventix.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("AddressLine2")
-                        .HasColumnType("text");
-
                     b.Property<string>("City")
                         .IsRequired()
                         .HasColumnType("text");
@@ -761,24 +575,12 @@ namespace Eventix.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("ContactEmail")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ContactPhone")
-                        .HasColumnType("text");
-
                     b.Property<string>("Country")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("HasSeatingMap")
-                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsAccessible")
                         .HasColumnType("boolean");
@@ -789,27 +591,9 @@ namespace Eventix.Infrastructure.Migrations
                     b.Property<bool>("IsIndoor")
                         .HasColumnType("boolean");
 
-                    b.Property<decimal?>("Latitude")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal?>("Longitude")
-                        .HasColumnType("numeric");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<string>("PostalCode")
-                        .HasColumnType("text");
-
-                    b.Property<string>("SeatingMapImageUrl")
-                        .HasColumnType("text");
-
-                    b.Property<string>("State")
-                        .HasColumnType("text");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
@@ -846,14 +630,8 @@ namespace Eventix.Infrastructure.Migrations
                     b.Property<decimal?>("DefaultBasePrice")
                         .HasColumnType("numeric");
 
-                    b.Property<string>("Description")
-                        .HasColumnType("text");
-
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("integer");
-
-                    b.Property<bool>("IsAccessibleSection")
-                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
@@ -865,13 +643,7 @@ namespace Eventix.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int?>("RowCount")
-                        .HasColumnType("integer");
-
                     b.Property<int>("SeatType")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("SeatsPerRow")
                         .HasColumnType("integer");
 
                     b.Property<Guid>("TenantId")
@@ -890,16 +662,105 @@ namespace Eventix.Infrastructure.Migrations
                     b.ToTable("VenueSection", "public");
                 });
 
+            modelBuilder.Entity("Tenant", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("City")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("ContactEmail")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Country")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsTrial")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("LogoUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("SchemaName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SchemaName")
+                        .IsUnique();
+
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
+                    b.ToTable("Tenants", "public");
+                });
+
+            modelBuilder.Entity("EventSection", b =>
+                {
+                    b.HasOne("Eventix.Domain.Entities.Event", null)
+                        .WithMany("EventSections")
+                        .HasForeignKey("EventId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Eventix.Domain.Entities.VenueSection", null)
+                        .WithMany("EventSections")
+                        .HasForeignKey("VenueSectionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Eventix.Domain.Entities.Booking", b =>
                 {
                     b.HasOne("Eventix.Domain.Entities.Event", "Event")
-                        .WithMany()
+                        .WithMany("Bookings")
                         .HasForeignKey("EventId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Eventix.Domain.Entities.User", "User")
-                        .WithMany()
+                        .WithMany("Bookings")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -928,25 +789,6 @@ namespace Eventix.Infrastructure.Migrations
                     b.Navigation("TicketType");
                 });
 
-            modelBuilder.Entity("Eventix.Domain.Entities.CheckIn", b =>
-                {
-                    b.HasOne("Eventix.Domain.Entities.User", "CheckedInByUser")
-                        .WithMany()
-                        .HasForeignKey("CheckedInByUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Eventix.Domain.Entities.Ticket", "Ticket")
-                        .WithMany()
-                        .HasForeignKey("TicketId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("CheckedInByUser");
-
-                    b.Navigation("Ticket");
-                });
-
             modelBuilder.Entity("Eventix.Domain.Entities.Event", b =>
                 {
                     b.HasOne("Eventix.Domain.Entities.EventCategory", "EventCategory")
@@ -955,7 +797,7 @@ namespace Eventix.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Eventix.Domain.Entities.Tenant", null)
+                    b.HasOne("Tenant", null)
                         .WithMany("Events")
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -972,76 +814,21 @@ namespace Eventix.Infrastructure.Migrations
                     b.Navigation("Venue");
                 });
 
-            modelBuilder.Entity("Eventix.Domain.Entities.EventSection", b =>
-                {
-                    b.HasOne("Eventix.Domain.Entities.Event", "Event")
-                        .WithMany("EventSections")
-                        .HasForeignKey("EventId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Eventix.Domain.Entities.VenueSection", "VenueSection")
-                        .WithMany("EventSections")
-                        .HasForeignKey("VenueSectionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Event");
-
-                    b.Navigation("VenueSection");
-                });
-
             modelBuilder.Entity("Eventix.Domain.Entities.EventSession", b =>
                 {
                     b.HasOne("Eventix.Domain.Entities.Event", "Event")
-                        .WithMany()
+                        .WithMany("Sessions")
                         .HasForeignKey("EventId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Eventix.Domain.Entities.Speaker", "Speaker")
-                        .WithMany()
+                        .WithMany("Sessions")
                         .HasForeignKey("SpeakerId");
 
                     b.Navigation("Event");
 
                     b.Navigation("Speaker");
-                });
-
-            modelBuilder.Entity("Eventix.Domain.Entities.Notification", b =>
-                {
-                    b.HasOne("Eventix.Domain.Entities.Event", "Event")
-                        .WithMany()
-                        .HasForeignKey("EventId");
-
-                    b.HasOne("Eventix.Domain.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Event");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Eventix.Domain.Entities.Review", b =>
-                {
-                    b.HasOne("Eventix.Domain.Entities.Event", "Event")
-                        .WithMany()
-                        .HasForeignKey("EventId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Eventix.Domain.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Event");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Eventix.Domain.Entities.Ticket", b =>
@@ -1058,7 +845,7 @@ namespace Eventix.Infrastructure.Migrations
             modelBuilder.Entity("Eventix.Domain.Entities.TicketType", b =>
                 {
                     b.HasOne("Eventix.Domain.Entities.Event", "Event")
-                        .WithMany()
+                        .WithMany("TicketTypes")
                         .HasForeignKey("EventId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1066,26 +853,41 @@ namespace Eventix.Infrastructure.Migrations
                     b.Navigation("Event");
                 });
 
+            modelBuilder.Entity("Eventix.Domain.Entities.UserRole", b =>
+                {
+                    b.HasOne("Eventix.Domain.Entities.Role", "Role")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Eventix.Domain.Entities.User", "User")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Eventix.Domain.Entities.Venue", b =>
                 {
-                    b.HasOne("Eventix.Domain.Entities.Tenant", "Tenant")
+                    b.HasOne("Tenant", null)
                         .WithMany("Venues")
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("Eventix.Domain.Entities.VenueSection", b =>
                 {
-                    b.HasOne("Eventix.Domain.Entities.Venue", "Venue")
+                    b.HasOne("Eventix.Domain.Entities.Venue", null)
                         .WithMany("Sections")
                         .HasForeignKey("VenueId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Venue");
                 });
 
             modelBuilder.Entity("Eventix.Domain.Entities.Booking", b =>
@@ -1100,7 +902,13 @@ namespace Eventix.Infrastructure.Migrations
 
             modelBuilder.Entity("Eventix.Domain.Entities.Event", b =>
                 {
+                    b.Navigation("Bookings");
+
                     b.Navigation("EventSections");
+
+                    b.Navigation("Sessions");
+
+                    b.Navigation("TicketTypes");
                 });
 
             modelBuilder.Entity("Eventix.Domain.Entities.EventCategory", b =>
@@ -1108,16 +916,26 @@ namespace Eventix.Infrastructure.Migrations
                     b.Navigation("Events");
                 });
 
-            modelBuilder.Entity("Eventix.Domain.Entities.Tenant", b =>
+            modelBuilder.Entity("Eventix.Domain.Entities.Role", b =>
                 {
-                    b.Navigation("Events");
+                    b.Navigation("UserRoles");
+                });
 
-                    b.Navigation("Venues");
+            modelBuilder.Entity("Eventix.Domain.Entities.Speaker", b =>
+                {
+                    b.Navigation("Sessions");
                 });
 
             modelBuilder.Entity("Eventix.Domain.Entities.TicketType", b =>
                 {
                     b.Navigation("BookingItems");
+                });
+
+            modelBuilder.Entity("Eventix.Domain.Entities.User", b =>
+                {
+                    b.Navigation("Bookings");
+
+                    b.Navigation("UserRoles");
                 });
 
             modelBuilder.Entity("Eventix.Domain.Entities.Venue", b =>
@@ -1130,6 +948,13 @@ namespace Eventix.Infrastructure.Migrations
             modelBuilder.Entity("Eventix.Domain.Entities.VenueSection", b =>
                 {
                     b.Navigation("EventSections");
+                });
+
+            modelBuilder.Entity("Tenant", b =>
+                {
+                    b.Navigation("Events");
+
+                    b.Navigation("Venues");
                 });
 #pragma warning restore 612, 618
         }

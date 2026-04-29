@@ -1,5 +1,4 @@
-﻿using System.Text.RegularExpressions;
-using Eventix.Application.DTOs.Tenants;
+﻿using Eventix.Application.DTOs.Tenants;
 using Eventix.Application.Interfaces.Repositories;
 using Eventix.Application.Interfaces.Services;
 using Eventix.Domain.Entities;
@@ -9,157 +8,128 @@ namespace Eventix.Infrastructure.Services;
 
 public class TenantService : ITenantService
 {
-    private readonly ITenantRepository _tenantRepository;
-    private readonly ITenantSchemaProvisioner _tenantSchemaProvisioner;
+    private readonly ITenantRepository _repository;
+    private readonly ITenantSchemaProvisioner _schemaProvisioner;
 
     public TenantService(
-        ITenantRepository tenantRepository,
-        ITenantSchemaProvisioner tenantSchemaProvisioner)
+        ITenantRepository repository,
+        ITenantSchemaProvisioner schemaProvisioner)
     {
-        _tenantRepository = tenantRepository;
-        _tenantSchemaProvisioner = tenantSchemaProvisioner;
+        _repository = repository;
+        _schemaProvisioner = schemaProvisioner;
     }
 
-    public async Task<IReadOnlyList<TenantResponseDTO>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<TenantResponseDTO>> GetAllAsync(CancellationToken ct)
     {
-        var tenants = await _tenantRepository.GetAllAsync(cancellationToken);
-        return tenants.Select(MapToResponseDto).ToList();
+        var tenants = await _repository.GetAllAsync(ct);
+        return tenants.Select(Map).ToList();
     }
 
-    public async Task<TenantResponseDTO?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<TenantResponseDTO?> GetByIdAsync(Guid id, CancellationToken ct)
     {
-        var tenant = await _tenantRepository.GetByIdAsync(id, cancellationToken);
-        return tenant is null ? null : MapToResponseDto(tenant);
+        var tenant = await _repository.GetByIdAsync(id, ct);
+        return tenant is null ? null : Map(tenant);
     }
 
-    public async Task<TenantResponseDTO?> GetBySlugAsync(string slug, CancellationToken cancellationToken = default)
+    public async Task<TenantResponseDTO?> GetBySlugAsync(string slug, CancellationToken ct)
     {
-        var normalizedSlug = NormalizeSlug(slug);
-
-        var tenant = await _tenantRepository.GetBySlugAsync(normalizedSlug, cancellationToken);
-        return tenant is null ? null : MapToResponseDto(tenant);
+        var tenant = await _repository.GetBySlugAsync(slug, ct);
+        return tenant is null ? null : Map(tenant);
     }
 
-    public async Task<TenantResponseDTO> CreateAsync(CreateTenantDTO dto, CancellationToken cancellationToken = default)
+    public async Task<TenantResponseDTO> CreateAsync(CreateTenantDTO dto, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(dto.Name))
-            throw new ArgumentException("Tenant name is required.");
+        var cleanSlug = dto.Slug.Trim().ToLower();
+        var schemaName = $"tenant_{cleanSlug.Replace("-", "_")}";
 
-        if (string.IsNullOrWhiteSpace(dto.Slug))
-            throw new ArgumentException("Tenant slug is required.");
-
-        var normalizedSlug = NormalizeSlug(dto.Slug);
-
-        if (!IsValidSlug(normalizedSlug))
-            throw new ArgumentException("Slug can contain only lowercase letters, numbers, and hyphens.");
-
-        var exists = await _tenantRepository.ExistsBySlugAsync(normalizedSlug, cancellationToken);
-        if (exists)
-            throw new InvalidOperationException("Tenant with this slug already exists.");
-
-        var tenant = new Tenant
+        var entity = new Tenant
         {
-            Name = dto.Name.Trim(),
-            Slug = normalizedSlug,
-            SchemaName = $"tenant_{normalizedSlug}",
+            Id = Guid.NewGuid(),
+            Name = dto.Name,
+            Slug = cleanSlug,
+            SchemaName = schemaName,
 
             Description = dto.Description,
-
             ContactEmail = dto.ContactEmail,
-            ContactPhone = dto.ContactPhone,
-
-            AddressLine1 = dto.AddressLine1,
-            AddressLine2 = dto.AddressLine2,
             City = dto.City,
-            State = dto.State,
-            PostalCode = dto.PostalCode,
             Country = dto.Country,
-
             LogoUrl = dto.LogoUrl,
-            WebsiteUrl = dto.WebsiteUrl,
 
-            MaxUsers = dto.MaxUsers,
-            MaxEvents = dto.MaxEvents,
+            Status = dto.Status,
             IsTrial = dto.IsTrial,
+            IsActive = dto.IsActive,
 
-            Status = TenantStatus.Active,
-            IsActive = true,
             CreatedAtUtc = DateTime.UtcNow
         };
 
-        await _tenantRepository.AddAsync(tenant, cancellationToken);
-        await _tenantSchemaProvisioner.ProvisionTenantSchemaAsync(tenant.SchemaName, cancellationToken);
+        await _repository.AddAsync(entity, ct);
+        await _repository.SaveChangesAsync(ct);
 
-        return MapToResponseDto(tenant);
+        await _schemaProvisioner.ProvisionTenantSchemaAsync(schemaName, ct);
+
+        return Map(entity);
     }
 
-    public async Task<TenantResponseDTO?> UpdateAsync(Guid id, UpdateTenantDTO dto, CancellationToken cancellationToken = default)
+    public async Task<TenantResponseDTO?> UpdateAsync(Guid id, UpdateTenantDTO dto, CancellationToken ct)
     {
-        var tenant = await _tenantRepository.GetByIdAsync(id, cancellationToken);
+        var tenant = await _repository.GetByIdAsync(id, ct);
+
         if (tenant is null)
             return null;
 
-        tenant.Name = dto.Name.Trim();
+        tenant.Name = dto.Name;
         tenant.Description = dto.Description;
-
         tenant.ContactEmail = dto.ContactEmail;
-        tenant.ContactPhone = dto.ContactPhone;
-
-        tenant.AddressLine1 = dto.AddressLine1;
-        tenant.AddressLine2 = dto.AddressLine2;
         tenant.City = dto.City;
-        tenant.State = dto.State;
-        tenant.PostalCode = dto.PostalCode;
         tenant.Country = dto.Country;
-
         tenant.LogoUrl = dto.LogoUrl;
-        tenant.WebsiteUrl = dto.WebsiteUrl;
 
+        tenant.Status = dto.Status;
+        tenant.IsTrial = dto.IsTrial;
         tenant.IsActive = dto.IsActive;
-        tenant.MaxUsers = dto.MaxUsers;
-        tenant.MaxEvents = dto.MaxEvents;
+
         tenant.UpdatedAtUtc = DateTime.UtcNow;
 
-        await _tenantRepository.UpdateAsync(tenant, cancellationToken);
+        await _repository.UpdateAsync(tenant);
+        await _repository.SaveChangesAsync(ct);
 
-        return MapToResponseDto(tenant);
+        return Map(tenant);
     }
 
-    public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<bool> DeleteAsync(Guid id, CancellationToken ct)
     {
-        var tenant = await _tenantRepository.GetByIdAsync(id, cancellationToken);
+        var tenant = await _repository.GetByIdAsync(id, ct);
+
         if (tenant is null)
             return false;
 
-        await _tenantRepository.DeleteAsync(tenant, cancellationToken);
+        await _repository.DeleteAsync(tenant);
+        await _repository.SaveChangesAsync(ct);
+
         return true;
     }
 
-    private static string NormalizeSlug(string slug)
-        => slug.Trim().ToLowerInvariant();
-
-    private static bool IsValidSlug(string slug)
-        => Regex.IsMatch(slug, "^[a-z0-9-]+$");
-
-    private static TenantResponseDTO MapToResponseDto(Tenant tenant)
+    private static TenantResponseDTO Map(Tenant t)
     {
         return new TenantResponseDTO
         {
-            Id = tenant.Id,
-            Name = tenant.Name,
-            Slug = tenant.Slug,
-            SchemaName = tenant.SchemaName,
-            Description = tenant.Description,
-            ContactEmail = tenant.ContactEmail,
-            ContactPhone = tenant.ContactPhone,
-            City = tenant.City,
-            Country = tenant.Country,
-            LogoUrl = tenant.LogoUrl,
-            WebsiteUrl = tenant.WebsiteUrl,
-            Status = tenant.Status.ToString(),
-            IsTrial = tenant.IsTrial,
-            IsActive = tenant.IsActive,
-            CreatedAtUtc = tenant.CreatedAtUtc
+            Id = t.Id,
+            Name = t.Name,
+            Slug = t.Slug,
+            SchemaName = t.SchemaName,
+
+            Description = t.Description,
+            ContactEmail = t.ContactEmail,
+            City = t.City,
+            Country = t.Country,
+            LogoUrl = t.LogoUrl,
+
+            Status = t.Status,
+            IsTrial = t.IsTrial,
+            IsActive = t.IsActive,
+
+            CreatedAtUtc = t.CreatedAtUtc,
+            UpdatedAtUtc = t.UpdatedAtUtc
         };
     }
 }

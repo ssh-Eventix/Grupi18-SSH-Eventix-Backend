@@ -1,4 +1,4 @@
-﻿namespace Eventix.Application.DTOs.Speakers;
+﻿namespace Eventix.Application.DTOs.Speaker;
 
 public class UpdateSpeakerDto
 {
