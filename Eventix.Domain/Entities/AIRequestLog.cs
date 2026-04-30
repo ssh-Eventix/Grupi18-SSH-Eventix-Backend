@@ -2,34 +2,24 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Eventix.Domain.Common;
+using Eventix.Domain.Enums;
 
 namespace Eventix.Domain.Entities
 {
     public class AIRequestLog : TenantBaseEntity
     {
-        [Key]
-        public Guid Id { get; set; }
+        public Guid UserId { get; set; }
 
-        public Guid? UserId { get; set; }
+        public User User { get; set; } = default!;
 
-        [ForeignKey(nameof(UserId))]
-        public User User { get; set; }
-
-        // TenantId already comes from TenantBaseEntity
-
-        [Required]
         public string Prompt { get; set; }
 
-        [MaxLength(500)]
-        public string ResponseSummary { get; set; }
+        public string? ResponseSummary { get; set; }
 
-        [MaxLength(100)]
-        public string RequestType { get; set; } // Chat, Recommendation, Analysis
+        public AIRequestType RequestType { get; set; }
 
         public int TokensUsed { get; set; }
-
-        [MaxLength(50)]
-        public string Status { get; set; } // Success, Failed
+        public AIRequestStatus Status { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }

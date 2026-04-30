@@ -10,8 +10,6 @@ public class CreateEventSectionDTO
 
     public int Capacity { get; set; }
 
-    public decimal Price { get; set; }
-
     public bool IsActive { get; set; } = true;
 
     public DateTime? SalesStartUtc { get; set; }

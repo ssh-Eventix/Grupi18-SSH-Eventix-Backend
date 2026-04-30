@@ -16,5 +16,7 @@ namespace Eventix.Domain.Entities
         public virtual ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
         public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 
+        public ICollection<Review> Reviews { get; set; } = new List<Review>();
+        public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
     }
 }

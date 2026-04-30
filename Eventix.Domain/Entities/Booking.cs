@@ -21,6 +21,7 @@ namespace Eventix.Domain.Entities
         public User User { get; set; } = default!;
         public Event Event { get; set; } = default!;
         public ICollection<BookingItem> BookingItems { get; set; } = new List<BookingItem>();
+        public ICollection<Payment> Payments { get; set; } = new List<Payment>();
     }
 
 }
