@@ -14,8 +14,6 @@ public class EventSectionResponseDTO
 
     public int Capacity { get; set; }
 
-    public decimal Price { get; set; }
-
     public bool IsActive { get; set; }
 
     public DateTime? SalesStartUtc { get; set; }

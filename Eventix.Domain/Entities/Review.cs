@@ -11,26 +11,17 @@ namespace Eventix.Domain.Entities
 {
     public class Review : TenantBaseEntity
     {
-        [Key]
-        public Guid Id { get; set; }
-
-        [Required]
         public Guid EventId { get; set; }
 
-        [ForeignKey(nameof(EventId))]
-        public Event Event { get; set; }
+        public Event Event { get; set; } = default!;
 
-        [Required]
         public Guid UserId { get; set; }
 
-        [ForeignKey(nameof(UserId))]
-        public User User { get; set; }
+        public User User { get; set; } = default!;
 
-        [Range(1, 5)]
         public int Rating { get; set; }
 
-        [MaxLength(1000)]
-        public string Comment { get; set; }
+        public string? Comment { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }

@@ -1,13 +1,14 @@
+using Eventix.API.Middleware;
+using Eventix.Application.Interfaces.Common;
 using Eventix.Application.Interfaces.Repositories;
 using Eventix.Application.Interfaces.Services;
+using Eventix.Application.Services;
 using Eventix.Infrastructure.MultiTenancy;
 using Eventix.Infrastructure.Persistence.Database;
 using Eventix.Infrastructure.Persistence.Repositories;
 using Eventix.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Eventix.Application.Services;
-using Eventix.Application.Interfaces.Common;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +16,8 @@ builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddAuthentication();
+builder.Services.AddAuthorization();
 
 builder.Services.AddScoped<ITenantContext, TenantContext>();
 builder.Services.AddScoped<ITenantResolver, TenantResolver>();
@@ -66,11 +69,18 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-app.UseSwagger();
-app.UseSwaggerUI();
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 app.UseHttpsRedirection();
-app.UseCors("ReactClient");
+
+app.UseMiddleware<RequestLoggingMiddleware>();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.UseMiddleware<TenantMiddleware>();
 
