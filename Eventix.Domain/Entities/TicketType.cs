@@ -16,7 +16,7 @@ namespace Eventix.Domain.Entities
         public int SoldQuantity { get; set; }
         public DateTime SaleStartDate { get; set; }
         public DateTime SaleEndDate { get; set; }
-        public Event Event { get; set; }
+        public Event? Event { get; set; }
         public ICollection<BookingItem> BookingItems { get; set; } = new List<BookingItem>();
         public Guid? EventSectionId { get; set; }
         public EventSection? EventSection { get; set; }
