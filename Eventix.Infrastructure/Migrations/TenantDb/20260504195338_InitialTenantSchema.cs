@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Eventix.Infrastructure.Migrations.TenantDb
 {
     /// <inheritdoc />
-    public partial class AddEventSession : Migration
+    public partial class InitialTenantSchema : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -22,9 +22,9 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
                     Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
-                    Icon = table.Column<string>(type: "character varying(250)", maxLength: 250, nullable: true),
-                    DisplayOrder = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
-                    IsActive = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
+                    Icon = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    DisplayOrder = table.Column<int>(type: "integer", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
                     CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
@@ -36,13 +36,33 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                 });
 
             migrationBuilder.CreateTable(
+                name: "PaymentMethods",
+                schema: "public",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    Provider = table.Column<int>(type: "integer", nullable: false),
+                    Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PaymentMethods", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Roles",
                 schema: "public",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: false),
-                    Description = table.Column<string>(type: "text", nullable: true),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
@@ -59,13 +79,16 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    TenantId = table.Column<Guid>(type: "uuid", nullable: false),
-                    FullName = table.Column<string>(type: "text", nullable: false),
-                    Bio = table.Column<string>(type: "text", nullable: true),
-                    Email = table.Column<string>(type: "text", nullable: true),
-                    Phone = table.Column<string>(type: "text", nullable: true),
-                    ProfileImageUrl = table.Column<string>(type: "text", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    FullName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Bio = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
+                    Email = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    Phone = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    ProfileImageUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -78,10 +101,10 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    FirstName = table.Column<string>(type: "text", nullable: false),
-                    LastName = table.Column<string>(type: "text", nullable: false),
-                    Email = table.Column<string>(type: "text", nullable: false),
-                    PasswordHash = table.Column<string>(type: "text", nullable: false),
+                    FirstName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    LastName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Email = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    PasswordHash = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
                     CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
@@ -100,13 +123,13 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    Code = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    AddressLine1 = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Code = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    AddressLine1 = table.Column<string>(type: "character varying(250)", maxLength: 250, nullable: false),
                     City = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Country = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     TotalCapacity = table.Column<int>(type: "integer", nullable: false),
-                    IsIndoor = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
-                    IsAccessible = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
+                    IsIndoor = table.Column<bool>(type: "boolean", nullable: false),
+                    IsAccessible = table.Column<bool>(type: "boolean", nullable: false),
                     CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
@@ -115,6 +138,68 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Venues", x => x.Id);
+                    table.CheckConstraint("CK_Venue_TotalCapacity", "\"TotalCapacity\" >= 0");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AIRequestLogs",
+                schema: "public",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Prompt = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: false),
+                    ResponseSummary = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: true),
+                    RequestType = table.Column<int>(type: "integer", nullable: false),
+                    TokensUsed = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AIRequestLogs", x => x.Id);
+                    table.CheckConstraint("CK_AIRequestLog_TokensUsed", "\"TokensUsed\" >= 0");
+                    table.ForeignKey(
+                        name: "FK_AIRequestLogs_Users_UserId",
+                        column: x => x.UserId,
+                        principalSchema: "public",
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AuditLogs",
+                schema: "public",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    EntityName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    EntityId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Action = table.Column<int>(type: "integer", nullable: false),
+                    OldValues = table.Column<string>(type: "jsonb", nullable: true),
+                    NewValues = table.Column<string>(type: "jsonb", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AuditLogs", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AuditLogs_Users_UserId",
+                        column: x => x.UserId,
+                        principalSchema: "public",
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -128,7 +213,8 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                     AssignedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -157,21 +243,20 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     VenueId = table.Column<Guid>(type: "uuid", nullable: false),
                     EventCategoryId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    Slug = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    Description = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: true),
-                    OrganizerName = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: true),
+                    Title = table.Column<string>(type: "character varying(250)", maxLength: 250, nullable: false),
+                    Slug = table.Column<string>(type: "character varying(250)", maxLength: 250, nullable: false),
+                    Description = table.Column<string>(type: "character varying(3000)", maxLength: 3000, nullable: true),
+                    OrganizerName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     StartUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     EndUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
                     Visibility = table.Column<int>(type: "integer", nullable: false),
                     BannerImageUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
-                    MaxTicketsPerOrder = table.Column<int>(type: "integer", nullable: false, defaultValue: 10),
-                    MinTicketsPerOrder = table.Column<int>(type: "integer", nullable: false, defaultValue: 1),
-                    IsFree = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
-                    IsPublished = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
-                    Currency = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
-                    VenueId1 = table.Column<Guid>(type: "uuid", nullable: true),
+                    MaxTicketsPerOrder = table.Column<int>(type: "integer", nullable: false),
+                    MinTicketsPerOrder = table.Column<int>(type: "integer", nullable: false),
+                    IsFree = table.Column<bool>(type: "boolean", nullable: false),
+                    IsPublished = table.Column<bool>(type: "boolean", nullable: false),
+                    Currency = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
                     CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
@@ -180,6 +265,9 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Events", x => x.Id);
+                    table.CheckConstraint("CK_Event_DateRange", "\"EndUtc\" > \"StartUtc\"");
+                    table.CheckConstraint("CK_Event_MaxTicketsPerOrder", "\"MaxTicketsPerOrder\" >= \"MinTicketsPerOrder\"");
+                    table.CheckConstraint("CK_Event_MinTicketsPerOrder", "\"MinTicketsPerOrder\" > 0");
                     table.ForeignKey(
                         name: "FK_Events_EventCategories_EventCategoryId",
                         column: x => x.EventCategoryId,
@@ -194,12 +282,6 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                         principalTable: "Venues",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_Events_Venues_VenueId1",
-                        column: x => x.VenueId1,
-                        principalSchema: "public",
-                        principalTable: "Venues",
-                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -209,13 +291,13 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     VenueId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
-                    Code = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Code = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     Capacity = table.Column<int>(type: "integer", nullable: false),
                     SeatType = table.Column<int>(type: "integer", nullable: false),
-                    DisplayOrder = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
-                    IsActive = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
-                    DefaultBasePrice = table.Column<decimal>(type: "numeric(18,2)", nullable: true),
+                    DisplayOrder = table.Column<int>(type: "integer", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    DefaultBasePrice = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: true),
                     CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
@@ -224,6 +306,8 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_VenueSections", x => x.Id);
+                    table.CheckConstraint("CK_VenueSection_Capacity", "\"Capacity\" >= 0");
+                    table.CheckConstraint("CK_VenueSection_DefaultBasePrice", "\"DefaultBasePrice\" IS NULL OR \"DefaultBasePrice\" >= 0");
                     table.ForeignKey(
                         name: "FK_VenueSections_Venues_VenueId",
                         column: x => x.VenueId,
@@ -242,7 +326,7 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
                     EventId = table.Column<Guid>(type: "uuid", nullable: false),
                     BookingDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    TotalAmount = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    TotalAmount = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
                     ReferenceNumber = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -253,6 +337,7 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Bookings", x => x.Id);
+                    table.CheckConstraint("CK_Booking_TotalAmount", "\"TotalAmount\" >= 0");
                     table.ForeignKey(
                         name: "FK_Bookings_Events_EventId",
                         column: x => x.EventId,
@@ -276,9 +361,9 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     EventId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Code = table.Column<string>(type: "text", nullable: false),
+                    Code = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Type = table.Column<int>(type: "integer", nullable: false),
-                    DiscountValue = table.Column<decimal>(type: "numeric", nullable: false),
+                    DiscountValue = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     ValidFrom = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     ValidTo = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UsageLimit = table.Column<int>(type: "integer", nullable: true),
@@ -291,6 +376,10 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_DiscountCoupons", x => x.Id);
+                    table.CheckConstraint("CK_DiscountCoupon_DiscountValue", "\"DiscountValue\" > 0");
+                    table.CheckConstraint("CK_DiscountCoupon_UsageCount", "\"UsageCount\" >= 0");
+                    table.CheckConstraint("CK_DiscountCoupon_UsageLimit", "\"UsageLimit\" IS NULL OR \"UsageLimit\" > 0");
+                    table.CheckConstraint("CK_DiscountCoupon_ValidRange", "\"ValidTo\" > \"ValidFrom\"");
                     table.ForeignKey(
                         name: "FK_DiscountCoupons_Events_EventId",
                         column: x => x.EventId,
@@ -308,8 +397,8 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     EventId = table.Column<Guid>(type: "uuid", nullable: false),
                     SpeakerId = table.Column<Guid>(type: "uuid", nullable: true),
-                    Title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    Description = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false),
+                    Title = table.Column<string>(type: "character varying(250)", maxLength: 250, nullable: false),
+                    Description = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: false),
                     StartTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     EndTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -320,6 +409,7 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_EventSessions", x => x.Id);
+                    table.CheckConstraint("CK_EventSession_TimeRange", "\"EndTime\" > \"StartTime\"");
                     table.ForeignKey(
                         name: "FK_EventSessions_Events_EventId",
                         column: x => x.EventId,
@@ -344,11 +434,15 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
                     EventId = table.Column<Guid>(type: "uuid", nullable: true),
-                    Type = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Type = table.Column<int>(type: "integer", nullable: false),
                     Title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    Message = table.Column<string>(type: "text", nullable: false),
+                    Message = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: false),
                     IsRead = table.Column<bool>(type: "boolean", nullable: false),
-                    SentAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    SentAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -358,7 +452,8 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                         column: x => x.EventId,
                         principalSchema: "public",
                         principalTable: "Events",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
                         name: "FK_Notifications_Users_UserId",
                         column: x => x.UserId,
@@ -377,12 +472,17 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                     EventId = table.Column<Guid>(type: "uuid", nullable: false),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
                     Rating = table.Column<int>(type: "integer", nullable: false),
-                    Comment = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    Comment = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Reviews", x => x.Id);
+                    table.CheckConstraint("CK_Review_Rating", "\"Rating\" >= 1 AND \"Rating\" <= 5");
                     table.ForeignKey(
                         name: "FK_Reviews_Events_EventId",
                         column: x => x.EventId,
@@ -396,37 +496,7 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                         principalSchema: "public",
                         principalTable: "Users",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "TicketTypes",
-                schema: "public",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    EventId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    Price = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
-                    QuantityAvailable = table.Column<int>(type: "integer", nullable: false),
-                    SoldQuantity = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
-                    SaleStartDate = table.Column<DateTime>(type: "datetime", nullable: false),
-                    SaleEndDate = table.Column<DateTime>(type: "datetime", nullable: false),
-                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
-                    TenantId = table.Column<Guid>(type: "uuid", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_TicketTypes", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_TicketTypes_Events_EventId",
-                        column: x => x.EventId,
-                        principalSchema: "public",
-                        principalTable: "Events",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -437,11 +507,10 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     EventId = table.Column<Guid>(type: "uuid", nullable: false),
                     VenueSectionId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
-                    Code = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Code = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     Capacity = table.Column<int>(type: "integer", nullable: false),
-                    Price = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
-                    IsActive = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
                     SalesStartUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     SalesEndUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -452,6 +521,8 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_EventSections", x => x.Id);
+                    table.CheckConstraint("CK_EventSection_Capacity", "\"Capacity\" >= 0");
+                    table.CheckConstraint("CK_EventSection_SalesRange", "\"SalesStartUtc\" IS NULL OR \"SalesEndUtc\" IS NULL OR \"SalesEndUtc\" > \"SalesStartUtc\"");
                     table.ForeignKey(
                         name: "FK_EventSections_Events_EventId",
                         column: x => x.EventId,
@@ -469,6 +540,86 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                 });
 
             migrationBuilder.CreateTable(
+                name: "Payments",
+                schema: "public",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    BookingId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Amount = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    PaymentMethodId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TransactionId = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    PaidAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Payments", x => x.Id);
+                    table.CheckConstraint("CK_Payment_Amount", "\"Amount\" > 0");
+                    table.ForeignKey(
+                        name: "FK_Payments_Bookings_BookingId",
+                        column: x => x.BookingId,
+                        principalSchema: "public",
+                        principalTable: "Bookings",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Payments_PaymentMethods_PaymentMethodId",
+                        column: x => x.PaymentMethodId,
+                        principalSchema: "public",
+                        principalTable: "PaymentMethods",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TicketTypes",
+                schema: "public",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    EventId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
+                    Price = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    QuantityAvailable = table.Column<int>(type: "integer", nullable: false),
+                    SoldQuantity = table.Column<int>(type: "integer", nullable: false),
+                    SaleStartDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    SaleEndDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    EventSectionId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TicketTypes", x => x.Id);
+                    table.CheckConstraint("CK_TicketType_Price", "\"Price\" >= 0");
+                    table.CheckConstraint("CK_TicketType_QuantityAvailable", "\"QuantityAvailable\" >= 0");
+                    table.CheckConstraint("CK_TicketType_SaleRange", "\"SaleStartDate\" IS NULL OR \"SaleEndDate\" IS NULL OR \"SaleEndDate\" > \"SaleStartDate\"");
+                    table.CheckConstraint("CK_TicketType_SoldQuantity", "\"SoldQuantity\" >= 0");
+                    table.CheckConstraint("CK_TicketType_SoldQuantity_Limit", "\"SoldQuantity\" <= \"QuantityAvailable\"");
+                    table.ForeignKey(
+                        name: "FK_TicketTypes_EventSections_EventSectionId",
+                        column: x => x.EventSectionId,
+                        principalSchema: "public",
+                        principalTable: "EventSections",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_TicketTypes_Events_EventId",
+                        column: x => x.EventId,
+                        principalSchema: "public",
+                        principalTable: "Events",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "BookingItems",
                 schema: "public",
                 columns: table => new
@@ -477,7 +628,8 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                     BookingId = table.Column<Guid>(type: "uuid", nullable: false),
                     TicketTypeId = table.Column<Guid>(type: "uuid", nullable: false),
                     Quantity = table.Column<int>(type: "integer", nullable: false),
-                    UnitPrice = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    UnitPrice = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    EventSectionId = table.Column<Guid>(type: "uuid", nullable: true),
                     CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
@@ -486,6 +638,8 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_BookingItems", x => x.Id);
+                    table.CheckConstraint("CK_BookingItem_Quantity", "\"Quantity\" > 0");
+                    table.CheckConstraint("CK_BookingItem_UnitPrice", "\"UnitPrice\" >= 0");
                     table.ForeignKey(
                         name: "FK_BookingItems_Bookings_BookingId",
                         column: x => x.BookingId,
@@ -493,6 +647,13 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                         principalTable: "Bookings",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_BookingItems_EventSections_EventSectionId",
+                        column: x => x.EventSectionId,
+                        principalSchema: "public",
+                        principalTable: "EventSections",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_BookingItems_TicketTypes_TicketTypeId",
                         column: x => x.TicketTypeId,
@@ -510,9 +671,10 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     BookingItemId = table.Column<Guid>(type: "uuid", nullable: false),
                     TicketCode = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    QRCode = table.Column<string>(type: "text", nullable: false),
+                    QRCode = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
-                    IssuedAt = table.Column<DateTime>(type: "datetime", nullable: false),
+                    IssuedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UsedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
@@ -539,7 +701,11 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                     TicketId = table.Column<Guid>(type: "uuid", nullable: false),
                     CheckedInByUserId = table.Column<Guid>(type: "uuid", nullable: false),
                     CheckInTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Notes = table.Column<string>(type: "text", nullable: false)
+                    Notes = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -557,8 +723,38 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                         principalSchema: "public",
                         principalTable: "Users",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AIRequestLogs_TenantId_UserId_CreatedAt",
+                schema: "public",
+                table: "AIRequestLogs",
+                columns: new[] { "TenantId", "UserId", "CreatedAt" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AIRequestLogs_UserId",
+                schema: "public",
+                table: "AIRequestLogs",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AuditLogs_TenantId_EntityName_EntityId",
+                schema: "public",
+                table: "AuditLogs",
+                columns: new[] { "TenantId", "EntityName", "EntityId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AuditLogs_TenantId_UserId_CreatedAt",
+                schema: "public",
+                table: "AuditLogs",
+                columns: new[] { "TenantId", "UserId", "CreatedAt" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AuditLogs_UserId",
+                schema: "public",
+                table: "AuditLogs",
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_BookingItems_BookingId",
@@ -567,10 +763,10 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                 column: "BookingId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_BookingItems_TenantId",
+                name: "IX_BookingItems_EventSectionId",
                 schema: "public",
                 table: "BookingItems",
-                column: "TenantId");
+                column: "EventSectionId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_BookingItems_TicketTypeId",
@@ -585,10 +781,11 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                 column: "EventId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Bookings_TenantId",
+                name: "IX_Bookings_TenantId_ReferenceNumber",
                 schema: "public",
                 table: "Bookings",
-                column: "TenantId");
+                columns: new[] { "TenantId", "ReferenceNumber" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Bookings_UserId",
@@ -603,10 +800,18 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                 column: "CheckedInByUserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_CheckIns_TenantId_TicketId",
+                schema: "public",
+                table: "CheckIns",
+                columns: new[] { "TenantId", "TicketId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_CheckIns_TicketId",
                 schema: "public",
                 table: "CheckIns",
-                column: "TicketId");
+                column: "TicketId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_DiscountCoupons_EventId",
@@ -615,10 +820,11 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                 column: "EventId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_EventCategories_TenantId",
+                name: "IX_DiscountCoupons_TenantId_EventId_Code",
                 schema: "public",
-                table: "EventCategories",
-                column: "TenantId");
+                table: "DiscountCoupons",
+                columns: new[] { "TenantId", "EventId", "Code" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_EventCategories_TenantId_Name",
@@ -634,12 +840,6 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                 column: "EventCategoryId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Events_TenantId",
-                schema: "public",
-                table: "Events",
-                column: "TenantId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Events_TenantId_Slug",
                 schema: "public",
                 table: "Events",
@@ -653,28 +853,23 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                 column: "VenueId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Events_VenueId1",
-                schema: "public",
-                table: "Events",
-                column: "VenueId1");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_EventSections_EventId",
                 schema: "public",
                 table: "EventSections",
                 column: "EventId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_EventSections_TenantId",
-                schema: "public",
-                table: "EventSections",
-                column: "TenantId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_EventSections_TenantId_EventId_Code",
                 schema: "public",
                 table: "EventSections",
                 columns: new[] { "TenantId", "EventId", "Code" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EventSections_TenantId_EventId_VenueSectionId",
+                schema: "public",
+                table: "EventSections",
+                columns: new[] { "TenantId", "EventId", "VenueSectionId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -696,16 +891,16 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                 column: "SpeakerId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_EventSessions_TenantId",
-                schema: "public",
-                table: "EventSessions",
-                column: "TenantId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Notifications_EventId",
                 schema: "public",
                 table: "Notifications",
                 column: "EventId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Notifications_TenantId_UserId_IsRead",
+                schema: "public",
+                table: "Notifications",
+                columns: new[] { "TenantId", "UserId", "IsRead" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Notifications_UserId",
@@ -714,10 +909,44 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_PaymentMethods_TenantId_Name",
+                schema: "public",
+                table: "PaymentMethods",
+                columns: new[] { "TenantId", "Name" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Payments_BookingId",
+                schema: "public",
+                table: "Payments",
+                column: "BookingId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Payments_PaymentMethodId",
+                schema: "public",
+                table: "Payments",
+                column: "PaymentMethodId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Payments_TenantId_TransactionId",
+                schema: "public",
+                table: "Payments",
+                columns: new[] { "TenantId", "TransactionId" },
+                unique: true,
+                filter: "\"TransactionId\" IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Reviews_EventId",
                 schema: "public",
                 table: "Reviews",
                 column: "EventId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Reviews_TenantId_EventId_UserId",
+                schema: "public",
+                table: "Reviews",
+                columns: new[] { "TenantId", "EventId", "UserId" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Reviews_UserId",
@@ -726,22 +955,38 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Roles_TenantId_Name",
+                schema: "public",
+                table: "Roles",
+                columns: new[] { "TenantId", "Name" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Speakers_TenantId_Email",
+                schema: "public",
+                table: "Speakers",
+                columns: new[] { "TenantId", "Email" },
+                unique: true,
+                filter: "\"Email\" IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Tickets_BookingItemId",
                 schema: "public",
                 table: "Tickets",
                 column: "BookingItemId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Tickets_TenantId",
+                name: "IX_Tickets_TenantId_QRCode",
                 schema: "public",
                 table: "Tickets",
-                column: "TenantId");
+                columns: new[] { "TenantId", "QRCode" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Tickets_TicketCode",
+                name: "IX_Tickets_TenantId_TicketCode",
                 schema: "public",
                 table: "Tickets",
-                column: "TicketCode",
+                columns: new[] { "TenantId", "TicketCode" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -751,10 +996,17 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                 column: "EventId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TicketTypes_TenantId",
+                name: "IX_TicketTypes_EventSectionId",
                 schema: "public",
                 table: "TicketTypes",
-                column: "TenantId");
+                column: "EventSectionId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TicketTypes_TenantId_EventId_Name",
+                schema: "public",
+                table: "TicketTypes",
+                columns: new[] { "TenantId", "EventId", "Name" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserRoles_RoleId",
@@ -763,16 +1015,24 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                 column: "RoleId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_UserRoles_TenantId_UserId_RoleId",
+                schema: "public",
+                table: "UserRoles",
+                columns: new[] { "TenantId", "UserId", "RoleId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_UserRoles_UserId",
                 schema: "public",
                 table: "UserRoles",
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Venues_TenantId",
+                name: "IX_Users_TenantId_Email",
                 schema: "public",
-                table: "Venues",
-                column: "TenantId");
+                table: "Users",
+                columns: new[] { "TenantId", "Email" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Venues_TenantId_Code",
@@ -780,12 +1040,6 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                 table: "Venues",
                 columns: new[] { "TenantId", "Code" },
                 unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_VenueSections_TenantId",
-                schema: "public",
-                table: "VenueSections",
-                column: "TenantId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_VenueSections_TenantId_VenueId_Code",
@@ -805,6 +1059,14 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "AIRequestLogs",
+                schema: "public");
+
+            migrationBuilder.DropTable(
+                name: "AuditLogs",
+                schema: "public");
+
+            migrationBuilder.DropTable(
                 name: "CheckIns",
                 schema: "public");
 
@@ -813,15 +1075,15 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                 schema: "public");
 
             migrationBuilder.DropTable(
-                name: "EventSections",
-                schema: "public");
-
-            migrationBuilder.DropTable(
                 name: "EventSessions",
                 schema: "public");
 
             migrationBuilder.DropTable(
                 name: "Notifications",
+                schema: "public");
+
+            migrationBuilder.DropTable(
+                name: "Payments",
                 schema: "public");
 
             migrationBuilder.DropTable(
@@ -837,11 +1099,11 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                 schema: "public");
 
             migrationBuilder.DropTable(
-                name: "VenueSections",
+                name: "Speakers",
                 schema: "public");
 
             migrationBuilder.DropTable(
-                name: "Speakers",
+                name: "PaymentMethods",
                 schema: "public");
 
             migrationBuilder.DropTable(
@@ -865,7 +1127,15 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                 schema: "public");
 
             migrationBuilder.DropTable(
+                name: "EventSections",
+                schema: "public");
+
+            migrationBuilder.DropTable(
                 name: "Events",
+                schema: "public");
+
+            migrationBuilder.DropTable(
+                name: "VenueSections",
                 schema: "public");
 
             migrationBuilder.DropTable(
