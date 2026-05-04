@@ -26,6 +26,7 @@
 
   <ItemGroup>
     <Folder Include="ExternalServices\" />
+    <Folder Include="Migrations\Tenant\" />
     <Folder Include="Security\" />
   </ItemGroup>
 

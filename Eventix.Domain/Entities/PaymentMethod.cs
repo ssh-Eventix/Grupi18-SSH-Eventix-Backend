@@ -14,7 +14,7 @@ namespace Eventix.Domain.Entities
 
         public PaymentProvider Provider { get; set; } 
 
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
 		public ICollection<Payment> Payments { get; set; } = new List<Payment>();
     }
