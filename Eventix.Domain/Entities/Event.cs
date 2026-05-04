@@ -39,4 +39,5 @@ public class Event : TenantBaseEntity
     public ICollection<EventSession> Sessions { get; set; } = new List<EventSession>();
     public ICollection<Review> Reviews { get; set; } = new List<Review>();
     public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
+    public ICollection<DiscountCoupon> DiscountCoupons { get; set; } = new List<DiscountCoupon>();
 }

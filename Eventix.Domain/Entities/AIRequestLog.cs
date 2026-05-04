@@ -12,7 +12,7 @@ namespace Eventix.Domain.Entities
 
         public User User { get; set; } = default!;
 
-        public string Prompt { get; set; }
+        public string Prompt { get; set; } = string.Empty;
 
         public string? ResponseSummary { get; set; }
 

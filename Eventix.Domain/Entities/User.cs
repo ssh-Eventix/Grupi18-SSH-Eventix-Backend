@@ -18,5 +18,9 @@ namespace Eventix.Domain.Entities
 
         public ICollection<Review> Reviews { get; set; } = new List<Review>();
         public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
+
+        public ICollection<CheckIn> CheckIns { get; set; } = new List<CheckIn>();
+        public ICollection<AIRequestLog> AIRequestLogs { get; set; } = new List<AIRequestLog>();
+        public ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
     }
 }

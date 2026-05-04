@@ -11,7 +11,7 @@ namespace Eventix.Domain.Entities
         public Guid UserId { get; set; }
         public User User { get; set; } = default!;
 
-        public string EntityName { get; set; }  
+        public string EntityName { get; set; } = string.Empty;
 
         public Guid EntityId { get; set; }
 
