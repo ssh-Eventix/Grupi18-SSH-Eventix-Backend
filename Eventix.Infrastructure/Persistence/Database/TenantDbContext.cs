@@ -407,7 +407,6 @@ public class TenantDbContext : DbContext
         });
     }
 
-
     // ================= BOOKINGS =================
 
     private static void ConfigureBooking(ModelBuilder modelBuilder)

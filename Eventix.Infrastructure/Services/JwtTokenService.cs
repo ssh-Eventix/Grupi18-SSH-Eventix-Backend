@@ -1,6 +1,5 @@
 using Eventix.Application.Interfaces.Services;
 using Eventix.Infrastructure.Auth;
-using Eventix.Domain.Enums;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -109,22 +108,13 @@ public class JwtTokenService : IJwtTokenService
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
-        var roleSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         if (roles != null)
         {
             foreach (var role in roles.Where(r => !string.IsNullOrWhiteSpace(r)))
             {
-                roleSet.Add(role.Trim());
+                claims.Add(new Claim(ClaimTypes.Role, role));
+                claims.Add(new Claim("role", role));
             }
-        }
-
-        if (isSuperAdmin)
-            roleSet.Add(UserRole.SuperAdmin.ToString());
-
-        foreach (var role in roleSet)
-        {
-            claims.Add(new Claim(ClaimTypes.Role, role));
-            claims.Add(new Claim("role", role));
         }
         
         if (isSuperAdmin)
