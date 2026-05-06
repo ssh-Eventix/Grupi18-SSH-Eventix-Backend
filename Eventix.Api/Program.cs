@@ -85,7 +85,6 @@ builder.Services
             ValidateLifetime = true,
             ClockSkew = TimeSpan.Zero
         };
-        // Validate impersonation sessions when tokens contain impersonation claims
         options.Events = new JwtBearerEvents
         {
             OnTokenValidated = async ctx =>
@@ -103,7 +102,6 @@ builder.Services
                     return;
                 }
 
-                // Validate session exists and is active in PublicDbContext
                 var publicDb = ctx.HttpContext.RequestServices.GetService(typeof(PublicDbContext)) as PublicDbContext;
                 if (publicDb == null)
                 {
@@ -111,7 +109,6 @@ builder.Services
                     return;
                 }
 
-                // Validate session exists and not revoked and not expired
                 var session = await publicDb.TenantImpersonationLogs.FindAsync(new object[] { sessionId }, ctx.HttpContext.RequestAborted);
                 if (session == null)
                 {
@@ -119,14 +116,12 @@ builder.Services
                     return;
                 }
 
-                // Check expiration
                 if (session.ExpiresAtUtc <= DateTime.UtcNow)
                 {
                     ctx.Fail("Impersonation session expired");
                     return;
                 }
-
-                // Check for any revocation events for this session (append-only audit)
+                
                 var revoked = await publicDb.TenantImpersonationEvents
                     .AsNoTracking()
                     .AnyAsync(e => e.SessionId == sessionId && e.EventType == Eventix.Domain.Entities.ImpersonationEventType.Revoked, ctx.HttpContext.RequestAborted);
@@ -150,12 +145,10 @@ builder.Services.AddDbContext<TenantDbContext>((serviceProvider, options) =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
     options.ReplaceService<IModelCacheKeyFactory, TenantModelCacheKeyFactory>();
 });
-
 builder.Services.AddScoped<ITenantSchemaProvisioner, TenantSchemaProvisioner>();
 builder.Services.AddScoped<ITenantService, TenantService>();
+
 builder.Services.AddScoped<ITenantRepository, TenantRepository>();
-// Global user role repository removed in simplified model; rely on PublicUser.IsSuperAdmin
-builder.Services.AddScoped<IPublicUserRepository, PublicUserRepository>();
 builder.Services.AddScoped<IEventCategoryRepository, EventCategoryRepository>();
 builder.Services.AddScoped<IVenueRepository, VenueRepository>();
 builder.Services.AddScoped<IVenueSectionRepository, VenueSectionRepository>();

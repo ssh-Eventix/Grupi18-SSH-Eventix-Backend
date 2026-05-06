@@ -23,15 +23,3 @@ Thumbs.db
 desktop.ini
 $RECYCLE.BIN/
 
-# Ignore legacy/global role artifacts (archived)
-Eventix.Application/Interfaces/Repositories/IGlobalUserRoleRepository.cs
-Eventix.Domain/Entities/GlobalRole.cs
-Eventix.Domain/Entities/GlobalUserRole.cs
-Eventix.Infrastructure/Persistence/Repositories/GlobalUserRoleRepository.cs
-Eventix.Infrastructure/Auth/SuperAdminHandler.cs
-Eventix.Infrastructure/Auth/SuperAdminRequirement.cs
-Eventix.Infrastructure/Auth/TenantRoleHandler.cs
-Eventix.Infrastructure/Auth/TenantRoleRequirement.cs
-
-# Ignore local IDE config folder created earlier
-.config/
