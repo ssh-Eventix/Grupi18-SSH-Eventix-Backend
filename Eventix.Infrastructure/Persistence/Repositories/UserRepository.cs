@@ -49,5 +49,15 @@ public class UserRepository : IUserRepository
 
     public Task SaveChangesAsync(CancellationToken cancellationToken = default)
         => _context.SaveChangesAsync(cancellationToken);
+    
+    public Task<User?> GetByEmailAndTenantAsync(string email, Guid tenantId, CancellationToken ct)
+    {
+        return _context.Users
+            .FirstOrDefaultAsync(x =>
+                    x.Email == email &&
+                    x.TenantId == _tenantContext.TenantId &&
+                    !x.IsDeleted,
+                ct);
+    }
 }
 

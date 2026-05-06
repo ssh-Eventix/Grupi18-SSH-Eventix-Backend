@@ -1,5 +1,6 @@
 ﻿using Eventix.Application.DTOs.Events;
 using Eventix.Application.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Eventix.API.Controllers;
@@ -16,6 +17,7 @@ public class EventsController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Policy = "Permission:EventsRead")]
     public async Task<ActionResult<IEnumerable<EventResponseDTO>>> GetAll(
         [FromQuery] string? search,
         CancellationToken cancellationToken)
@@ -25,6 +27,7 @@ public class EventsController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
+    [Authorize(Policy = "Permission:EventsRead")]
     public async Task<ActionResult<EventResponseDTO>> GetById(
         Guid id,
         CancellationToken cancellationToken)
@@ -38,6 +41,7 @@ public class EventsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "Permission:EventsCreate")]
     public async Task<ActionResult<EventResponseDTO>> Create(
         [FromBody] CreateEventDTO dto,
         CancellationToken cancellationToken)
@@ -48,6 +52,7 @@ public class EventsController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Policy = "Permission:EventsUpdate")]
     public async Task<IActionResult> Update(
         Guid id,
         [FromBody] UpdateEventDTO dto,
@@ -62,6 +67,7 @@ public class EventsController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Policy = "Permission:EventsDelete")]
     public async Task<IActionResult> Delete(
         Guid id,
         CancellationToken cancellationToken)

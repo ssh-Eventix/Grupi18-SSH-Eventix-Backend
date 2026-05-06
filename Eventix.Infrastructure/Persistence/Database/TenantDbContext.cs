@@ -32,6 +32,7 @@ public class TenantDbContext : DbContext
     public DbSet<EventSession> EventSessions => Set<EventSession>();
     public DbSet<Speaker> Speakers => Set<Speaker>();
 
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<TicketType> TicketTypes => Set<TicketType>();
     public DbSet<Booking> Bookings => Set<Booking>();
     public DbSet<BookingItem> BookingItems => Set<BookingItem>();
@@ -78,6 +79,7 @@ public class TenantDbContext : DbContext
         ConfigureDiscountCoupon(modelBuilder);
         ConfigureAIRequestLog(modelBuilder);
         ConfigureAuditLog(modelBuilder);
+        ConfigureRefreshToken(modelBuilder);
 
         base.OnModelCreating(modelBuilder);
     }
@@ -112,6 +114,8 @@ public class TenantDbContext : DbContext
             entity.Property(x => x.Name).IsRequired().HasMaxLength(100);
             entity.Property(x => x.Description).HasMaxLength(500);
 
+            entity.Property(x => x.IsGlobal).HasDefaultValue(false);
+
             entity.HasIndex(x => new { x.TenantId, x.Name }).IsUnique();
         });
     }
@@ -144,22 +148,7 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<Venue>(entity =>
         {
-            entity.ToTable("Venues");
-
-            entity.HasKey(x => x.Id);
-
-            entity.Property(x => x.Name).IsRequired().HasMaxLength(200);
-            entity.Property(x => x.Code).IsRequired().HasMaxLength(50);
-            entity.Property(x => x.AddressLine1).IsRequired().HasMaxLength(250);
-            entity.Property(x => x.City).IsRequired().HasMaxLength(100);
-            entity.Property(x => x.Country).IsRequired().HasMaxLength(100);
-
             entity.HasIndex(x => new { x.TenantId, x.Code }).IsUnique();
-
-            entity.ToTable(t =>
-            {
-                t.HasCheckConstraint("CK_Venue_TotalCapacity", "\"TotalCapacity\" >= 0");
-            });
         });
     }
 
@@ -480,7 +469,6 @@ public class TenantDbContext : DbContext
         });
     }
 
-
     // ================= PAYMENTS =================
 
     private static void ConfigurePayment(ModelBuilder modelBuilder)
@@ -665,6 +653,26 @@ public class TenantDbContext : DbContext
                 .WithMany(x => x.AuditLogs)
                 .HasForeignKey(x => x.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+    }
+
+    private static void ConfigureRefreshToken(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.ToTable("RefreshTokens");
+
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.TokenHash).IsRequired();
+
+            entity.HasIndex(x => x.TokenHash).IsUnique();
+
+            // relation to User (tenant-scoped by schema)
+            entity.HasOne<User>()
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

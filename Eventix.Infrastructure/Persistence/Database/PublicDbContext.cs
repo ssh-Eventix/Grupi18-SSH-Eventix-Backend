@@ -11,14 +11,67 @@ public class PublicDbContext : DbContext
     }
 
     public DbSet<Tenant> Tenants => Set<Tenant>();
+    public DbSet<Role> Roles => Set<Role>();
+    public DbSet<PublicUser> PublicUsers => Set<PublicUser>();
+    public DbSet<TenantImpersonationLog> TenantImpersonationLogs => Set<TenantImpersonationLog>();
+    public DbSet<TenantImpersonationEvent> TenantImpersonationEvents => Set<TenantImpersonationEvent>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("public");
 
         ConfigureTenant(modelBuilder);
+        ConfigurePublicRoleAndGlobalUserRoles(modelBuilder);
 
         base.OnModelCreating(modelBuilder);
+    }
+
+    private static void ConfigurePublicRoleAndGlobalUserRoles(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Role>(entity =>
+        {
+            entity.ToTable("Roles");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Name).HasMaxLength(100).IsRequired();
+            entity.Property(x => x.IsGlobal).HasDefaultValue(true);
+            entity.HasIndex(x => new { x.IsGlobal, x.Name }).IsUnique();
+        });
+
+        // Global user role mapping removed; use PublicUser.IsSuperAdmin for platform-level admin
+
+        modelBuilder.Entity<PublicUser>(entity =>
+        {
+            entity.ToTable("PublicUsers");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Email).HasMaxLength(200).IsRequired();
+            entity.HasIndex(x => x.Email).IsUnique();
+            entity.Property(x => x.IsActive).HasDefaultValue(true);
+        });
+
+        modelBuilder.Entity<TenantImpersonationLog>(entity =>
+        {
+            entity.ToTable("TenantImpersonationLogs");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.TenantId).IsRequired();
+            entity.Property(x => x.TargetTenantUserId).IsRequired();
+            entity.Property(x => x.StartedAtUtc).IsRequired();
+            entity.Property(x => x.ExpiresAtUtc).IsRequired();
+            entity.Property(x => x.IsActive).HasDefaultValue(true);
+            entity.HasIndex(x => x.TenantId);
+            entity.HasIndex(x => x.ImpersonatorPublicUserId);
+            entity.HasIndex(x => x.ImpersonatorTenantUserId);
+        });
+
+        modelBuilder.Entity<TenantImpersonationEvent>(entity =>
+        {
+            entity.ToTable("TenantImpersonationEvents");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.SessionId).IsRequired();
+            entity.Property(x => x.EventType).IsRequired();
+            entity.Property(x => x.OccurredAtUtc).IsRequired();
+            entity.HasIndex(x => x.SessionId);
+            entity.HasIndex(x => x.ActorPublicUserId);
+        });
     }
 
     private static void ConfigureTenant(ModelBuilder modelBuilder)
