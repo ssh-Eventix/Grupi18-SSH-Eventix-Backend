@@ -147,8 +147,12 @@ public class TenantDbContext : DbContext
     private static void ConfigureVenue(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Venue>(entity =>
-        {   entity.ToTable("Venues");
-            entity.HasIndex(x => new { x.TenantId, x.Code }).IsUnique();
+        { entity.HasIndex(x => new { x.TenantId, x.Code }).IsUnique();
+
+            entity.ToTable(t =>
+            {
+                t.HasCheckConstraint("CK_Venue_TotalCapacity", "\"TotalCapacity\" >= 0");
+            });
         });
     }
 
@@ -403,6 +407,7 @@ public class TenantDbContext : DbContext
         });
     }
 
+
     // ================= BOOKINGS =================
 
     private static void ConfigureBooking(ModelBuilder modelBuilder)
@@ -467,6 +472,7 @@ public class TenantDbContext : DbContext
             });
         });
     }
+
 
     // ================= PAYMENTS =================
 
@@ -667,7 +673,6 @@ public class TenantDbContext : DbContext
 
             entity.HasIndex(x => x.TokenHash).IsUnique();
 
-            // relation to User (tenant-scoped by schema)
             entity.HasOne<User>()
                 .WithMany()
                 .HasForeignKey(x => x.UserId)

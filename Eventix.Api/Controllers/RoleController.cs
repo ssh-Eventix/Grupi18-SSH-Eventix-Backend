@@ -1,5 +1,11 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Eventix.Application.DTOs.Roles;
 using Eventix.Application.Interfaces.Services;
+using Eventix.Domain.Entities;
 using Eventix.Application.Interfaces.Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
@@ -68,3 +74,4 @@ namespace Eventix.API.Controllers
         }
     }
 }
+

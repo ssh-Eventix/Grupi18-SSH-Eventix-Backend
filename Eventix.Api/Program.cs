@@ -84,13 +84,60 @@ builder.Services
             ValidAudience = audience,
 
             ValidateLifetime = true,
-            ClockSkew = TimeSpan.Zero,
-            RoleClaimType = "role"
+            ClockSkew = TimeSpan.Zero
         };
-
+        // Validate impersonation sessions when tokens contain impersonation claims
         options.Events = new JwtBearerEvents
         {
-            OnTokenValidated = ImpersonationTokenValidation.ValidateAsync
+            OnTokenValidated = async ctx =>
+            {
+                var principal = ctx.Principal;
+                if (principal == null) return;
+
+                var isImpersonation = principal.HasClaim(c => c.Type == "isImpersonation" && c.Value == "true");
+                if (!isImpersonation) return;
+
+                var sessionClaim = principal.FindFirst("impersonationSessionId")?.Value;
+                if (!Guid.TryParse(sessionClaim, out var sessionId))
+                {
+                    ctx.Fail("Invalid impersonation session claim");
+                    return;
+                }
+
+                // Validate session exists and is active in PublicDbContext
+                var publicDb = ctx.HttpContext.RequestServices.GetService(typeof(PublicDbContext)) as PublicDbContext;
+                if (publicDb == null)
+                {
+                    ctx.Fail("Unable to validate impersonation session");
+                    return;
+                }
+
+                // Validate session exists and not revoked and not expired
+                var session = await publicDb.TenantImpersonationLogs.FindAsync(new object[] { sessionId }, ctx.HttpContext.RequestAborted);
+                if (session == null)
+                {
+                    ctx.Fail("Impersonation session not found");
+                    return;
+                }
+
+                // Check expiration
+                if (session.ExpiresAtUtc <= DateTime.UtcNow)
+                {
+                    ctx.Fail("Impersonation session expired");
+                    return;
+                }
+
+                // Check for any revocation events for this session (append-only audit)
+                var revoked = await publicDb.TenantImpersonationEvents
+                    .AsNoTracking()
+                    .AnyAsync(e => e.SessionId == sessionId && e.EventType == Eventix.Domain.Entities.ImpersonationEventType.Revoked, ctx.HttpContext.RequestAborted);
+
+                if (revoked)
+                {
+                    ctx.Fail("Impersonation session revoked");
+                    return;
+                }
+            }
         };
     });
 
@@ -104,6 +151,7 @@ builder.Services.AddDbContext<TenantDbContext>((_, options) =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
     options.ReplaceService<IModelCacheKeyFactory, TenantModelCacheKeyFactory>();
 });
+
 builder.Services.AddScoped<ITenantSchemaProvisioner, TenantSchemaProvisioner>();
 builder.Services.AddScoped<ITenantService, TenantService>();
 
@@ -140,7 +188,6 @@ builder.Services.AddScoped<IImpersonationService, ImpersonationService>();
 var corsOrigins = builder.Configuration
     .GetSection("Cors:AllowedOrigins")
     .Get<string[]>() ?? ["http://localhost:5173", "http://localhost:3000"];
-
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactClient", policy =>
@@ -166,21 +213,17 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseCors("ReactClient");
+
 //app.UseHttpsRedirection();
 
 app.UseMiddleware<RequestLoggingMiddleware>();
 
+// tenant middleware must run before authentication/authorization so TenantContext is set from header/schema
 app.UseMiddleware<TenantMiddleware>();
-
-app.UseCors("ReactClient");
 
 app.UseAuthentication();
 app.UseAuthorization();
-
-app.UseCors("ReactClient");
-
-app.UseMiddleware<TenantMiddleware>();
-
 
 app.MapGet("/api/health", () =>
 {
