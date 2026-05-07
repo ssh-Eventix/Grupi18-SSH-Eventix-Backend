@@ -3,6 +3,7 @@ using Eventix.Domain.Entities;
 using Eventix.Application.Interfaces.Common;
 using Eventix.Application.Interfaces.Repositories;
 using Eventix.Application.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UserRoleEnum = Eventix.Domain.Enums.UserRole;
 
@@ -10,6 +11,7 @@ namespace Eventix.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[AllowAnonymous]
 public class AuthController : ControllerBase
 {
     private readonly IUserRepository _userRepository;

@@ -20,12 +20,14 @@ public class PublicDbContext : DbContext
         modelBuilder.HasDefaultSchema("public");
 
         ConfigureTenant(modelBuilder);
-        ConfigurePublicRoleAndGlobalUserRoles(modelBuilder);
+        ConfigureRole(modelBuilder);
+        ConfigurePublicUser(modelBuilder);
+        ConfigureTenantImpersonationLog(modelBuilder);
 
         base.OnModelCreating(modelBuilder);
     }
 
-    private static void ConfigurePublicRoleAndGlobalUserRoles(ModelBuilder modelBuilder)
+    private static void ConfigureRole(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Role>(entity =>
         {
@@ -35,9 +37,10 @@ public class PublicDbContext : DbContext
             entity.Property(x => x.IsGlobal).HasDefaultValue(true);
             entity.HasIndex(x => new { x.IsGlobal, x.Name }).IsUnique();
         });
+    }
 
-        // Global user role mapping removed; use PublicUser.IsSuperAdmin for platform-level admin
-
+    private static void ConfigurePublicUser(ModelBuilder modelBuilder)
+    {
         modelBuilder.Entity<PublicUser>(entity =>
         {
             entity.ToTable("PublicUsers");
@@ -46,7 +49,10 @@ public class PublicDbContext : DbContext
             entity.HasIndex(x => x.Email).IsUnique();
             entity.Property(x => x.IsActive).HasDefaultValue(true);
         });
+    }
 
+    private static void ConfigureTenantImpersonationLog(ModelBuilder modelBuilder)
+    {
         modelBuilder.Entity<TenantImpersonationLog>(entity =>
         {
             entity.ToTable("TenantImpersonationLogs");

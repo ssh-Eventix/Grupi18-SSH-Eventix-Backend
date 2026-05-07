@@ -147,7 +147,7 @@ public class TenantDbContext : DbContext
     private static void ConfigureVenue(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Venue>(entity =>
-        {
+        {   entity.ToTable("Venues");
             entity.HasIndex(x => new { x.TenantId, x.Code }).IsUnique();
         });
     }

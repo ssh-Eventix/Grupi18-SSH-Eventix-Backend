@@ -747,41 +747,6 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                     b.ToTable("PaymentMethods", "public");
                 });
 
-            modelBuilder.Entity("Eventix.Domain.Entities.RefreshToken", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("ExpiresAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("ReplacedByTokenHash")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("RevokedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("TokenHash")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TokenHash")
-                        .IsUnique();
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("RefreshTokens", "public");
-                });
-
             modelBuilder.Entity("Eventix.Domain.Entities.Review", b =>
                 {
                     b.Property<Guid>("Id")
@@ -846,11 +811,6 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
-
-                    b.Property<bool>("IsGlobal")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -1078,9 +1038,6 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
-                    b.Property<Guid?>("PublicUserId")
-                        .HasColumnType("uuid");
-
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
 
@@ -1142,19 +1099,23 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
 
                     b.Property<string>("AddressLine1")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
 
                     b.Property<string>("City")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("Code")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("Country")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -1170,7 +1131,8 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
@@ -1186,7 +1148,10 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                     b.HasIndex("TenantId", "Code")
                         .IsUnique();
 
-                    b.ToTable("Venues", "public");
+                    b.ToTable("Venues", "public", t =>
+                        {
+                            t.HasCheckConstraint("CK_Venue_TotalCapacity", "\"TotalCapacity\" >= 0");
+                        });
                 });
 
             modelBuilder.Entity("Eventix.Domain.Entities.VenueSection", b =>
@@ -1439,15 +1404,6 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                     b.Navigation("Booking");
 
                     b.Navigation("PaymentMethod");
-                });
-
-            modelBuilder.Entity("Eventix.Domain.Entities.RefreshToken", b =>
-                {
-                    b.HasOne("Eventix.Domain.Entities.User", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("Eventix.Domain.Entities.Review", b =>
