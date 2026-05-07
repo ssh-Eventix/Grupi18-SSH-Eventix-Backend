@@ -8,7 +8,7 @@ namespace Eventix.Application.DTOs.Booking
 {
     public class BookingItemRequest
     {
-        public Guid TicketId { get; set; }
+        public Guid TicketTypeId { get; set; }
         public int Quantity { get; set; }
     }
 }

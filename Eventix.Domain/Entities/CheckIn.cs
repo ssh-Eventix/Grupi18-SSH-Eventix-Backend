@@ -11,24 +11,16 @@ namespace Eventix.Domain.Entities
 {
     public class CheckIn : TenantBaseEntity
     {
-        [Key]
-        public Guid Id { get; set; }
-
-        [Required]
         public Guid TicketId { get; set; }
 
-        [ForeignKey(nameof(TicketId))]
-        public Ticket Ticket { get; set; }
+        public Ticket Ticket { get; set; } = default!;
 
-        [Required]
         public Guid CheckedInByUserId { get; set; }
 
-        [ForeignKey(nameof(CheckedInByUserId))]
-        public User CheckedInByUser { get; set; }
+        public User CheckedInByUser { get; set; } = default!;
 
-        [Required]
-        public DateTime CheckInTime { get; set; }
+        public DateTime CheckInTime { get; set; } = DateTime.UtcNow;
 
-        public string Notes { get; set; }
+        public string? Notes { get; set; }
     }
 }

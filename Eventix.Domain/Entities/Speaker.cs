@@ -4,10 +4,6 @@ namespace Eventix.Domain.Entities;
 
 public class Speaker : TenantBaseEntity
 {
-    public Guid Id { get; set; }
-
-    public Guid TenantId { get; set; }
-
     public string FullName { get; set; } = string.Empty;
 
     public string? Bio { get; set; }

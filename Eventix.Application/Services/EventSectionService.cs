@@ -57,7 +57,6 @@ public class EventSectionService : IEventSectionService
             Name = dto.Name,
             Code = dto.Code,
             Capacity = dto.Capacity,
-            Price = dto.Price,
             IsActive = dto.IsActive,
 
             SalesStartUtc = dto.SalesStartUtc,
@@ -81,7 +80,6 @@ public class EventSectionService : IEventSectionService
         entity.Name = dto.Name;
         entity.Code = dto.Code;
         entity.Capacity = dto.Capacity;
-        entity.Price = dto.Price;
         entity.IsActive = dto.IsActive;
         entity.SalesStartUtc = dto.SalesStartUtc;
         entity.SalesEndUtc = dto.SalesEndUtc;
@@ -117,7 +115,6 @@ public class EventSectionService : IEventSectionService
         Name = x.Name,
         Code = x.Code,
         Capacity = x.Capacity,
-        Price = x.Price,
         IsActive = x.IsActive,
 
         SalesStartUtc = x.SalesStartUtc,
