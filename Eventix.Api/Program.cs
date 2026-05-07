@@ -145,7 +145,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactClient", policy =>
     {
-        policy.WithOrigins(corsOrigins)
+        policy.WithOrigins("http://localhost:5173", "http://localhost:3000")
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
@@ -166,7 +166,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseMiddleware<RequestLoggingMiddleware>();
 
@@ -177,6 +177,19 @@ app.UseCors("ReactClient");
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseCors("ReactClient");
+
+app.UseMiddleware<TenantMiddleware>();
+
+
+app.MapGet("/api/health", () =>
+{
+    return Results.Ok(new
+    {
+        message = "Backend is working",
+        time = DateTime.UtcNow
+    });
+});
 
 app.MapControllers();
 

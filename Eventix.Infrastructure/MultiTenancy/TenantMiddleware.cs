@@ -21,7 +21,9 @@ public class TenantMiddleware
 
         if (path != null &&
             (path.StartsWith("/swagger") ||
-             path.StartsWith("/api/tenants")))
+             path.StartsWith("/api/tenants") ||
+             path.StartsWith("/api/auth")||
+             path.StartsWith("/api/health")))
         {
             await _next(httpContext);
             return;
