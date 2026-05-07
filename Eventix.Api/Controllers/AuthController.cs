@@ -4,9 +4,7 @@ using Eventix.Application.Interfaces.Common;
 using Eventix.Application.Interfaces.Repositories;
 using Eventix.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Linq;
-using System.Collections.Generic;
+using UserRoleEnum = Eventix.Domain.Enums.UserRole;
 
 namespace Eventix.API.Controllers;
 
@@ -16,6 +14,7 @@ public class AuthController : ControllerBase
 {
     private readonly IUserRepository _userRepository;
     private readonly IUserRoleRepository _userRoleRepository;
+    private readonly IRoleRepository _roleRepository;
     private readonly IPublicUserRepository _publicUserRepository;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtTokenService _jwtTokenService;
@@ -26,6 +25,7 @@ public class AuthController : ControllerBase
     public AuthController(
         IUserRepository userRepository,
         IUserRoleRepository userRoleRepository,
+        IRoleRepository roleRepository,
         IPublicUserRepository publicUserRepository,
         IPasswordHasher passwordHasher,
         IJwtTokenService jwtTokenService,
@@ -35,12 +35,77 @@ public class AuthController : ControllerBase
     {
         _userRepository = userRepository;
         _userRoleRepository = userRoleRepository;
+        _roleRepository = roleRepository;
         _publicUserRepository = publicUserRepository;
         _passwordHasher = passwordHasher;
         _jwtTokenService = jwtTokenService;
         _refreshTokenService = refreshTokenService;
         _refreshTokenRepository = refreshTokenRepository;
         _tenantContext = tenantContext;
+    }
+
+    [HttpPost("register")]
+    public async Task<ActionResult<LoginResponseDTO>> Register(
+        [FromBody] RegisterRequestDTO dto,
+        CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Email) ||
+            string.IsNullOrWhiteSpace(dto.Password) ||
+            string.IsNullOrWhiteSpace(dto.FirstName) ||
+            string.IsNullOrWhiteSpace(dto.LastName))
+        {
+            return BadRequest("FirstName, LastName, Email and Password are required.");
+        }
+
+        var existing = await _userRepository.GetByEmailAsync(dto.Email, ct);
+        if (existing is not null && !existing.IsDeleted)
+            return Conflict("A user with this email already exists.");
+
+        var user = new User
+        {
+            TenantId = _tenantContext.TenantId,
+            FirstName = dto.FirstName.Trim(),
+            LastName = dto.LastName.Trim(),
+            Email = dto.Email.Trim(),
+            PasswordHash = _passwordHasher.Hash(dto.Password),
+            IsActive = true
+        };
+
+        await _userRepository.AddAsync(user, ct);
+        await _userRepository.SaveChangesAsync(ct);
+
+        var roles = await _roleRepository.GetAllAsync(ct);
+        var buyerRole = roles.FirstOrDefault(r =>
+            string.Equals(r.Name, UserRoleEnum.Buyer.ToString(), StringComparison.OrdinalIgnoreCase) && !r.IsDeleted);
+
+        if (buyerRole is null)
+            return StatusCode(500, "Default Buyer role is not configured for this tenant.");
+
+        await _userRoleRepository.AddAsync(new UserRole
+        {
+            TenantId = _tenantContext.TenantId,
+            UserId = user.Id,
+            RoleId = buyerRole.Id
+        }, ct);
+        await _userRoleRepository.SaveChangesAsync(ct);
+
+        var mergedRoles = new List<string> { UserRoleEnum.Buyer.ToString() };
+
+        var (accessToken, accessExpires) = await _jwtTokenService.GenerateTokenAsync(
+            user.Id,
+            user.Email,
+            _tenantContext.TenantId,
+            mergedRoles,
+            cancellationToken: ct);
+        var (refreshToken, refreshExpires) = await _refreshTokenService.CreateAsync(user.Id, ct);
+
+        return Ok(new LoginResponseDTO
+        {
+            AccessToken = accessToken,
+            AccessTokenExpiresAtUtc = accessExpires,
+            RefreshToken = refreshToken,
+            RefreshTokenExpiresAtUtc = refreshExpires
+        });
     }
 
     [HttpPost("login")]
