@@ -14,8 +14,7 @@ public class PublicDbContext : DbContext
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<PublicUser> PublicUsers => Set<PublicUser>();
     public DbSet<TenantImpersonationLog> TenantImpersonationLogs => Set<TenantImpersonationLog>();
-    public DbSet<TenantImpersonationEvent> TenantImpersonationEvents => Set<TenantImpersonationEvent>();
-
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("public");
@@ -60,17 +59,6 @@ public class PublicDbContext : DbContext
             entity.HasIndex(x => x.TenantId);
             entity.HasIndex(x => x.ImpersonatorPublicUserId);
             entity.HasIndex(x => x.ImpersonatorTenantUserId);
-        });
-
-        modelBuilder.Entity<TenantImpersonationEvent>(entity =>
-        {
-            entity.ToTable("TenantImpersonationEvents");
-            entity.HasKey(x => x.Id);
-            entity.Property(x => x.SessionId).IsRequired();
-            entity.Property(x => x.EventType).IsRequired();
-            entity.Property(x => x.OccurredAtUtc).IsRequired();
-            entity.HasIndex(x => x.SessionId);
-            entity.HasIndex(x => x.ActorPublicUserId);
         });
     }
 

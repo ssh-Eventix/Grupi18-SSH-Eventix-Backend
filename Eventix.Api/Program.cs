@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Eventix.API.Middleware;
 using Eventix.Application.Interfaces.Common;
 using Eventix.Application.Interfaces.Repositories;
@@ -85,53 +86,10 @@ builder.Services
             ValidateLifetime = true,
             ClockSkew = TimeSpan.Zero
         };
+
         options.Events = new JwtBearerEvents
         {
-            OnTokenValidated = async ctx =>
-            {
-                var principal = ctx.Principal;
-                if (principal == null) return;
-
-                var isImpersonation = principal.HasClaim(c => c.Type == "isImpersonation" && c.Value == "true");
-                if (!isImpersonation) return;
-
-                var sessionClaim = principal.FindFirst("impersonationSessionId")?.Value;
-                if (!Guid.TryParse(sessionClaim, out var sessionId))
-                {
-                    ctx.Fail("Invalid impersonation session claim");
-                    return;
-                }
-
-                var publicDb = ctx.HttpContext.RequestServices.GetService(typeof(PublicDbContext)) as PublicDbContext;
-                if (publicDb == null)
-                {
-                    ctx.Fail("Unable to validate impersonation session");
-                    return;
-                }
-
-                var session = await publicDb.TenantImpersonationLogs.FindAsync(new object[] { sessionId }, ctx.HttpContext.RequestAborted);
-                if (session == null)
-                {
-                    ctx.Fail("Impersonation session not found");
-                    return;
-                }
-
-                if (session.ExpiresAtUtc <= DateTime.UtcNow)
-                {
-                    ctx.Fail("Impersonation session expired");
-                    return;
-                }
-                
-                var revoked = await publicDb.TenantImpersonationEvents
-                    .AsNoTracking()
-                    .AnyAsync(e => e.SessionId == sessionId && e.EventType == Eventix.Domain.Entities.ImpersonationEventType.Revoked, ctx.HttpContext.RequestAborted);
-
-                if (revoked)
-                {
-                    ctx.Fail("Impersonation session revoked");
-                    return;
-                }
-            }
+            OnTokenValidated = ImpersonationTokenValidation.ValidateAsync
         };
     });
 
@@ -178,20 +136,22 @@ builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<IImpersonationService, ImpersonationService>();
 
+var corsOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .Get<string[]>() ?? ["http://localhost:5173", "http://localhost:3000"];
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactClient", policy =>
     {
-        policy.WithOrigins("http://localhost:5173", "http://localhost:3000")
+        policy.WithOrigins(corsOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
 });
 
-// Authorization policies
 builder.Services.AddScoped<IAuthorizationHandler, TenantAdminHandler>();
 builder.Services.AddSingleton<IAuthorizationHandler, SuperAdminImpersonationHandler>();
-// Permission handler & role->permission service
 builder.Services.AddSingleton<IRolePermissionService, RolePermissionService>();
 builder.Services.AddScoped<IAuthorizationHandler, PermissionHandler>();
 
@@ -203,7 +163,7 @@ builder.Services.AddAuthorization(options =>
     });
 
     // Only platform SuperAdmins may start/stop impersonation sessions
-    options.AddPolicy("SuperAdminImpersonationOnly", policy =>
+    options.AddPolicy(ImpersonationAuthConstants.SuperAdminImpersonationPolicy, policy =>
     {
         policy.Requirements.Add(new SuperAdminImpersonationRequirement());
     });
@@ -247,6 +207,8 @@ app.UseMiddleware<RequestLoggingMiddleware>();
 // tenant middleware must run before authentication/authorization so TenantContext is set from header/schema
 app.UseMiddleware<TenantMiddleware>();
 
+app.UseCors("ReactClient");
+
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -254,3 +216,74 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+public static class ImpersonationAuthConstants
+{
+    public const string SuperAdminImpersonationPolicy = "SuperAdminImpersonationOnly";
+    public const string IsImpersonationClaim = "isImpersonation";
+    public const string ImpersonationSessionIdClaim = "impersonationSessionId";
+}
+
+public static class ImpersonationTokenValidation
+{
+    public static async Task ValidateAsync(TokenValidatedContext context)
+    {
+        var principal = context.Principal;
+        if (principal == null)
+            return;
+
+        var isImpersonation = principal.HasClaim(c =>
+            c.Type == ImpersonationAuthConstants.IsImpersonationClaim &&
+            c.Value == "true");
+        if (!isImpersonation)
+            return;
+
+        var sessionClaim = principal.FindFirst(ImpersonationAuthConstants.ImpersonationSessionIdClaim)?.Value;
+        if (!Guid.TryParse(sessionClaim, out var sessionId))
+        {
+            context.Fail("Invalid impersonation session claim");
+            return;
+        }
+
+        var publicDb = context.HttpContext.RequestServices.GetRequiredService<PublicDbContext>();
+        var tenantContext = context.HttpContext.RequestServices.GetRequiredService<ITenantContext>();
+
+        var session = await publicDb.TenantImpersonationLogs
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == sessionId, context.HttpContext.RequestAborted);
+
+        if (session == null)
+        {
+            context.Fail("Impersonation session not found");
+            return;
+        }
+
+        if (session.TenantId != tenantContext.TenantId)
+        {
+            context.Fail("Tenant mismatch");
+            return;
+        }
+
+        if (!session.IsActive || session.RevokedAtUtc.HasValue)
+        {
+            context.Fail("Impersonation session revoked");
+            return;
+        }
+
+        if (session.ExpiresAtUtc <= DateTime.UtcNow)
+        {
+            context.Fail("Impersonation session expired");
+            return;
+        }
+
+        var subjectClaim = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(subjectClaim, out var subjectUserId))
+        {
+            context.Fail("Invalid subject claim");
+            return;
+        }
+
+        if (session.TargetTenantUserId != subjectUserId)
+            context.Fail("Impersonation subject mismatch");
+    }
+}

@@ -1,5 +1,5 @@
-using Eventix.Application.Interfaces.Repositories;
 using Eventix.Application.Interfaces.Common;
+using Eventix.Application.Interfaces.Repositories;
 using Eventix.Application.Interfaces.Services;
 using Eventix.Domain.Entities;
 using Eventix.Infrastructure.Persistence.Database;
@@ -9,6 +9,9 @@ namespace Eventix.Infrastructure.Services;
 
 public class ImpersonationService : IImpersonationService
 {
+    private const int MaxImpersonationDurationMinutes = 120;
+    private const int MaxReasonLength = 500;
+
     private readonly PublicDbContext _publicDb;
     private readonly IUserRepository _userRepository;
     private readonly IUserRoleRepository _userRoleRepository;
@@ -29,68 +32,121 @@ public class ImpersonationService : IImpersonationService
         _tenantContext = tenantContext;
     }
 
-    public async Task<(string Token, DateTime ExpiresAtUtc, Guid SessionId)> StartImpersonationAsync(Guid impersonatorTenantUserId, Guid targetTenantUserId, int minutes, string? reason = null, CancellationToken cancellationToken = default)
+    public async Task<ImpersonationStartResult> StartImpersonationAsync(
+        Guid impersonatorTenantUserId,
+        Guid targetTenantUserId,
+        int minutes,
+        string? reason = null,
+        CancellationToken cancellationToken = default)
     {
-        var target = await _userRepository.GetByIdAsync(targetTenantUserId, cancellationToken);
-        if (target == null || !target.IsActive)
-            throw new InvalidOperationException("Target user does not exist or is inactive.");
+        if (minutes <= 0 || minutes > MaxImpersonationDurationMinutes)
+            throw new ArgumentOutOfRangeException(
+                nameof(minutes),
+                $"Impersonation duration must be between 1 and {MaxImpersonationDurationMinutes} minutes.");
 
-        var impersonator = await _userRepository.GetByIdAsync(impersonatorTenantUserId, cancellationToken);
-        Guid? impersonatorPublicUserId = impersonator?.PublicUserId;
+        var normalizedReason = string.IsNullOrWhiteSpace(reason)
+            ? null
+            : reason.Trim();
+
+        if (normalizedReason is { Length: > MaxReasonLength })
+            throw new ArgumentOutOfRangeException(
+                nameof(reason),
+                $"Impersonation reason cannot exceed {MaxReasonLength} characters.");
+
+        var impersonator = await _userRepository.GetByIdAsync(
+            impersonatorTenantUserId,
+            cancellationToken);
+
+        if (impersonator == null || !impersonator.IsActive)
+            throw new InvalidOperationException(
+                "Impersonator does not exist or is inactive.");
+
+        var target = await _userRepository.GetByIdAsync(
+            targetTenantUserId,
+            cancellationToken);
+
+        if (target == null || !target.IsActive)
+            throw new InvalidOperationException(
+                "Target user does not exist or is inactive.");
+
+        if (impersonatorTenantUserId == targetTenantUserId)
+            throw new InvalidOperationException(
+                "Users cannot impersonate themselves.");
 
         var now = DateTime.UtcNow;
+
+        var hasActiveSession = await _publicDb.TenantImpersonationLogs
+            .AnyAsync(x =>
+                    x.TenantId == _tenantContext.TenantId &&
+                    x.TargetTenantUserId == targetTenantUserId &&
+                    x.IsActive &&
+                    x.ExpiresAtUtc > now,
+                cancellationToken);
+
+        if (hasActiveSession)
+            throw new InvalidOperationException(
+                "Target user already has an active impersonation session.");
+
         var session = new TenantImpersonationLog
         {
             TenantId = _tenantContext.TenantId,
-            ImpersonatorPublicUserId = impersonatorPublicUserId,
-            ImpersonatorTenantUserId = impersonator?.Id,
+            ImpersonatorPublicUserId = impersonator.PublicUserId,
+            ImpersonatorTenantUserId = impersonator.Id,
             TargetTenantUserId = target.Id,
             StartedAtUtc = now,
             ExpiresAtUtc = now.AddMinutes(minutes),
             IsActive = true,
-            Reason = reason
+            Reason = normalizedReason
         };
 
-        await _publicDb.TenantImpersonationLogs.AddAsync(session, cancellationToken);
-        await _publicDb.SaveChangesAsync(cancellationToken);
-        
-        var roles = await _userRoleRepository.GetRoleNamesByUserIdAsync(target.Id, cancellationToken);
+        await _publicDb.TenantImpersonationLogs
+            .AddAsync(session, cancellationToken);
 
-        var result = await _jwtTokenService.GenerateTokenAsync(
+        await _publicDb.SaveChangesAsync(cancellationToken);
+
+        var roles = await _userRoleRepository
+            .GetRoleNamesByUserIdAsync(
+                target.Id,
+                cancellationToken);
+
+        var tokenResult = await _jwtTokenService.GenerateTokenAsync(
             subjectId: target.Id,
             email: target.Email,
             tenantId: _tenantContext.TenantId,
             roles: roles,
             isImpersonation: true,
             impersonationSessionId: session.Id,
-            impersonatorPublicUserId: impersonatorPublicUserId,
+            impersonatorPublicUserId: impersonator.PublicUserId,
             cancellationToken: cancellationToken);
 
-        var token = result.Token;
-        var expires = result.ExpiresAtUtc;
-
-        return (token, expires, session.Id);
+        return new ImpersonationStartResult(
+            tokenResult.Token,
+            tokenResult.ExpiresAtUtc,
+            session.Id);
     }
 
-    public async Task StopImpersonationAsync(Guid sessionId, Guid? actorTenantUserId = null, Guid? actorPublicUserId = null, CancellationToken cancellationToken = default)
+    public async Task StopImpersonationAsync(
+        Guid sessionId,
+        CancellationToken cancellationToken = default)
     {
-        var session = await _publicDb.TenantImpersonationLogs.AsNoTracking().FirstOrDefaultAsync(x => x.Id == sessionId, cancellationToken);
+        var session = await _publicDb.TenantImpersonationLogs
+            .FirstOrDefaultAsync(
+                x => x.Id == sessionId,
+                cancellationToken);
+
         if (session == null)
-            throw new InvalidOperationException("Impersonation session not found");
+            throw new InvalidOperationException(
+                "Impersonation session not found.");
 
-        var revocation = new TenantImpersonationEvent
-        {
-            SessionId = sessionId,
-            EventType = ImpersonationEventType.Revoked,
-            ActorPublicUserId = actorPublicUserId,
-            ActorTenantUserId = actorTenantUserId,
-            OccurredAtUtc = DateTime.UtcNow,
-            Reason = "Revoked via API"
-        };
+        if (!session.IsActive)
+            return;
 
-        await _publicDb.TenantImpersonationEvents.AddAsync(revocation, cancellationToken);
+        var now = DateTime.UtcNow;
+
+        session.IsActive = false;
+        session.RevokedAtUtc = now;
+        session.ExpiresAtUtc = now;
+
         await _publicDb.SaveChangesAsync(cancellationToken);
     }
 }
-
-
