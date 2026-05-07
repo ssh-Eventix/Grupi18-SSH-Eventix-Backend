@@ -84,55 +84,12 @@ builder.Services
             ValidAudience = audience,
 
             ValidateLifetime = true,
-            ClockSkew = TimeSpan.Zero
+            ClockSkew = TimeSpan.Zero,
+            RoleClaimType = "role"
         };
         options.Events = new JwtBearerEvents
         {
-            OnTokenValidated = async ctx =>
-            {
-                var principal = ctx.Principal;
-                if (principal == null) return;
-
-                var isImpersonation = principal.HasClaim(c => c.Type == "isImpersonation" && c.Value == "true");
-                if (!isImpersonation) return;
-
-                var sessionClaim = principal.FindFirst("impersonationSessionId")?.Value;
-                if (!Guid.TryParse(sessionClaim, out var sessionId))
-                {
-                    ctx.Fail("Invalid impersonation session claim");
-                    return;
-                }
-
-                var publicDb = ctx.HttpContext.RequestServices.GetService(typeof(PublicDbContext)) as PublicDbContext;
-                if (publicDb == null)
-                {
-                    ctx.Fail("Unable to validate impersonation session");
-                    return;
-                }
-
-                var session = await publicDb.TenantImpersonationLogs.FindAsync(new object[] { sessionId }, ctx.HttpContext.RequestAborted);
-                if (session == null)
-                {
-                    ctx.Fail("Impersonation session not found");
-                    return;
-                }
-
-                if (session.ExpiresAtUtc <= DateTime.UtcNow)
-                {
-                    ctx.Fail("Impersonation session expired");
-                    return;
-                }
-                
-                var revoked = await publicDb.TenantImpersonationEvents
-                    .AsNoTracking()
-                    .AnyAsync(e => e.SessionId == sessionId && e.EventType == Eventix.Domain.Entities.ImpersonationEventType.Revoked, ctx.HttpContext.RequestAborted);
-
-                if (revoked)
-                {
-                    ctx.Fail("Impersonation session revoked");
-                    return;
-                }
-            }
+            OnTokenValidated = ImpersonationTokenValidation.ValidateAsync
         };
     });
 
@@ -178,10 +135,6 @@ builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<IImpersonationService, ImpersonationService>();
-
-var corsOrigins = builder.Configuration
-    .GetSection("Cors:AllowedOrigins")
-    .Get<string[]>() ?? ["http://localhost:5173", "http://localhost:3000"];
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactClient", policy =>
