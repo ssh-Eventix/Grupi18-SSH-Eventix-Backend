@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Eventix.Application.DTOs.EventSections;
+﻿using Eventix.Application.DTOs.EventSections;
 
 namespace Eventix.Application.Interfaces.Services
 {

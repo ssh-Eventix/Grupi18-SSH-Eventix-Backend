@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Eventix.Domain.Common;
+﻿using Eventix.Domain.Common;
 using Eventix.Domain.Enums;
 
 namespace Eventix.Domain.Entities

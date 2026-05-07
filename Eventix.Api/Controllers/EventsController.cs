@@ -17,7 +17,7 @@ public class EventsController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Policy = "Permission:EventsRead")]
+    [Authorize(Roles = "Admin,Buyer,SuperAdmin")]
     public async Task<ActionResult<IEnumerable<EventResponseDTO>>> GetAll(
         [FromQuery] string? search,
         CancellationToken cancellationToken)
@@ -27,7 +27,7 @@ public class EventsController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
-    [Authorize(Policy = "Permission:EventsRead")]
+    [Authorize(Roles = "Admin,Buyer,SuperAdmin")]
     public async Task<ActionResult<EventResponseDTO>> GetById(
         Guid id,
         CancellationToken cancellationToken)
@@ -41,7 +41,7 @@ public class EventsController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Policy = "Permission:EventsCreate")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<ActionResult<EventResponseDTO>> Create(
         [FromBody] CreateEventDTO dto,
         CancellationToken cancellationToken)
@@ -52,7 +52,7 @@ public class EventsController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
-    [Authorize(Policy = "Permission:EventsUpdate")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<IActionResult> Update(
         Guid id,
         [FromBody] UpdateEventDTO dto,
@@ -67,7 +67,7 @@ public class EventsController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Policy = "Permission:EventsDelete")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<IActionResult> Delete(
         Guid id,
         CancellationToken cancellationToken)

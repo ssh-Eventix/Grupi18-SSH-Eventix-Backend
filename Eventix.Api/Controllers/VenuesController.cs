@@ -21,12 +21,12 @@ public class VenuesController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Policy = "Permission:VenuesRead")]
+    [Authorize(Roles = "Admin,Buyer,SuperAdmin")]
     public async Task<IActionResult> GetAll()
         => Ok(await _service.GetAllAsync());
 
     [HttpGet("{id:guid}")]
-    [Authorize(Policy = "Permission:VenuesRead")]
+    [Authorize(Roles = "Admin,Buyer,SuperAdmin")]
     public async Task<IActionResult> GetById(Guid id)
     {
         var venue = await _service.GetByIdAsync(id);
@@ -34,17 +34,17 @@ public class VenuesController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Policy = "Permission:VenuesCreate")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<IActionResult> Create(CreateVenueDTO dto)
         => Ok(await _service.CreateAsync(dto));
 
     [HttpPut("{id:guid}")]
-    [Authorize(Policy = "Permission:VenuesUpdate")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<IActionResult> Update(Guid id, UpdateVenueDTO dto)
         => await _service.UpdateAsync(id, dto) ? NoContent() : NotFound();
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Policy = "Permission:VenuesDelete")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<IActionResult> Delete(Guid id)
         => await _service.DeleteAsync(id) ? NoContent() : NotFound();
 }

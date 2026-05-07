@@ -1,11 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Eventix.Application.DTOs.UserRoles;
 using Eventix.Application.Interfaces.Services;
-using Eventix.Domain.Entities;
 using Eventix.Application.Interfaces.Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
@@ -34,7 +28,7 @@ namespace Eventix.API.Controllers
             }
 
         [HttpGet("by-user/{userId:guid}")]
-        [Authorize(Policy = "Permission:UsersRead")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         public async Task<ActionResult<List<UserRoleResponseDTO>>> GetByUserId(Guid userId, CancellationToken cancellationToken)
         {
             var user = await _userService.GetByIdAsync(userId, cancellationToken);
@@ -46,7 +40,7 @@ namespace Eventix.API.Controllers
         }
 
         [HttpPost]
-        [Authorize(Policy = "Permission:UsersAssignRoles")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         public async Task<IActionResult> Assign([FromBody] CreateUserRoleDTO dto, CancellationToken cancellationToken)
         {
             var user = await _userService.GetByIdAsync(dto.UserId, cancellationToken);
@@ -62,7 +56,7 @@ namespace Eventix.API.Controllers
         }
 
         [HttpDelete("{id:guid}")]
-        [Authorize(Policy = "Permission:UsersAssignRoles")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
         {
             var deleted = await _userRoleService.DeleteAsync(id, cancellationToken);
@@ -70,4 +64,3 @@ namespace Eventix.API.Controllers
         }
     }
 }
-

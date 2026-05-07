@@ -37,7 +37,7 @@ public class ImpersonationController : ControllerBase
     }
 
     [HttpPost("start")]
-    [Authorize(Policy = global::ImpersonationAuthConstants.SuperAdminImpersonationPolicy)]
+    [Authorize(Roles = "SuperAdmin")]
     [ProducesResponseType(typeof(StartImpersonationResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -86,7 +86,7 @@ public class ImpersonationController : ControllerBase
     }
 
     [HttpPost("stop")]
-    [Authorize(Policy = global::ImpersonationAuthConstants.SuperAdminImpersonationPolicy)]
+    [Authorize(Roles = "SuperAdmin")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

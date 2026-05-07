@@ -1,6 +1,3 @@
-using System;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using Eventix.Domain.Common;
 using Eventix.Domain.Enums;
 

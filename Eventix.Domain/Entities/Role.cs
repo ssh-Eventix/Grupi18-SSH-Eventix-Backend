@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Eventix.Domain.Common;
 
 namespace Eventix.Domain.Entities

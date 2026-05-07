@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using Eventix.Domain.Common;
+﻿using Eventix.Domain.Common;
 
 namespace Eventix.Domain.Entities
 {
@@ -11,7 +9,6 @@ namespace Eventix.Domain.Entities
         public string LastName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string PasswordHash { get; set; } = string.Empty;
-        // Link to a global/public user identity (optional). Used for auto-provisioning and correlation.
         public Guid? PublicUserId { get; set; }
         public bool IsActive { get; set; }
 

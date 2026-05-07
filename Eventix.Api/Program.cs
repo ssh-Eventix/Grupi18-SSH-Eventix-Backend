@@ -9,7 +9,6 @@ using Eventix.Infrastructure.Persistence.Database;
 using Eventix.Infrastructure.Persistence.Repositories;
 using Eventix.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
@@ -84,7 +83,8 @@ builder.Services
             ValidAudience = audience,
 
             ValidateLifetime = true,
-            ClockSkew = TimeSpan.Zero
+            ClockSkew = TimeSpan.Zero,
+            RoleClaimType = "role"
         };
 
         options.Events = new JwtBearerEvents
@@ -98,7 +98,7 @@ builder.Services.AddScoped<ITenantResolver, TenantResolver>();
 builder.Services.AddDbContext<PublicDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddDbContext<TenantDbContext>((serviceProvider, options) =>
+builder.Services.AddDbContext<TenantDbContext>((_, options) =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
     options.ReplaceService<IModelCacheKeyFactory, TenantModelCacheKeyFactory>();
@@ -150,47 +150,7 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddScoped<IAuthorizationHandler, TenantAdminHandler>();
-builder.Services.AddSingleton<IAuthorizationHandler, SuperAdminImpersonationHandler>();
-builder.Services.AddSingleton<IRolePermissionService, RolePermissionService>();
-builder.Services.AddScoped<IAuthorizationHandler, PermissionHandler>();
-
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("TenantAdminOrSuperAdmin", policy =>
-    {
-        policy.Requirements.Add(new TenantAdminRequirement());
-    });
-
-    // Only platform SuperAdmins may start/stop impersonation sessions
-    options.AddPolicy(ImpersonationAuthConstants.SuperAdminImpersonationPolicy, policy =>
-    {
-        policy.Requirements.Add(new SuperAdminImpersonationRequirement());
-    });
-
-    // Permission-based policies (use naming: "Permission:<Name>")
-    options.AddPolicy($"Permission:{Permission.EventsCreate}", p => p.Requirements.Add(new PermissionRequirement(Permission.EventsCreate)));
-    options.AddPolicy($"Permission:{Permission.EventsRead}", p => p.Requirements.Add(new PermissionRequirement(Permission.EventsRead)));
-    options.AddPolicy($"Permission:{Permission.EventsUpdate}", p => p.Requirements.Add(new PermissionRequirement(Permission.EventsUpdate)));
-    options.AddPolicy($"Permission:{Permission.EventsDelete}", p => p.Requirements.Add(new PermissionRequirement(Permission.EventsDelete)));
-
-    options.AddPolicy($"Permission:{Permission.TicketsCreate}", p => p.Requirements.Add(new PermissionRequirement(Permission.TicketsCreate)));
-    options.AddPolicy($"Permission:{Permission.TicketsRead}", p => p.Requirements.Add(new PermissionRequirement(Permission.TicketsRead)));
-    options.AddPolicy($"Permission:{Permission.TicketsUpdate}", p => p.Requirements.Add(new PermissionRequirement(Permission.TicketsUpdate)));
-    options.AddPolicy($"Permission:{Permission.TicketsDelete}", p => p.Requirements.Add(new PermissionRequirement(Permission.TicketsDelete)));
-    options.AddPolicy($"Permission:{Permission.TicketsPurchase}", p => p.Requirements.Add(new PermissionRequirement(Permission.TicketsPurchase)));
-
-    options.AddPolicy($"Permission:{Permission.VenuesCreate}", p => p.Requirements.Add(new PermissionRequirement(Permission.VenuesCreate)));
-    options.AddPolicy($"Permission:{Permission.VenuesRead}", p => p.Requirements.Add(new PermissionRequirement(Permission.VenuesRead)));
-    options.AddPolicy($"Permission:{Permission.VenuesUpdate}", p => p.Requirements.Add(new PermissionRequirement(Permission.VenuesUpdate)));
-    options.AddPolicy($"Permission:{Permission.VenuesDelete}", p => p.Requirements.Add(new PermissionRequirement(Permission.VenuesDelete)));
-
-    options.AddPolicy($"Permission:{Permission.UsersCreate}", p => p.Requirements.Add(new PermissionRequirement(Permission.UsersCreate)));
-    options.AddPolicy($"Permission:{Permission.UsersRead}", p => p.Requirements.Add(new PermissionRequirement(Permission.UsersRead)));
-    options.AddPolicy($"Permission:{Permission.UsersUpdate}", p => p.Requirements.Add(new PermissionRequirement(Permission.UsersUpdate)));
-    options.AddPolicy($"Permission:{Permission.UsersDelete}", p => p.Requirements.Add(new PermissionRequirement(Permission.UsersDelete)));
-    options.AddPolicy($"Permission:{Permission.UsersAssignRoles}", p => p.Requirements.Add(new PermissionRequirement(Permission.UsersAssignRoles)));
-});
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
@@ -204,7 +164,6 @@ app.UseHttpsRedirection();
 
 app.UseMiddleware<RequestLoggingMiddleware>();
 
-// tenant middleware must run before authentication/authorization so TenantContext is set from header/schema
 app.UseMiddleware<TenantMiddleware>();
 
 app.UseCors("ReactClient");
@@ -219,7 +178,6 @@ app.Run();
 
 public static class ImpersonationAuthConstants
 {
-    public const string SuperAdminImpersonationPolicy = "SuperAdminImpersonationOnly";
     public const string IsImpersonationClaim = "isImpersonation";
     public const string ImpersonationSessionIdClaim = "impersonationSessionId";
 }
