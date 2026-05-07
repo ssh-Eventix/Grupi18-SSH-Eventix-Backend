@@ -160,17 +160,17 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors("ReactClient");
-
+app.UseHttpsRedirection();
 //app.UseHttpsRedirection();
 
 app.UseMiddleware<RequestLoggingMiddleware>();
 
-// tenant middleware must run before authentication/authorization so TenantContext is set from header/schema
-app.UseMiddleware<TenantMiddleware>();
-
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseCors("ReactClient");
+
+app.UseMiddleware<TenantMiddleware>();
 
 app.MapGet("/api/health", () =>
 {
