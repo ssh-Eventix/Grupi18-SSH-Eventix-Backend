@@ -83,14 +83,26 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseMiddleware<RequestLoggingMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseCors("ReactClient");
+
 app.UseMiddleware<TenantMiddleware>();
+
+
+app.MapGet("/api/health", () =>
+{
+    return Results.Ok(new
+    {
+        message = "Backend is working",
+        time = DateTime.UtcNow
+    });
+});
 
 app.MapControllers();
 
