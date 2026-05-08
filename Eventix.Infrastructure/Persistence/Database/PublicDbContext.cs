@@ -11,8 +11,9 @@ public class PublicDbContext : DbContext
     }
 
     public DbSet<Tenant> Tenants => Set<Tenant>();
-    public DbSet<Role> Roles => Set<Role>();
     public DbSet<PublicUser> PublicUsers => Set<PublicUser>();
+    public DbSet<PublicRole> PublicRoles => Set<PublicRole>();
+    public DbSet<PublicUserRole> PublicUserRoles => Set<PublicUserRole>();
     public DbSet<TenantImpersonationLog> TenantImpersonationLogs => Set<TenantImpersonationLog>();
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -20,22 +21,30 @@ public class PublicDbContext : DbContext
         modelBuilder.HasDefaultSchema("public");
 
         ConfigureTenant(modelBuilder);
-        ConfigureRole(modelBuilder);
+        ConfigurePublicRole(modelBuilder);
+        ConfigurePublicUserRole(modelBuilder);
         ConfigurePublicUser(modelBuilder);
         ConfigureTenantImpersonationLog(modelBuilder);
 
         base.OnModelCreating(modelBuilder);
     }
 
-    private static void ConfigureRole(ModelBuilder modelBuilder)
+    private static void ConfigurePublicRole(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Role>(entity =>
+        modelBuilder.Entity<PublicRole>(entity =>
         {
-            entity.ToTable("Roles");
+            entity.ToTable("PublicRoles");
             entity.HasKey(x => x.Id);
-            entity.Property(x => x.Name).HasMaxLength(100).IsRequired();
-            entity.Property(x => x.IsGlobal).HasDefaultValue(true);
-            entity.HasIndex(x => new { x.IsGlobal, x.Name }).IsUnique();
+
+            entity.Property(x => x.Name)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entity.Property(x => x.Description)
+                .HasMaxLength(500);
+
+            entity.HasIndex(x => x.Name)
+                .IsUnique();
         });
     }
 
@@ -48,6 +57,28 @@ public class PublicDbContext : DbContext
             entity.Property(x => x.Email).HasMaxLength(200).IsRequired();
             entity.HasIndex(x => x.Email).IsUnique();
             entity.Property(x => x.IsActive).HasDefaultValue(true);
+        });
+    }
+
+    private static void ConfigurePublicUserRole(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<PublicUserRole>(entity =>
+        {
+            entity.ToTable("PublicUserRoles");
+            entity.HasKey(x => x.Id);
+
+            entity.HasIndex(x => new { x.PublicUserId, x.PublicRoleId })
+                .IsUnique();
+
+            entity.HasOne(x => x.PublicUser)
+                .WithMany(x => x.PublicUserRoles)
+                .HasForeignKey(x => x.PublicUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.PublicRole)
+                .WithMany(x => x.PublicUserRoles)
+                .HasForeignKey(x => x.PublicRoleId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 
