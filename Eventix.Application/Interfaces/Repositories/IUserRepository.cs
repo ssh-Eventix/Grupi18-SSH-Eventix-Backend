@@ -11,4 +11,5 @@ public interface IUserRepository
     Task UpdateAsync(User entity);
     Task DeleteAsync(User entity);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
+    Task<User?> GetByEmailAndTenantAsync(string email, Guid tenantId, CancellationToken ct);
 }

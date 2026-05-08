@@ -1,5 +1,4 @@
 ﻿using Eventix.Domain.Common;
-using Eventix.Domain.Enums;
 
 namespace Eventix.Domain.Entities;
 

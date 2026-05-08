@@ -1,4 +1,3 @@
-using System;
 using Eventix.Domain.Enums;
 using Eventix.Domain.Common;
 
