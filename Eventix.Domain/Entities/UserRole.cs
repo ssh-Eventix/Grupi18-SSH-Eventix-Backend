@@ -1,4 +1,3 @@
-using System;
 using Eventix.Domain.Common;
 
 namespace Eventix.Domain.Entities

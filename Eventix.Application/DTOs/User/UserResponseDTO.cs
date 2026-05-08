@@ -1,4 +1,4 @@
-namespace Eventix.Application.DTOs.Users;
+namespace Eventix.Application.DTOs.User;
 
 public class UserResponseDTO
 {

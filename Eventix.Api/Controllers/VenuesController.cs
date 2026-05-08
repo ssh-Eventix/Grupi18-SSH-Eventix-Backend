@@ -1,9 +1,6 @@
 ﻿using Eventix.Application.DTOs.Venues;
-using Eventix.Application.Interfaces.Repositories;
 using Eventix.Application.Interfaces.Services;
-using Eventix.Application.Services;
-using Eventix.Domain.Entities;
-using Eventix.Infrastructure.MultiTenancy;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Eventix.API.Controllers;
@@ -20,10 +17,12 @@ public class VenuesController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin,Buyer,SuperAdmin")]
     public async Task<IActionResult> GetAll()
         => Ok(await _service.GetAllAsync());
 
     [HttpGet("{id:guid}")]
+    [Authorize(Roles = "Admin,Buyer,SuperAdmin")]
     public async Task<IActionResult> GetById(Guid id)
     {
         var venue = await _service.GetByIdAsync(id);
@@ -31,14 +30,17 @@ public class VenuesController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<IActionResult> Create(CreateVenueDTO dto)
         => Ok(await _service.CreateAsync(dto));
 
     [HttpPut("{id:guid}")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<IActionResult> Update(Guid id, UpdateVenueDTO dto)
         => await _service.UpdateAsync(id, dto) ? NoContent() : NotFound();
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<IActionResult> Delete(Guid id)
         => await _service.DeleteAsync(id) ? NoContent() : NotFound();
 }
