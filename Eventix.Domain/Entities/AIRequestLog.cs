@@ -21,6 +21,5 @@ namespace Eventix.Domain.Entities
         public int TokensUsed { get; set; }
         public AIRequestStatus Status { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }
