@@ -160,7 +160,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
 //app.UseHttpsRedirection();
 
 app.UseMiddleware<RequestLoggingMiddleware>();
@@ -171,6 +170,7 @@ app.UseAuthorization();
 app.UseCors("ReactClient");
 
 app.UseMiddleware<TenantMiddleware>();
+
 
 app.MapGet("/api/health", () =>
 {
