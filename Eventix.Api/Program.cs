@@ -141,6 +141,7 @@ builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<IPublicUserRepository, PublicUserRepository>();
 
 builder.Services.AddCors(options =>
 {
@@ -171,12 +172,12 @@ if (app.Environment.IsDevelopment())
 
 app.UseMiddleware<RequestLoggingMiddleware>();
 
-app.UseAuthentication();
-app.UseAuthorization();
-
 app.UseCors("ReactClient");
 
 app.UseMiddleware<TenantMiddleware>();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 
 app.MapGet("/api/health", () =>
@@ -232,7 +233,7 @@ public static class ImpersonationTokenValidation
             return;
         }
 
-        if (session.TenantId != tenantContext.TenantId)
+        if (session.TargetTenantId != tenantContext.TenantId)
         {
             context.Fail("Tenant mismatch");
             return;
@@ -257,7 +258,9 @@ public static class ImpersonationTokenValidation
             return;
         }
 
-        if (session.TargetTenantUserId != subjectUserId)
+        if (session.TargetUserId.HasValue && session.TargetUserId.Value != subjectUserId)
+        {
             context.Fail("Impersonation subject mismatch");
+        }
     }
 }

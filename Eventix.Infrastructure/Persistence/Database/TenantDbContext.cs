@@ -32,7 +32,6 @@ public class TenantDbContext : DbContext
     public DbSet<EventSession> EventSessions => Set<EventSession>();
     public DbSet<Speaker> Speakers => Set<Speaker>();
 
-    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<TicketType> TicketTypes => Set<TicketType>();
     public DbSet<Booking> Bookings => Set<Booking>();
     public DbSet<BookingItem> BookingItems => Set<BookingItem>();
@@ -79,7 +78,6 @@ public class TenantDbContext : DbContext
         ConfigureDiscountCoupon(modelBuilder);
         ConfigureAIRequestLog(modelBuilder);
         ConfigureAuditLog(modelBuilder);
-        ConfigureRefreshToken(modelBuilder);
 
         base.OnModelCreating(modelBuilder);
     }
@@ -623,8 +621,6 @@ public class TenantDbContext : DbContext
             entity.Property(x => x.Prompt).IsRequired().HasMaxLength(4000);
             entity.Property(x => x.ResponseSummary).HasMaxLength(4000);
 
-            entity.HasIndex(x => new { x.TenantId, x.UserId, x.CreatedAt });
-
             entity.HasOne(x => x.User)
                 .WithMany(x => x.AIRequestLogs)
                 .HasForeignKey(x => x.UserId)
@@ -651,7 +647,6 @@ public class TenantDbContext : DbContext
             entity.Property(x => x.NewValues).HasColumnType("jsonb");
 
             entity.HasIndex(x => new { x.TenantId, x.EntityName, x.EntityId });
-            entity.HasIndex(x => new { x.TenantId, x.UserId, x.CreatedAt });
 
             entity.HasOne(x => x.User)
                 .WithMany(x => x.AuditLogs)
@@ -660,22 +655,4 @@ public class TenantDbContext : DbContext
         });
     }
 
-    private static void ConfigureRefreshToken(ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<RefreshToken>(entity =>
-        {
-            entity.ToTable("RefreshTokens");
-
-            entity.HasKey(x => x.Id);
-
-            entity.Property(x => x.TokenHash).IsRequired();
-
-            entity.HasIndex(x => x.TokenHash).IsUnique();
-
-            entity.HasOne<User>()
-                .WithMany()
-                .HasForeignKey(x => x.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
-        });
-    }
 }

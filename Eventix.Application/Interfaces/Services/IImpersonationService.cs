@@ -1,15 +1,17 @@
+using Eventix.Application.DTOs.Auth;
 namespace Eventix.Application.Interfaces.Services;
-
-public sealed record ImpersonationStartResult(string Token, DateTime ExpiresAtUtc, Guid SessionId);
 
 public interface IImpersonationService
 {
     Task<ImpersonationStartResult> StartImpersonationAsync(
-        Guid impersonatorTenantUserId,
-        Guid targetTenantUserId,
+        Guid superAdminPublicUserId,
+        Guid targetTenantId,
+        Guid targetPublicUserId,
         int minutes,
         string? reason = null,
         CancellationToken cancellationToken = default);
 
-    Task StopImpersonationAsync(Guid sessionId, CancellationToken cancellationToken = default);
+    Task StopImpersonationAsync(
+        Guid sessionId,
+        CancellationToken cancellationToken = default);
 }
