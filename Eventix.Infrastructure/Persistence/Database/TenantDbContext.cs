@@ -112,6 +112,8 @@ public class TenantDbContext : DbContext
             entity.Property(x => x.Name).IsRequired().HasMaxLength(100);
             entity.Property(x => x.Description).HasMaxLength(500);
 
+            entity.Property(x => x.IsGlobal).HasDefaultValue(false);
+
             entity.HasIndex(x => new { x.TenantId, x.Name }).IsUnique();
         });
     }
@@ -143,18 +145,7 @@ public class TenantDbContext : DbContext
     private static void ConfigureVenue(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Venue>(entity =>
-        {
-            entity.ToTable("Venues");
-
-            entity.HasKey(x => x.Id);
-
-            entity.Property(x => x.Name).IsRequired().HasMaxLength(200);
-            entity.Property(x => x.Code).IsRequired().HasMaxLength(50);
-            entity.Property(x => x.AddressLine1).IsRequired().HasMaxLength(250);
-            entity.Property(x => x.City).IsRequired().HasMaxLength(100);
-            entity.Property(x => x.Country).IsRequired().HasMaxLength(100);
-
-            entity.HasIndex(x => new { x.TenantId, x.Code }).IsUnique();
+        { entity.HasIndex(x => new { x.TenantId, x.Code }).IsUnique();
 
             entity.ToTable(t =>
             {
@@ -414,7 +405,6 @@ public class TenantDbContext : DbContext
         });
     }
 
-
     // ================= BOOKINGS =================
 
     private static void ConfigureBooking(ModelBuilder modelBuilder)
@@ -631,8 +621,6 @@ public class TenantDbContext : DbContext
             entity.Property(x => x.Prompt).IsRequired().HasMaxLength(4000);
             entity.Property(x => x.ResponseSummary).HasMaxLength(4000);
 
-            entity.HasIndex(x => new { x.TenantId, x.UserId, x.CreatedAt });
-
             entity.HasOne(x => x.User)
                 .WithMany(x => x.AIRequestLogs)
                 .HasForeignKey(x => x.UserId)
@@ -659,7 +647,6 @@ public class TenantDbContext : DbContext
             entity.Property(x => x.NewValues).HasColumnType("jsonb");
 
             entity.HasIndex(x => new { x.TenantId, x.EntityName, x.EntityId });
-            entity.HasIndex(x => new { x.TenantId, x.UserId, x.CreatedAt });
 
             entity.HasOne(x => x.User)
                 .WithMany(x => x.AuditLogs)
@@ -667,4 +654,5 @@ public class TenantDbContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
         });
     }
+
 }

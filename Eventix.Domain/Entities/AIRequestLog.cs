@@ -1,6 +1,3 @@
-using System;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using Eventix.Domain.Common;
 using Eventix.Domain.Enums;
 
@@ -21,6 +18,5 @@ namespace Eventix.Domain.Entities
         public int TokensUsed { get; set; }
         public AIRequestStatus Status { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }
