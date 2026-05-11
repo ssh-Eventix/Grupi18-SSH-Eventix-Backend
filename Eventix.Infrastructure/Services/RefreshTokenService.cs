@@ -18,21 +18,23 @@ public class RefreshTokenService : IRefreshTokenService
         _repo = repo;
     }
 
-    public async Task<(string Token, DateTime ExpiresAtUtc)> CreateAsync(Guid userId, CancellationToken ct)
+    public async Task<(string Token, DateTime ExpiresAtUtc)> CreateAsync(
+        Guid publicUserId,
+        CancellationToken ct)
     {
         var rawToken = GenerateSecureToken();
         var hash = Hash(rawToken);
 
         var entity = new RefreshToken
         {
-            Id = Guid.NewGuid(),
-            UserId = userId,
+            PublicUserId = publicUserId,
             TokenHash = hash,
             CreatedAtUtc = DateTime.UtcNow,
             ExpiresAtUtc = DateTime.UtcNow.AddDays(ExpirationDays)
         };
 
         await _repo.AddAsync(entity, ct);
+        await _repo.SaveChangesAsync(ct);
 
         return (rawToken, entity.ExpiresAtUtc);
     }
@@ -40,14 +42,19 @@ public class RefreshTokenService : IRefreshTokenService
     public string Hash(string token)
     {
         using var sha256 = SHA256.Create();
-        var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(token));
+
+        var bytes = sha256.ComputeHash(
+            Encoding.UTF8.GetBytes(token));
+
         return Convert.ToBase64String(bytes);
     }
 
     private static string GenerateSecureToken()
     {
         var bytes = new byte[TokenSize];
+
         RandomNumberGenerator.Fill(bytes);
+
         return Convert.ToBase64String(bytes);
     }
 }

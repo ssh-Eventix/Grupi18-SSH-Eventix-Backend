@@ -7,9 +7,9 @@ namespace Eventix.Infrastructure.Persistence.Repositories;
 
 public class RefreshTokenRepository : IRefreshTokenRepository
 {
-    private readonly TenantDbContext _context;
+    private readonly PublicDbContext _context;
 
-    public RefreshTokenRepository(TenantDbContext context)
+    public RefreshTokenRepository(PublicDbContext context)
     {
         _context = context;
     }
@@ -19,9 +19,12 @@ public class RefreshTokenRepository : IRefreshTokenRepository
         await _context.RefreshTokens.AddAsync(token, ct);
     }
 
-    public Task<RefreshToken?> GetByTokenHashAsync(string tokenHash, CancellationToken ct)
+    public Task<RefreshToken?> GetByTokenHashAsync(
+        string tokenHash,
+        CancellationToken ct)
     {
         return _context.RefreshTokens
+            .Include(x => x.PublicUser)
             .FirstOrDefaultAsync(x => x.TokenHash == tokenHash, ct);
     }
 
@@ -29,5 +32,10 @@ public class RefreshTokenRepository : IRefreshTokenRepository
     {
         _context.RefreshTokens.Update(token);
         return Task.CompletedTask;
+    }
+
+    public Task SaveChangesAsync(CancellationToken ct)
+    {
+        return _context.SaveChangesAsync(ct);
     }
 }

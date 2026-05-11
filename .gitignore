@@ -6,6 +6,7 @@ obj/
 # User-specific files
 *.user
 *.suo
+.env
 
 # Test results
 TestResults/
