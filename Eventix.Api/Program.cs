@@ -1,21 +1,24 @@
-using System.Security.Claims;
 using Eventix.API.Middleware;
 using Eventix.Application.Interfaces.Common;
 using Eventix.Application.Interfaces.Repositories;
 using Eventix.Application.Interfaces.Services;
 using Eventix.Application.Services;
+using Eventix.Infrastructure.Auth;
 using Eventix.Infrastructure.MultiTenancy;
 using Eventix.Infrastructure.Persistence.Database;
 using Eventix.Infrastructure.Persistence.Repositories;
 using Eventix.Infrastructure.Services;
+using Hangfire;
+using Hangfire.PostgreSql;
+using Hangfire.SqlServer;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Eventix.Infrastructure.Auth;
+using System.Security.Claims;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -142,6 +145,7 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<IPublicUserRepository, PublicUserRepository>();
+builder.Services.AddScoped<NotificationJobService>();
 
 builder.Services.AddCors(options =>
 {
@@ -160,7 +164,20 @@ builder.Services.AddAuthorization(options =>
         .Build();
 });
 
+// hangfire
+builder.Services.AddHangfire(config =>
+{
+    config.UsePostgreSqlStorage(options =>
+    {
+        options.UseNpgsqlConnection(builder.Configuration.GetConnectionString("DefaultConnection"));
+    });
+});
+
+builder.Services.AddHangfireServer();
+
 var app = builder.Build();
+
+app.UseHangfireDashboard("/hangfire");
 
 if (app.Environment.IsDevelopment())
 {
@@ -190,6 +207,11 @@ app.MapGet("/api/health", () =>
 });
 
 app.MapControllers();
+
+RecurringJob.AddOrUpdate(
+    "health-job",
+    () => Console.WriteLine("System running: " + DateTime.UtcNow),
+    Cron.Minutely);
 
 app.Run();
 
