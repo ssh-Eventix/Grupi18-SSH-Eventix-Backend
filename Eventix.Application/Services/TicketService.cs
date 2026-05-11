@@ -2,12 +2,8 @@
 using Eventix.Application.Interfaces.Services;
 using Eventix.Domain.Entities;
 using Eventix.Domain.Enums;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace Eventix.Application.Services
 {

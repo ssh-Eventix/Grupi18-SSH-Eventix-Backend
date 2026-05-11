@@ -1,4 +1,4 @@
-using Eventix.Application.DTOs.Users;
+using Eventix.Application.DTOs.User;
 using Eventix.Application.Interfaces.Common;
 using Eventix.Application.Interfaces.Repositories;
 using Eventix.Application.Interfaces.Services;
@@ -9,10 +9,10 @@ namespace Eventix.Application.Services;
 public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
-    private readonly Interfaces.Common.IPasswordHasher _passwordHasher;
+    private readonly IPasswordHasher _passwordHasher;
     private readonly ITenantContext _tenantContext;
 
-    public UserService(IUserRepository userRepository, Interfaces.Common.IPasswordHasher passwordHasher, ITenantContext tenantContext)
+    public UserService(IUserRepository userRepository,IPasswordHasher passwordHasher, ITenantContext tenantContext)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
@@ -37,7 +37,7 @@ public class UserService : IUserService
         return user is null || user.IsDeleted ? null : MapToDto(user);
     }
 
-    public async Task<UserResponseDTO> CreateAsync(CreateUserDTO dto, Guid tenantId, CancellationToken cancellationToken = default)
+    public async Task<UserResponseDTO> CreateAsync(CreateUserDTO dto, CancellationToken cancellationToken = default)
     {
         var existing = await _userRepository.GetByEmailAsync(dto.Email, cancellationToken);
         if (existing is not null && !existing.IsDeleted)

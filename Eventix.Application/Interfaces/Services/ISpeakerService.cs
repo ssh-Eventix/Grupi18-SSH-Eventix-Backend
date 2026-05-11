@@ -1,8 +1,4 @@
 ﻿using Eventix.Application.DTOs.Speaker;
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Eventix.Application.Interfaces.Services;
 

@@ -62,9 +62,14 @@ namespace Eventix.Application.Services
                 if (ticketType.QuantityAvailable < item.Quantity)
                     throw new Exception("Not enough tickets available");
 
+                if (item.Quantity <= 0)
+                    throw new Exception("Quantity must be greater than zero");
+
+                if (request.BookingItems == null || !request.BookingItems.Any())
+                    throw new Exception("Booking must have at least one item");
+
                 var bookingItem = new BookingItem
                 {
-                    BookingId = booking.Id,
                     TicketTypeId = item.TicketTypeId,
                     Quantity = item.Quantity,
                     UnitPrice = ticketType.Price
@@ -81,12 +86,10 @@ namespace Eventix.Application.Services
                     });
                 }
 
-                booking.TotalAmount = total;
+                ticketType.QuantityAvailable -= item.Quantity;
+                total += item.Quantity * ticketType.Price;
 
-                await _bookingRepository.AddAsync(booking);
-                await _bookingRepository.SaveChangesAsync();
-
-                return MapBooking(booking);
+                booking.BookingItems.Add(bookingItem);
             }
 
             booking.TotalAmount = total;
@@ -109,6 +112,7 @@ namespace Eventix.Application.Services
                     .SelectMany(bi => bi.Tickets)
                     .Select(t => new TicketDto
                     {
+                        Id = t.Id,
                         TicketCode = t.TicketCode,
                         QRCode = t.QRCode
                     }).ToList()
