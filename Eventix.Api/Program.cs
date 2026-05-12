@@ -4,13 +4,13 @@ using Eventix.Application.Interfaces.Repositories;
 using Eventix.Application.Interfaces.Services;
 using Eventix.Application.Services;
 using Eventix.Infrastructure.Auth;
+using Eventix.Infrastructure.BackgroundJobs;
 using Eventix.Infrastructure.MultiTenancy;
 using Eventix.Infrastructure.Persistence.Database;
 using Eventix.Infrastructure.Persistence.Repositories;
 using Eventix.Infrastructure.Services;
 using Hangfire;
 using Hangfire.PostgreSql;
-using Hangfire.SqlServer;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -19,6 +19,9 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Security.Claims;
 using System.Text;
+using Hangfire.Common;
+using Hangfire.Storage;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -145,8 +148,14 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<IPublicUserRepository, PublicUserRepository>();
-builder.Services.AddScoped<NotificationJobService>();
-
+builder.Services.AddScoped<BookingCleanupJob>();
+builder.Services.AddScoped<NotificationReminderJob>();
+builder.Services.AddScoped<TicketExpirationJob>();
+builder.Services.AddScoped<ReviewReminderJob>();
+builder.Services.AddScoped<PaymentRetryJob>();
+builder.Services.AddScoped<EventStatusUpdateJob>();
+builder.Services.AddScoped<CouponExpirationJob>();
+builder.Services.AddScoped<CheckInAnalyticsJob>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactClient", policy =>
@@ -208,10 +217,7 @@ app.MapGet("/api/health", () =>
 
 app.MapControllers();
 
-RecurringJob.AddOrUpdate(
-    "health-job",
-    () => Console.WriteLine("System running: " + DateTime.UtcNow),
-    Cron.Minutely);
+JobScheduler.RegisterJobs();
 
 app.Run();
 
