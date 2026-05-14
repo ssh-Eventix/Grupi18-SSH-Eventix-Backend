@@ -9,6 +9,10 @@ namespace Eventix.Domain.Entities
     public class AuditLog : TenantBaseEntity
     {
         public Guid UserId { get; set; } //foreign key that relates to Users Table
+<<<<<<< Updated upstream
+=======
+    
+>>>>>>> Stashed changes
         public User User { get; set; } = default!;
 
         public string EntityName { get; set; } = string.Empty;
