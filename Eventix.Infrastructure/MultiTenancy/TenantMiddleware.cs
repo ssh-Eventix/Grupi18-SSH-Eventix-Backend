@@ -22,7 +22,9 @@ public class TenantMiddleware
         if (path != null &&
             (path.StartsWith("/swagger") ||
              path.StartsWith("/api/tenants") ||
-             path.StartsWith("/api/auth")))
+             path.StartsWith("/api/auth")||
+             path.StartsWith("/api/health")||
+             path.StartsWith("/hangfire")))
         {
             await _next(httpContext);
             return;
@@ -32,8 +34,7 @@ public class TenantMiddleware
 
         if (string.IsNullOrWhiteSpace(slug))
         {
-            httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
-            await httpContext.Response.WriteAsync("Missing X-Tenant-Slug header.");
+            await _next(httpContext);
             return;
         }
 
@@ -41,8 +42,7 @@ public class TenantMiddleware
 
         if (tenant is null)
         {
-            httpContext.Response.StatusCode = StatusCodes.Status404NotFound;
-            await httpContext.Response.WriteAsync("Tenant not found.");
+            await _next(httpContext);
             return;
         }
 
