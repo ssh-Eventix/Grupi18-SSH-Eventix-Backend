@@ -7,10 +7,11 @@ namespace Eventix.Domain.Entities
         public string Email { get; set; } = string.Empty;
         public string PasswordHash { get; set; } = string.Empty; 
         public string FullName { get; set; } = string.Empty;
-        public bool IsSuperAdmin { get; set; } = false;
         public bool IsActive { get; set; } = true;
 
+        public DateTime? LastLoginAtUtc { get; set; }
         public ICollection<PublicUserRole> PublicUserRoles { get; set; } = new List<PublicUserRole>();
+        public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
     }
 }
 

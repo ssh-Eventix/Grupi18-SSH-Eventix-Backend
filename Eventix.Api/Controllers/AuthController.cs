@@ -1,8 +1,8 @@
 using Eventix.Application.DTOs.User;
-using Eventix.Domain.Entities;
 using Eventix.Application.Interfaces.Common;
 using Eventix.Application.Interfaces.Repositories;
 using Eventix.Application.Interfaces.Services;
+using Eventix.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UserRoleEnum = Eventix.Domain.Enums.UserRole;
@@ -59,17 +59,35 @@ public class AuthController : ControllerBase
             return BadRequest("FirstName, LastName, Email and Password are required.");
         }
 
-        var existing = await _userRepository.GetByEmailAsync(dto.Email, ct);
-        if (existing is not null && !existing.IsDeleted)
+        var email = dto.Email.Trim().ToLower();
+
+        var existingPublicUser = await _publicUserRepository.GetByEmailAsync(email, ct);
+        if (existingPublicUser is not null && !existingPublicUser.IsDeleted)
             return Conflict("A user with this email already exists.");
+
+        var existingTenantUser = await _userRepository.GetByEmailAsync(email, ct);
+        if (existingTenantUser is not null && !existingTenantUser.IsDeleted)
+            return Conflict("A tenant user with this email already exists.");
+
+        var publicUser = new PublicUser
+        {
+            Email = email,
+            FullName = $"{dto.FirstName.Trim()} {dto.LastName.Trim()}",
+            PasswordHash = _passwordHasher.Hash(dto.Password),
+            IsActive = true
+        };
+
+        await _publicUserRepository.AddAsync(publicUser, ct);
+        await _publicUserRepository.SaveChangesAsync(ct);
 
         var user = new User
         {
             TenantId = _tenantContext.TenantId,
+            PublicUserId = publicUser.Id,
             FirstName = dto.FirstName.Trim(),
             LastName = dto.LastName.Trim(),
-            Email = dto.Email.Trim(),
-            PasswordHash = _passwordHasher.Hash(dto.Password),
+            Email = email,
+            PasswordHash = publicUser.PasswordHash,
             IsActive = true
         };
 
@@ -77,8 +95,10 @@ public class AuthController : ControllerBase
         await _userRepository.SaveChangesAsync(ct);
 
         var roles = await _roleRepository.GetAllAsync(ct);
+
         var buyerRole = roles.FirstOrDefault(r =>
-            string.Equals(r.Name, UserRoleEnum.Buyer.ToString(), StringComparison.OrdinalIgnoreCase) && !r.IsDeleted);
+            string.Equals(r.Name, UserRoleEnum.Buyer.ToString(), StringComparison.OrdinalIgnoreCase) &&
+            !r.IsDeleted);
 
         if (buyerRole is null)
             return StatusCode(500, "Default Buyer role is not configured for this tenant.");
@@ -89,17 +109,24 @@ public class AuthController : ControllerBase
             UserId = user.Id,
             RoleId = buyerRole.Id
         }, ct);
+
         await _userRoleRepository.SaveChangesAsync(ct);
 
-        var mergedRoles = new List<string> { UserRoleEnum.Buyer.ToString() };
+        var tenantRoles = new List<string>
+        {
+            UserRoleEnum.Buyer.ToString()
+        };
 
         var (accessToken, accessExpires) = await _jwtTokenService.GenerateTokenAsync(
-            user.Id,
-            user.Email,
-            _tenantContext.TenantId,
-            mergedRoles,
+            subjectId: user.Id,
+            email: user.Email,
+            tenantId: _tenantContext.TenantId,
+            roles: tenantRoles,
             cancellationToken: ct);
-        var (refreshToken, refreshExpires) = await _refreshTokenService.CreateAsync(user.Id, ct);
+
+        var (refreshToken, refreshExpires) = await _refreshTokenService.CreateAsync(
+            publicUser.Id,
+            ct);
 
         return Ok(new LoginResponseDTO
         {
@@ -115,46 +142,34 @@ public class AuthController : ControllerBase
         [FromBody] LoginRequestDTO dto,
         CancellationToken ct)
     {
-        var user = await _userRepository.GetByEmailAsync(dto.Email, ct);
-        PublicUser? publicUser = null;
-        List<string> tenantRoles = new();
-
-        if (user != null && !user.IsDeleted && user.IsActive)
+        if (string.IsNullOrWhiteSpace(dto.Email) ||
+            string.IsNullOrWhiteSpace(dto.Password))
         {
-            if (!_passwordHasher.Verify(user.PasswordHash, dto.Password))
-                return Unauthorized();
-
-            tenantRoles = await _userRoleRepository.GetRoleNamesByUserIdAsync(user.Id, ct);
-
-            if (user.PublicUserId.HasValue)
-            {
-                publicUser = await _publicUserRepository.GetByIdAsync(user.PublicUserId.Value, ct);
-                if (publicUser != null && publicUser.IsActive)
-                {
-                    
-                }
-            }
+            return BadRequest("Email and password are required.");
         }
-        else
+
+        var email = dto.Email.Trim().ToLower();
+
+        var publicUser = await _publicUserRepository.GetByEmailAsync(email, ct);
+
+        if (publicUser is null || publicUser.IsDeleted || !publicUser.IsActive)
+            return Unauthorized();
+
+        if (!_passwordHasher.Verify(publicUser.PasswordHash, dto.Password))
+            return Unauthorized();
+
+        var user = await _userRepository.GetByPublicUserIdAsync(publicUser.Id, ct);
+
+        if (user is null || user.IsDeleted || !user.IsActive)
         {
-            publicUser = await _publicUserRepository.GetByEmailAsync(dto.Email, ct);
-            if (publicUser is null || !publicUser.IsActive)
-                return Unauthorized();
-
-            if (!_passwordHasher.Verify(publicUser.PasswordHash, dto.Password))
-                return Unauthorized();
-
-            if (!publicUser.IsSuperAdmin)
-                return Unauthorized();
-
             user = new User
             {
                 TenantId = _tenantContext.TenantId,
-                Email = publicUser.Email,
-                FirstName = string.Empty,
-                LastName = string.Empty,
-                PasswordHash = _passwordHasher.Hash(Guid.NewGuid().ToString()),
                 PublicUserId = publicUser.Id,
+                Email = publicUser.Email,
+                FirstName = publicUser.FullName,
+                LastName = string.Empty,
+                PasswordHash = publicUser.PasswordHash,
                 IsActive = true
             };
 
@@ -162,23 +177,28 @@ public class AuthController : ControllerBase
             await _userRepository.SaveChangesAsync(ct);
         }
 
-        var tenantRolesNormalized = tenantRoles
+        var tenantRoles = await _userRoleRepository.GetRoleNamesByUserIdAsync(user.Id, ct);
+
+        var roles = tenantRoles
             .Where(r => !string.IsNullOrWhiteSpace(r))
             .Select(r => r.Trim())
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
-        var mergedRoles = tenantRolesNormalized;
-
-        var isSuperAdmin = publicUser != null && publicUser.IsSuperAdmin;
 
         var (accessToken, accessExpires) = await _jwtTokenService.GenerateTokenAsync(
-            user.Id,
-            user.Email,
-            _tenantContext.TenantId,
-            mergedRoles,
-            isSuperAdmin,
+            subjectId: user.Id,
+            email: user.Email,
+            tenantId: _tenantContext.TenantId,
+            roles: roles,
             cancellationToken: ct);
-        var (refreshToken, refreshExpires) = await _refreshTokenService.CreateAsync(user.Id, ct);
+
+        var (refreshToken, refreshExpires) = await _refreshTokenService.CreateAsync(
+            publicUser.Id,
+            ct);
+
+        publicUser.LastLoginAtUtc = DateTime.UtcNow;
+        await _publicUserRepository.UpdateAsync(publicUser, ct);
+        await _publicUserRepository.SaveChangesAsync(ct);
 
         return Ok(new LoginResponseDTO
         {
@@ -194,6 +214,9 @@ public class AuthController : ControllerBase
         [FromBody] RefreshRequestDTO dto,
         CancellationToken ct)
     {
+        if (string.IsNullOrWhiteSpace(dto.RefreshToken))
+            return BadRequest("Refresh token is required.");
+
         var hash = _refreshTokenService.Hash(dto.RefreshToken);
 
         var existing = await _refreshTokenRepository.GetByTokenHashAsync(hash, ct);
@@ -201,53 +224,41 @@ public class AuthController : ControllerBase
         if (existing is null || existing.IsExpired || existing.IsRevoked)
             return Unauthorized();
 
-        var user = await _userRepository.GetByIdAsync(existing.UserId, ct);
-        if (user is null)
+        var publicUser = await _publicUserRepository.GetByIdAsync(existing.PublicUserId, ct);
+
+        if (publicUser is null || publicUser.IsDeleted || !publicUser.IsActive)
+            return Unauthorized();
+
+        var user = await _userRepository.GetByPublicUserIdAsync(publicUser.Id, ct);
+
+        if (user is null || user.IsDeleted || !user.IsActive)
             return Unauthorized();
 
         existing.RevokedAtUtc = DateTime.UtcNow;
 
         var tenantRoles = await _userRoleRepository.GetRoleNamesByUserIdAsync(user.Id, ct);
-        if (user.PublicUserId.HasValue)
-        {
-            var publicUser = await _publicUserRepository.GetByIdAsync(user.PublicUserId.Value, ct);
-            if (publicUser != null && publicUser.IsActive)
-            {
-                // simplified model: no GlobalUserRole mappings; use PublicUser.IsSuperAdmin instead
-            }
-        }
 
-        var tenantRolesNormalized = tenantRoles
+        var roles = tenantRoles
             .Where(r => !string.IsNullOrWhiteSpace(r))
             .Select(r => r.Trim())
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
-        var mergedRoles = tenantRolesNormalized;
-
-        var isSuperAdminRefresh = false;
-        if (user.PublicUserId.HasValue)
-        {
-            var publicUser = await _publicUserRepository.GetByIdAsync(user.PublicUserId.Value, ct);
-            if (publicUser != null && publicUser.IsActive)
-            {
-                isSuperAdminRefresh = publicUser.IsSuperAdmin;
-            }
-        }
 
         var (accessToken, accessExpires) = await _jwtTokenService.GenerateTokenAsync(
-            user.Id,
-            user.Email,
-            _tenantContext.TenantId,
-            mergedRoles,
-            isSuperAdminRefresh,
+            subjectId: user.Id,
+            email: user.Email,
+            tenantId: _tenantContext.TenantId,
+            roles: roles,
             cancellationToken: ct);
 
-        var (newRefreshToken, refreshExpires) =
-            await _refreshTokenService.CreateAsync(user.Id, ct);
+        var (newRefreshToken, refreshExpires) = await _refreshTokenService.CreateAsync(
+            publicUser.Id,
+            ct);
 
         existing.ReplacedByTokenHash = _refreshTokenService.Hash(newRefreshToken);
 
         await _refreshTokenRepository.UpdateAsync(existing, ct);
+        await _refreshTokenRepository.SaveChangesAsync(ct);
 
         return Ok(new LoginResponseDTO
         {

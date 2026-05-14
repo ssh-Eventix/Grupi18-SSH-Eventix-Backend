@@ -1,21 +1,27 @@
-using System.Security.Claims;
 using Eventix.API.Middleware;
 using Eventix.Application.Interfaces.Common;
 using Eventix.Application.Interfaces.Repositories;
 using Eventix.Application.Interfaces.Services;
 using Eventix.Application.Services;
+using Eventix.Infrastructure.Auth;
+using Eventix.Infrastructure.BackgroundJobs;
 using Eventix.Infrastructure.MultiTenancy;
 using Eventix.Infrastructure.Persistence.Database;
 using Eventix.Infrastructure.Persistence.Repositories;
 using Eventix.Infrastructure.Services;
+using Hangfire;
+using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Eventix.Infrastructure.Auth;
+using System.Security.Claims;
+using System.Text;
+using Hangfire.Common;
+using Hangfire.Storage;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -141,7 +147,15 @@ builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
-
+builder.Services.AddScoped<IPublicUserRepository, PublicUserRepository>();
+builder.Services.AddScoped<BookingCleanupJob>();
+builder.Services.AddScoped<NotificationReminderJob>();
+builder.Services.AddScoped<TicketExpirationJob>();
+builder.Services.AddScoped<ReviewReminderJob>();
+builder.Services.AddScoped<PaymentRetryJob>();
+builder.Services.AddScoped<EventStatusUpdateJob>();
+builder.Services.AddScoped<CouponExpirationJob>();
+builder.Services.AddScoped<CheckInAnalyticsJob>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactClient", policy =>
@@ -159,7 +173,20 @@ builder.Services.AddAuthorization(options =>
         .Build();
 });
 
+// hangfire
+builder.Services.AddHangfire(config =>
+{
+    config.UsePostgreSqlStorage(options =>
+    {
+        options.UseNpgsqlConnection(builder.Configuration.GetConnectionString("DefaultConnection"));
+    });
+});
+
+builder.Services.AddHangfireServer();
+
 var app = builder.Build();
+
+app.UseHangfireDashboard("/hangfire");
 
 if (app.Environment.IsDevelopment())
 {
@@ -171,12 +198,12 @@ if (app.Environment.IsDevelopment())
 
 app.UseMiddleware<RequestLoggingMiddleware>();
 
-app.UseAuthentication();
-app.UseAuthorization();
-
 app.UseCors("ReactClient");
 
 app.UseMiddleware<TenantMiddleware>();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 
 app.MapGet("/api/health", () =>
@@ -189,6 +216,8 @@ app.MapGet("/api/health", () =>
 });
 
 app.MapControllers();
+
+JobScheduler.RegisterJobs();
 
 app.Run();
 
@@ -232,7 +261,7 @@ public static class ImpersonationTokenValidation
             return;
         }
 
-        if (session.TenantId != tenantContext.TenantId)
+        if (session.TargetTenantId != tenantContext.TenantId)
         {
             context.Fail("Tenant mismatch");
             return;
@@ -257,7 +286,9 @@ public static class ImpersonationTokenValidation
             return;
         }
 
-        if (session.TargetTenantUserId != subjectUserId)
+        if (session.TargetUserId.HasValue && session.TargetUserId.Value != subjectUserId)
+        {
             context.Fail("Impersonation subject mismatch");
+        }
     }
 }

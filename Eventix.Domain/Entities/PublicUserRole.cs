@@ -2,7 +2,7 @@
 
 namespace Eventix.Domain.Entities;
 
-public class PublicUserRole : BaseEntity
+public class PublicUserRole 
 {
     public Guid PublicUserId { get; set; }
 

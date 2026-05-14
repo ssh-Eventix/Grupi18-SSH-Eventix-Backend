@@ -24,6 +24,14 @@ public class UserRepository : IUserRepository
             .Where(x => x.TenantId == _tenantContext.TenantId && !x.IsDeleted)
             .ToListAsync(cancellationToken);
 
+    public async Task<User?> GetByPublicUserIdAsync(Guid publicUserId, CancellationToken ct)
+    {
+        return await _context.Users
+            .Include(x => x.UserRoles)
+            .ThenInclude(x => x.Role)
+            .FirstOrDefaultAsync(x => x.PublicUserId == publicUserId, ct);
+    }
+
     public Task<User?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         => _context.Users
             .FirstOrDefaultAsync(x => x.Id == id && x.TenantId == _tenantContext.TenantId && !x.IsDeleted, cancellationToken);

@@ -5,7 +5,9 @@ namespace Eventix.Domain.Entities
 {
     public class AuditLog : TenantBaseEntity
     {
+<<<<<<< HEAD
         public Guid UserId { get; set; } //foreign key that relates to Users Table
+
         public User User { get; set; } = default!;
 
         public string EntityName { get; set; } = string.Empty;
