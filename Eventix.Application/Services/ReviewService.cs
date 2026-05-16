@@ -20,13 +20,13 @@ public class ReviewService : IReviewService
 
     public async Task<List<ReviewDto>> GetAllAsync(CancellationToken ct)
     {
-        var data = await _repo.GetAllAsync(_tenant.TenantId, ct);
+        var data = await _repo.GetAllAsync(ct);
         return data.Select(Map).ToList();
     }
 
     public async Task<ReviewDto?> GetByIdAsync(Guid id, CancellationToken ct)
     {
-        var data = await _repo.GetByIdAsync(id, _tenant.TenantId, ct);
+        var data = await _repo.GetByIdAsync(id, ct);
         return data is null ? null : Map(data);
     }
 
