@@ -15,7 +15,7 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                 name: "public");
 
             migrationBuilder.CreateTable(
-                name: "EventCategories",
+                name: "EventCategory",
                 schema: "public",
                 columns: table => new
                 {
@@ -36,7 +36,7 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                 });
 
             migrationBuilder.CreateTable(
-                name: "PaymentMethods",
+                name: "PaymentMethod",
                 schema: "public",
                 columns: table => new
                 {
@@ -56,7 +56,7 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                 });
 
             migrationBuilder.CreateTable(
-                name: "Roles",
+                name: "Role",
                 schema: "public",
                 columns: table => new
                 {
@@ -74,7 +74,7 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                 });
 
             migrationBuilder.CreateTable(
-                name: "Speakers",
+                name: "Speaker",
                 schema: "public",
                 columns: table => new
                 {
@@ -96,7 +96,7 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                 });
 
             migrationBuilder.CreateTable(
-                name: "Users",
+                name: "User",
                 schema: "public",
                 columns: table => new
                 {
@@ -117,7 +117,7 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                 });
 
             migrationBuilder.CreateTable(
-                name: "Venues",
+                name: "Venue",
                 schema: "public",
                 columns: table => new
                 {
@@ -142,7 +142,7 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                 });
 
             migrationBuilder.CreateTable(
-                name: "AIRequestLogs",
+                name: "AIRequestLog",
                 schema: "public",
                 columns: table => new
                 {
@@ -167,13 +167,13 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                         name: "FK_AIRequestLogs_Users_UserId",
                         column: x => x.UserId,
                         principalSchema: "public",
-                        principalTable: "Users",
+                        principalTable: "User",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
-                name: "AuditLogs",
+                name: "AuditLog",
                 schema: "public",
                 columns: table => new
                 {
@@ -197,13 +197,13 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                         name: "FK_AuditLogs_Users_UserId",
                         column: x => x.UserId,
                         principalSchema: "public",
-                        principalTable: "Users",
+                        principalTable: "User",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
-                name: "UserRoles",
+                name: "UserRole",
                 schema: "public",
                 columns: table => new
                 {
@@ -223,20 +223,20 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                         name: "FK_UserRoles_Roles_RoleId",
                         column: x => x.RoleId,
                         principalSchema: "public",
-                        principalTable: "Roles",
+                        principalTable: "Role",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_UserRoles_Users_UserId",
                         column: x => x.UserId,
                         principalSchema: "public",
-                        principalTable: "Users",
+                        principalTable: "User",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Events",
+                name: "Event",
                 schema: "public",
                 columns: table => new
                 {
@@ -272,20 +272,20 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                         name: "FK_Events_EventCategories_EventCategoryId",
                         column: x => x.EventCategoryId,
                         principalSchema: "public",
-                        principalTable: "EventCategories",
+                        principalTable: "EventCategory",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Events_Venues_VenueId",
                         column: x => x.VenueId,
                         principalSchema: "public",
-                        principalTable: "Venues",
+                        principalTable: "Venue",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
-                name: "VenueSections",
+                name: "VenueSection",
                 schema: "public",
                 columns: table => new
                 {
@@ -312,13 +312,13 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                         name: "FK_VenueSections_Venues_VenueId",
                         column: x => x.VenueId,
                         principalSchema: "public",
-                        principalTable: "Venues",
+                        principalTable: "Venue",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Bookings",
+                name: "Booking",
                 schema: "public",
                 columns: table => new
                 {
@@ -342,20 +342,20 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                         name: "FK_Bookings_Events_EventId",
                         column: x => x.EventId,
                         principalSchema: "public",
-                        principalTable: "Events",
+                        principalTable: "Event",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Bookings_Users_UserId",
                         column: x => x.UserId,
                         principalSchema: "public",
-                        principalTable: "Users",
+                        principalTable: "User",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
-                name: "DiscountCoupons",
+                name: "DiscountCoupon",
                 schema: "public",
                 columns: table => new
                 {
@@ -384,13 +384,13 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                         name: "FK_DiscountCoupons_Events_EventId",
                         column: x => x.EventId,
                         principalSchema: "public",
-                        principalTable: "Events",
+                        principalTable: "Event",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "EventSessions",
+                name: "EventSession",
                 schema: "public",
                 columns: table => new
                 {
@@ -414,20 +414,20 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                         name: "FK_EventSessions_Events_EventId",
                         column: x => x.EventId,
                         principalSchema: "public",
-                        principalTable: "Events",
+                        principalTable: "Event",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_EventSessions_Speakers_SpeakerId",
                         column: x => x.SpeakerId,
                         principalSchema: "public",
-                        principalTable: "Speakers",
+                        principalTable: "Speaker",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.SetNull);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Notifications",
+                name: "Notification",
                 schema: "public",
                 columns: table => new
                 {
@@ -451,20 +451,20 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                         name: "FK_Notifications_Events_EventId",
                         column: x => x.EventId,
                         principalSchema: "public",
-                        principalTable: "Events",
+                        principalTable: "Event",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
                         name: "FK_Notifications_Users_UserId",
                         column: x => x.UserId,
                         principalSchema: "public",
-                        principalTable: "Users",
+                        principalTable: "User",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Reviews",
+                name: "Review",
                 schema: "public",
                 columns: table => new
                 {
@@ -487,20 +487,20 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                         name: "FK_Reviews_Events_EventId",
                         column: x => x.EventId,
                         principalSchema: "public",
-                        principalTable: "Events",
+                        principalTable: "Event",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Reviews_Users_UserId",
                         column: x => x.UserId,
                         principalSchema: "public",
-                        principalTable: "Users",
+                        principalTable: "User",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
-                name: "EventSections",
+                name: "EventSection",
                 schema: "public",
                 columns: table => new
                 {
@@ -527,20 +527,20 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                         name: "FK_EventSections_Events_EventId",
                         column: x => x.EventId,
                         principalSchema: "public",
-                        principalTable: "Events",
+                        principalTable: "Event",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_EventSections_VenueSections_VenueSectionId",
                         column: x => x.VenueSectionId,
                         principalSchema: "public",
-                        principalTable: "VenueSections",
+                        principalTable: "VenueSection",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Payments",
+                name: "Payment",
                 schema: "public",
                 columns: table => new
                 {
@@ -564,20 +564,20 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                         name: "FK_Payments_Bookings_BookingId",
                         column: x => x.BookingId,
                         principalSchema: "public",
-                        principalTable: "Bookings",
+                        principalTable: "Booking",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Payments_PaymentMethods_PaymentMethodId",
                         column: x => x.PaymentMethodId,
                         principalSchema: "public",
-                        principalTable: "PaymentMethods",
+                        principalTable: "PaymentMethod",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
-                name: "TicketTypes",
+                name: "TicketType",
                 schema: "public",
                 columns: table => new
                 {
@@ -607,20 +607,20 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                         name: "FK_TicketTypes_EventSections_EventSectionId",
                         column: x => x.EventSectionId,
                         principalSchema: "public",
-                        principalTable: "EventSections",
+                        principalTable: "EventSection",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_TicketTypes_Events_EventId",
                         column: x => x.EventId,
                         principalSchema: "public",
-                        principalTable: "Events",
+                        principalTable: "Event",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "BookingItems",
+                name: "BookingItem",
                 schema: "public",
                 columns: table => new
                 {
@@ -644,27 +644,27 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                         name: "FK_BookingItems_Bookings_BookingId",
                         column: x => x.BookingId,
                         principalSchema: "public",
-                        principalTable: "Bookings",
+                        principalTable: "Booking",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_BookingItems_EventSections_EventSectionId",
                         column: x => x.EventSectionId,
                         principalSchema: "public",
-                        principalTable: "EventSections",
+                        principalTable: "EventSection",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_BookingItems_TicketTypes_TicketTypeId",
                         column: x => x.TicketTypeId,
                         principalSchema: "public",
-                        principalTable: "TicketTypes",
+                        principalTable: "TicketType",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Tickets",
+                name: "Ticket",
                 schema: "public",
                 columns: table => new
                 {
@@ -687,13 +687,13 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                         name: "FK_Tickets_BookingItems_BookingItemId",
                         column: x => x.BookingItemId,
                         principalSchema: "public",
-                        principalTable: "BookingItems",
+                        principalTable: "BookingItem",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "CheckIns",
+                name: "CheckIn",
                 schema: "public",
                 columns: table => new
                 {
@@ -714,14 +714,14 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                         name: "FK_CheckIns_Tickets_TicketId",
                         column: x => x.TicketId,
                         principalSchema: "public",
-                        principalTable: "Tickets",
+                        principalTable: "Ticket",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_CheckIns_Users_CheckedInByUserId",
                         column: x => x.CheckedInByUserId,
                         principalSchema: "public",
-                        principalTable: "Users",
+                        principalTable: "User",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -729,208 +729,208 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
             migrationBuilder.CreateIndex(
                 name: "IX_AIRequestLogs_TenantId_UserId_CreatedAt",
                 schema: "public",
-                table: "AIRequestLogs",
+                table: "AIRequestLog",
                 columns: new[] { "TenantId", "UserId", "CreatedAt" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_AIRequestLogs_UserId",
                 schema: "public",
-                table: "AIRequestLogs",
+                table: "AIRequestLog",
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AuditLogs_TenantId_EntityName_EntityId",
                 schema: "public",
-                table: "AuditLogs",
+                table: "AuditLog",
                 columns: new[] { "TenantId", "EntityName", "EntityId" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_AuditLogs_TenantId_UserId_CreatedAt",
                 schema: "public",
-                table: "AuditLogs",
+                table: "AuditLog",
                 columns: new[] { "TenantId", "UserId", "CreatedAt" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_AuditLogs_UserId",
                 schema: "public",
-                table: "AuditLogs",
+                table: "AuditLog",
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_BookingItems_BookingId",
                 schema: "public",
-                table: "BookingItems",
+                table: "BookingItem",
                 column: "BookingId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_BookingItems_EventSectionId",
                 schema: "public",
-                table: "BookingItems",
+                table: "BookingItem",
                 column: "EventSectionId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_BookingItems_TicketTypeId",
                 schema: "public",
-                table: "BookingItems",
+                table: "BookingItem",
                 column: "TicketTypeId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Bookings_EventId",
                 schema: "public",
-                table: "Bookings",
+                table: "Booking",
                 column: "EventId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Bookings_TenantId_ReferenceNumber",
                 schema: "public",
-                table: "Bookings",
+                table: "Booking",
                 columns: new[] { "TenantId", "ReferenceNumber" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Bookings_UserId",
                 schema: "public",
-                table: "Bookings",
+                table: "Booking",
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_CheckIns_CheckedInByUserId",
                 schema: "public",
-                table: "CheckIns",
+                table: "CheckIn",
                 column: "CheckedInByUserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_CheckIns_TenantId_TicketId",
                 schema: "public",
-                table: "CheckIns",
+                table: "CheckIn",
                 columns: new[] { "TenantId", "TicketId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_CheckIns_TicketId",
                 schema: "public",
-                table: "CheckIns",
+                table: "CheckIn",
                 column: "TicketId",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_DiscountCoupons_EventId",
                 schema: "public",
-                table: "DiscountCoupons",
+                table: "DiscountCoupon",
                 column: "EventId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_DiscountCoupons_TenantId_EventId_Code",
                 schema: "public",
-                table: "DiscountCoupons",
+                table: "DiscountCoupon",
                 columns: new[] { "TenantId", "EventId", "Code" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_EventCategories_TenantId_Name",
                 schema: "public",
-                table: "EventCategories",
+                table: "EventCategory",
                 columns: new[] { "TenantId", "Name" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Events_EventCategoryId",
                 schema: "public",
-                table: "Events",
+                table: "Event",
                 column: "EventCategoryId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Events_TenantId_Slug",
                 schema: "public",
-                table: "Events",
+                table: "Event",
                 columns: new[] { "TenantId", "Slug" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Events_VenueId",
                 schema: "public",
-                table: "Events",
+                table: "Event",
                 column: "VenueId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_EventSections_EventId",
                 schema: "public",
-                table: "EventSections",
+                table: "EventSection",
                 column: "EventId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_EventSections_TenantId_EventId_Code",
                 schema: "public",
-                table: "EventSections",
+                table: "EventSection",
                 columns: new[] { "TenantId", "EventId", "Code" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_EventSections_TenantId_EventId_VenueSectionId",
                 schema: "public",
-                table: "EventSections",
+                table: "EventSection",
                 columns: new[] { "TenantId", "EventId", "VenueSectionId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_EventSections_VenueSectionId",
                 schema: "public",
-                table: "EventSections",
+                table: "EventSection",
                 column: "VenueSectionId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_EventSessions_EventId",
                 schema: "public",
-                table: "EventSessions",
+                table: "EventSession",
                 column: "EventId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_EventSessions_SpeakerId",
                 schema: "public",
-                table: "EventSessions",
+                table: "EventSession",
                 column: "SpeakerId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Notifications_EventId",
                 schema: "public",
-                table: "Notifications",
+                table: "Notification",
                 column: "EventId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Notifications_TenantId_UserId_IsRead",
                 schema: "public",
-                table: "Notifications",
+                table: "Notification",
                 columns: new[] { "TenantId", "UserId", "IsRead" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Notifications_UserId",
                 schema: "public",
-                table: "Notifications",
+                table: "Notification",
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_PaymentMethods_TenantId_Name",
                 schema: "public",
-                table: "PaymentMethods",
+                table: "PaymentMethod",
                 columns: new[] { "TenantId", "Name" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Payments_BookingId",
                 schema: "public",
-                table: "Payments",
+                table: "Payment",
                 column: "BookingId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Payments_PaymentMethodId",
                 schema: "public",
-                table: "Payments",
+                table: "Payment",
                 column: "PaymentMethodId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Payments_TenantId_TransactionId",
                 schema: "public",
-                table: "Payments",
+                table: "Payment",
                 columns: new[] { "TenantId", "TransactionId" },
                 unique: true,
                 filter: "\"TransactionId\" IS NOT NULL");
@@ -938,33 +938,33 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
             migrationBuilder.CreateIndex(
                 name: "IX_Reviews_EventId",
                 schema: "public",
-                table: "Reviews",
+                table: "Review",
                 column: "EventId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Reviews_TenantId_EventId_UserId",
                 schema: "public",
-                table: "Reviews",
+                table: "Review",
                 columns: new[] { "TenantId", "EventId", "UserId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Reviews_UserId",
                 schema: "public",
-                table: "Reviews",
+                table: "Review",
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Roles_TenantId_Name",
                 schema: "public",
-                table: "Roles",
+                table: "Role",
                 columns: new[] { "TenantId", "Name" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Speakers_TenantId_Email",
                 schema: "public",
-                table: "Speakers",
+                table: "Speaker",
                 columns: new[] { "TenantId", "Email" },
                 unique: true,
                 filter: "\"Email\" IS NOT NULL");
@@ -972,86 +972,86 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
             migrationBuilder.CreateIndex(
                 name: "IX_Tickets_BookingItemId",
                 schema: "public",
-                table: "Tickets",
+                table: "Ticket",
                 column: "BookingItemId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Tickets_TenantId_QRCode",
                 schema: "public",
-                table: "Tickets",
+                table: "Ticket",
                 columns: new[] { "TenantId", "QRCode" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Tickets_TenantId_TicketCode",
                 schema: "public",
-                table: "Tickets",
+                table: "Ticket",
                 columns: new[] { "TenantId", "TicketCode" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_TicketTypes_EventId",
                 schema: "public",
-                table: "TicketTypes",
+                table: "TicketType",
                 column: "EventId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TicketTypes_EventSectionId",
                 schema: "public",
-                table: "TicketTypes",
+                table: "TicketType",
                 column: "EventSectionId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TicketTypes_TenantId_EventId_Name",
                 schema: "public",
-                table: "TicketTypes",
+                table: "TicketType",
                 columns: new[] { "TenantId", "EventId", "Name" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserRoles_RoleId",
                 schema: "public",
-                table: "UserRoles",
+                table: "UserRole",
                 column: "RoleId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserRoles_TenantId_UserId_RoleId",
                 schema: "public",
-                table: "UserRoles",
+                table: "UserRole",
                 columns: new[] { "TenantId", "UserId", "RoleId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserRoles_UserId",
                 schema: "public",
-                table: "UserRoles",
+                table: "UserRole",
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Users_TenantId_Email",
                 schema: "public",
-                table: "Users",
+                table: "User",
                 columns: new[] { "TenantId", "Email" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Venues_TenantId_Code",
                 schema: "public",
-                table: "Venues",
+                table: "Venue",
                 columns: new[] { "TenantId", "Code" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_VenueSections_TenantId_VenueId_Code",
                 schema: "public",
-                table: "VenueSections",
+                table: "VenueSection",
                 columns: new[] { "TenantId", "VenueId", "Code" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_VenueSections_VenueId",
                 schema: "public",
-                table: "VenueSections",
+                table: "VenueSection",
                 column: "VenueId");
         }
 
@@ -1059,92 +1059,93 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "AIRequestLogs",
+                name: "AIRequestLog",
                 schema: "public");
 
             migrationBuilder.DropTable(
-                name: "AuditLogs",
+                name: "AuditLog",
                 schema: "public");
 
             migrationBuilder.DropTable(
-                name: "CheckIns",
+                name: "CheckIn",
                 schema: "public");
 
             migrationBuilder.DropTable(
-                name: "DiscountCoupons",
+                name: "DiscountCoupon",
                 schema: "public");
 
             migrationBuilder.DropTable(
-                name: "EventSessions",
+                name: "EventSession",
                 schema: "public");
 
             migrationBuilder.DropTable(
-                name: "Notifications",
+                name: "Notification",
                 schema: "public");
 
             migrationBuilder.DropTable(
-                name: "Payments",
+                name: "Payment",
                 schema: "public");
 
             migrationBuilder.DropTable(
-                name: "Reviews",
+                name: "Review",
                 schema: "public");
 
             migrationBuilder.DropTable(
-                name: "UserRoles",
+                name: "UserRole",
                 schema: "public");
 
             migrationBuilder.DropTable(
-                name: "Tickets",
+                name: "Ticket",
                 schema: "public");
 
             migrationBuilder.DropTable(
-                name: "Speakers",
+                name: "Speaker",
                 schema: "public");
 
             migrationBuilder.DropTable(
-                name: "PaymentMethods",
+                name: "PaymentMethod",
                 schema: "public");
 
             migrationBuilder.DropTable(
-                name: "Roles",
+                name: "Role",
                 schema: "public");
 
             migrationBuilder.DropTable(
-                name: "BookingItems",
+                name: "BookingItem",
                 schema: "public");
 
             migrationBuilder.DropTable(
-                name: "Bookings",
+                name: "Booking",
                 schema: "public");
 
             migrationBuilder.DropTable(
-                name: "TicketTypes",
+                name: "TicketType",
                 schema: "public");
 
             migrationBuilder.DropTable(
-                name: "Users",
+                name: "User",
                 schema: "public");
 
             migrationBuilder.DropTable(
-                name: "EventSections",
+                name: "EventSection",
                 schema: "public");
 
             migrationBuilder.DropTable(
-                name: "Events",
+                name: "Event",
                 schema: "public");
 
             migrationBuilder.DropTable(
-                name: "VenueSections",
+                name: "VenueSection",
                 schema: "public");
 
             migrationBuilder.DropTable(
-                name: "EventCategories",
+                name: "EventCategory",
                 schema: "public");
 
             migrationBuilder.DropTable(
-                name: "Venues",
+                name: "Venue",
                 schema: "public");
         }
     }
 }
+

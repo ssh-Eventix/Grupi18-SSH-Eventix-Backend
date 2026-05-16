@@ -74,7 +74,7 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
 
                     b.HasIndex("TenantId", "UserId", "CreatedAt");
 
-                    b.ToTable("AIRequestLogs", "public", t =>
+                    b.ToTable("AIRequestLog", "public", t =>
                         {
                             t.HasCheckConstraint("CK_AIRequestLog_TokensUsed", "\"TokensUsed\" >= 0");
                         });
@@ -129,7 +129,7 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
 
                     b.HasIndex("TenantId", "UserId", "CreatedAt");
 
-                    b.ToTable("AuditLogs", "public");
+                    b.ToTable("AuditLog", "public");
                 });
 
             modelBuilder.Entity("Eventix.Domain.Entities.Booking", b =>
@@ -180,7 +180,7 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                     b.HasIndex("TenantId", "ReferenceNumber")
                         .IsUnique();
 
-                    b.ToTable("Bookings", "public", t =>
+                    b.ToTable("Booking", "public", t =>
                         {
                             t.HasCheckConstraint("CK_Booking_TotalAmount", "\"TotalAmount\" >= 0");
                         });
@@ -228,7 +228,7 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
 
                     b.HasIndex("TicketTypeId");
 
-                    b.ToTable("BookingItems", "public", t =>
+                    b.ToTable("BookingItem", "public", t =>
                         {
                             t.HasCheckConstraint("CK_BookingItem_Quantity", "\"Quantity\" > 0");
 
@@ -277,7 +277,7 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                     b.HasIndex("TenantId", "TicketId")
                         .IsUnique();
 
-                    b.ToTable("CheckIns", "public");
+                    b.ToTable("CheckIn", "public");
                 });
 
             modelBuilder.Entity("Eventix.Domain.Entities.DiscountCoupon", b =>
@@ -332,7 +332,7 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                     b.HasIndex("TenantId", "EventId", "Code")
                         .IsUnique();
 
-                    b.ToTable("DiscountCoupons", "public", t =>
+                    b.ToTable("DiscountCoupon", "public", t =>
                         {
                             t.HasCheckConstraint("CK_DiscountCoupon_DiscountValue", "\"DiscountValue\" > 0");
 
@@ -428,7 +428,7 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                     b.HasIndex("TenantId", "Slug")
                         .IsUnique();
 
-                    b.ToTable("Events", "public", t =>
+                    b.ToTable("Event", "public", t =>
                         {
                             t.HasCheckConstraint("CK_Event_DateRange", "\"EndUtc\" > \"StartUtc\"");
 
@@ -480,7 +480,7 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                     b.HasIndex("TenantId", "Name")
                         .IsUnique();
 
-                    b.ToTable("EventCategories", "public");
+                    b.ToTable("EventCategory", "public");
                 });
 
             modelBuilder.Entity("Eventix.Domain.Entities.EventSection", b =>
@@ -541,7 +541,7 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                     b.HasIndex("TenantId", "EventId", "VenueSectionId")
                         .IsUnique();
 
-                    b.ToTable("EventSections", "public", t =>
+                    b.ToTable("EventSection", "public", t =>
                         {
                             t.HasCheckConstraint("CK_EventSection_Capacity", "\"Capacity\" >= 0");
 
@@ -595,7 +595,7 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
 
                     b.HasIndex("SpeakerId");
 
-                    b.ToTable("EventSessions", "public", t =>
+                    b.ToTable("EventSession", "public", t =>
                         {
                             t.HasCheckConstraint("CK_EventSession_TimeRange", "\"EndTime\" > \"StartTime\"");
                         });
@@ -652,7 +652,7 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
 
                     b.HasIndex("TenantId", "UserId", "IsRead");
 
-                    b.ToTable("Notifications", "public");
+                    b.ToTable("Notification", "public");
                 });
 
             modelBuilder.Entity("Eventix.Domain.Entities.Payment", b =>
@@ -703,7 +703,7 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                         .IsUnique()
                         .HasFilter("\"TransactionId\" IS NOT NULL");
 
-                    b.ToTable("Payments", "public", t =>
+                    b.ToTable("Payment", "public", t =>
                         {
                             t.HasCheckConstraint("CK_Payment_Amount", "\"Amount\" > 0");
                         });
@@ -747,7 +747,7 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                     b.HasIndex("TenantId", "Name")
                         .IsUnique();
 
-                    b.ToTable("PaymentMethods", "public");
+                    b.ToTable("PaymentMethod", "public");
                 });
 
             modelBuilder.Entity("Eventix.Domain.Entities.Review", b =>
@@ -793,7 +793,7 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                     b.HasIndex("TenantId", "EventId", "UserId")
                         .IsUnique();
 
-                    b.ToTable("Reviews", "public", t =>
+                    b.ToTable("Review", "public", t =>
                         {
                             t.HasCheckConstraint("CK_Review_Rating", "\"Rating\" >= 1 AND \"Rating\" <= 5");
                         });
@@ -831,7 +831,7 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                     b.HasIndex("TenantId", "Name")
                         .IsUnique();
 
-                    b.ToTable("Roles", "public");
+                    b.ToTable("Role", "public");
                 });
 
             modelBuilder.Entity("Eventix.Domain.Entities.Speaker", b =>
@@ -882,7 +882,7 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                         .IsUnique()
                         .HasFilter("\"Email\" IS NOT NULL");
 
-                    b.ToTable("Speakers", "public");
+                    b.ToTable("Speaker", "public");
                 });
 
             modelBuilder.Entity("Eventix.Domain.Entities.Ticket", b =>
@@ -935,7 +935,7 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                     b.HasIndex("TenantId", "TicketCode")
                         .IsUnique();
 
-                    b.ToTable("Tickets", "public");
+                    b.ToTable("Ticket", "public");
                 });
 
             modelBuilder.Entity("Eventix.Domain.Entities.TicketType", b =>
@@ -992,7 +992,7 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                     b.HasIndex("TenantId", "EventId", "Name")
                         .IsUnique();
 
-                    b.ToTable("TicketTypes", "public", t =>
+                    b.ToTable("TicketType", "public", t =>
                         {
                             t.HasCheckConstraint("CK_TicketType_Price", "\"Price\" >= 0");
 
@@ -1052,7 +1052,7 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                     b.HasIndex("TenantId", "Email")
                         .IsUnique();
 
-                    b.ToTable("Users", "public");
+                    b.ToTable("User", "public");
                 });
 
             modelBuilder.Entity("Eventix.Domain.Entities.UserRole", b =>
@@ -1091,7 +1091,7 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                     b.HasIndex("TenantId", "UserId", "RoleId")
                         .IsUnique();
 
-                    b.ToTable("UserRoles", "public");
+                    b.ToTable("UserRole", "public");
                 });
 
             modelBuilder.Entity("Eventix.Domain.Entities.Venue", b =>
@@ -1151,7 +1151,7 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                     b.HasIndex("TenantId", "Code")
                         .IsUnique();
 
-                    b.ToTable("Venues", "public", t =>
+                    b.ToTable("Venue", "public", t =>
                         {
                             t.HasCheckConstraint("CK_Venue_TotalCapacity", "\"TotalCapacity\" >= 0");
                         });
@@ -1211,7 +1211,7 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                     b.HasIndex("TenantId", "VenueId", "Code")
                         .IsUnique();
 
-                    b.ToTable("VenueSections", "public", t =>
+                    b.ToTable("VenueSection", "public", t =>
                         {
                             t.HasCheckConstraint("CK_VenueSection_Capacity", "\"Capacity\" >= 0");
 
@@ -1586,3 +1586,4 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
         }
     }
 }
+
