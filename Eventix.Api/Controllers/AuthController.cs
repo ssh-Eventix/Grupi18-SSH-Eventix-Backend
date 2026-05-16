@@ -1,4 +1,4 @@
-using Eventix.Application.DTOs.User;
+using Eventix.Application.DTOs.Auth;
 using Eventix.Application.Interfaces.Common;
 using Eventix.Application.Interfaces.Repositories;
 using Eventix.Application.Interfaces.Services;
@@ -23,6 +23,7 @@ public class AuthController : ControllerBase
     private readonly IRefreshTokenService _refreshTokenService;
     private readonly IRefreshTokenRepository _refreshTokenRepository;
     private readonly ITenantContext _tenantContext;
+    private readonly ITenantEmailDomainRepository _tenantEmailDomainRepository;
 
     public AuthController(
         IUserRepository userRepository,
@@ -33,7 +34,8 @@ public class AuthController : ControllerBase
         IJwtTokenService jwtTokenService,
         IRefreshTokenService refreshTokenService,
         IRefreshTokenRepository refreshTokenRepository,
-        ITenantContext tenantContext)
+        ITenantContext tenantContext,
+        ITenantEmailDomainRepository tenantEmailDomainRepository)
     {
         _userRepository = userRepository;
         _userRoleRepository = userRoleRepository;
@@ -44,6 +46,7 @@ public class AuthController : ControllerBase
         _refreshTokenService = refreshTokenService;
         _refreshTokenRepository = refreshTokenRepository;
         _tenantContext = tenantContext;
+        _tenantEmailDomainRepository = tenantEmailDomainRepository;
     }
 
     [HttpPost("register")]
@@ -96,25 +99,32 @@ public class AuthController : ControllerBase
 
         var roles = await _roleRepository.GetAllAsync(ct);
 
-        var buyerRole = roles.FirstOrDefault(r =>
-            string.Equals(r.Name, UserRoleEnum.Buyer.ToString(), StringComparison.OrdinalIgnoreCase) &&
+        var emailDomain = GetEmailDomain(email);
+
+        var tenantDomain = await _tenantEmailDomainRepository
+            .GetByTenantIdAndDomainAsync(_tenantContext.TenantId, emailDomain, ct);
+
+        var defaultRoleName = tenantDomain?.DefaultRoleName ?? UserRoleEnum.Buyer.ToString();
+
+        var defaultRole = roles.FirstOrDefault(r =>
+            string.Equals(r.Name, defaultRoleName, StringComparison.OrdinalIgnoreCase) &&
             !r.IsDeleted);
 
-        if (buyerRole is null)
-            return StatusCode(500, "Default Buyer role is not configured for this tenant.");
+        if (defaultRole is null)
+            return StatusCode(500, $"Default role '{defaultRoleName}' is not configured for this tenant.");
 
         await _userRoleRepository.AddAsync(new UserRole
         {
             TenantId = _tenantContext.TenantId,
             UserId = user.Id,
-            RoleId = buyerRole.Id
+            RoleId = defaultRole.Id
         }, ct);
 
         await _userRoleRepository.SaveChangesAsync(ct);
 
         var tenantRoles = new List<string>
         {
-            UserRoleEnum.Buyer.ToString()
+            defaultRole.Name
         };
 
         var (accessToken, accessExpires) = await _jwtTokenService.GenerateTokenAsync(
@@ -161,21 +171,7 @@ public class AuthController : ControllerBase
         var user = await _userRepository.GetByPublicUserIdAsync(publicUser.Id, ct);
 
         if (user is null || user.IsDeleted || !user.IsActive)
-        {
-            user = new User
-            {
-                TenantId = _tenantContext.TenantId,
-                PublicUserId = publicUser.Id,
-                Email = publicUser.Email,
-                FirstName = publicUser.FullName,
-                LastName = string.Empty,
-                PasswordHash = publicUser.PasswordHash,
-                IsActive = true
-            };
-
-            await _userRepository.AddAsync(user, ct);
-            await _userRepository.SaveChangesAsync(ct);
-        }
+            return Unauthorized("User does not belong to this tenant.");
 
         var tenantRoles = await _userRoleRepository.GetRoleNamesByUserIdAsync(user.Id, ct);
 
@@ -267,5 +263,15 @@ public class AuthController : ControllerBase
             RefreshToken = newRefreshToken,
             RefreshTokenExpiresAtUtc = refreshExpires
         });
+    }
+
+    private static string GetEmailDomain(string email)
+    {
+        var parts = email.Split('@', StringSplitOptions.RemoveEmptyEntries);
+
+        if (parts.Length != 2)
+            throw new InvalidOperationException("Invalid email address.");
+
+        return parts[1].Trim().ToLower();
     }
 }

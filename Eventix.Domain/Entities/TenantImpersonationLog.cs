@@ -22,7 +22,7 @@ public class TenantImpersonationLog : BaseEntity
 
     public string? Reason { get; set; }
 
-    public TenantImpersonationEvent Event { get; set; }
+    public TenantImpersonationEvent Event { get; set; } = TenantImpersonationEvent.Started;
 
     public DateTime? RevokedAtUtc { get; set; }
 }

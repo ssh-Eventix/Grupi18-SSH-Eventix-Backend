@@ -19,7 +19,7 @@ namespace Eventix.Infrastructure.Persistence.Repositories
             return await _context.AuditLogs
                 .AsNoTracking()
                 .Include(a => a.User)
-                .OrderByDescending(a => a.CreatedAt)
+                .OrderByDescending(a => a.CreatedAtUtc)
                 .ToListAsync();
         }
 
@@ -36,7 +36,7 @@ namespace Eventix.Infrastructure.Persistence.Repositories
                 .AsNoTracking()
                 .Where(a => a.UserId == userId)
                 .Include(a => a.User)
-                .OrderByDescending(a => a.CreatedAt)
+                .OrderByDescending(a => a.CreatedAtUtc)
                 .ToListAsync();
         }
 
@@ -46,7 +46,7 @@ namespace Eventix.Infrastructure.Persistence.Repositories
                 .AsNoTracking()
                 .Where(a => a.EntityName == entityName && a.EntityId == entityId)
                 .Include(a => a.User)
-                .OrderByDescending(a => a.CreatedAt)
+                .OrderByDescending(a => a.CreatedAtUtc)
                 .ToListAsync();
         }
 
