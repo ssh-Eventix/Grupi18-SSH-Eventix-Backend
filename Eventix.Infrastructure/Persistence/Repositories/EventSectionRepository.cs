@@ -6,81 +6,54 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Eventix.Infrastructure.Persistence.Repositories;
 
-public class EventSectionRepository : IEventSectionRepository
+public class EventSectionRepository
+    : TenantBaseRepository<EventSection>, IEventSectionRepository
 {
-    private readonly TenantDbContext _context;
-    private readonly ITenantContext _tenantContext;
-
-    public EventSectionRepository(TenantDbContext context, ITenantContext tenantContext)
+    public EventSectionRepository(
+        TenantDbContext context,
+        ITenantContext tenantContext)
+        : base(context, tenantContext)
     {
-        _context = context;
-        _tenantContext = tenantContext;
     }
 
-    private Guid TenantId => _tenantContext.TenantId;
-
-    public async Task<IReadOnlyList<EventSection>> GetAllAsync(CancellationToken cancellationToken = default)
-        => await _context.EventSections
+    public override async Task<List<EventSection>> GetAllAsync(CancellationToken ct = default)
+    {
+        return await Query()
             .AsNoTracking()
             .Include(x => x.Event)
             .Include(x => x.VenueSection)
-            .Where(x => x.TenantId == TenantId && !x.IsDeleted)
             .OrderBy(x => x.Name)
-            .ToListAsync(cancellationToken);
+            .ToListAsync(ct);
+    }
 
-    public async Task<EventSection?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
-        => await _context.EventSections
+    public override Task<EventSection?> GetByIdAsync(Guid id, CancellationToken ct = default)
+    {
+        return Query()
             .Include(x => x.Event)
             .Include(x => x.VenueSection)
-            .FirstOrDefaultAsync(x =>
-                x.Id == id &&
-                x.TenantId == TenantId &&
-                !x.IsDeleted,
-                cancellationToken);
+            .FirstOrDefaultAsync(x => x.Id == id, ct);
+    }
 
     public async Task<IReadOnlyList<EventSection>> GetByEventIdAsync(
         Guid eventId,
-        CancellationToken cancellationToken = default)
-        => await _context.EventSections
+        CancellationToken ct = default)
+    {
+        return await Query()
             .AsNoTracking()
             .Include(x => x.VenueSection)
-            .Where(x =>
-                x.EventId == eventId &&
-                x.TenantId == TenantId &&
-                !x.IsDeleted)
+            .Where(x => x.EventId == eventId)
             .OrderBy(x => x.Name)
-            .ToListAsync(cancellationToken);
+            .ToListAsync(ct);
+    }
 
     public Task<bool> ExistsByEventAndVenueSectionAsync(
         Guid eventId,
         Guid venueSectionId,
-        CancellationToken cancellationToken = default)
-        => _context.EventSections.AnyAsync(x =>
+        CancellationToken ct = default)
+    {
+        return Query().AnyAsync(x =>
             x.EventId == eventId &&
-            x.VenueSectionId == venueSectionId &&
-            x.TenantId == TenantId &&
-            !x.IsDeleted,
-            cancellationToken);
-
-    public async Task AddAsync(EventSection entity, CancellationToken cancellationToken = default)
-    {
-        entity.TenantId = TenantId;
-        await _context.EventSections.AddAsync(entity, cancellationToken);
+            x.VenueSectionId == venueSectionId,
+            ct);
     }
-
-    public Task UpdateAsync(EventSection entity)
-    {
-        _context.EventSections.Update(entity);
-        return Task.CompletedTask;
-    }
-
-    public Task DeleteAsync(EventSection entity)
-    {
-        entity.IsDeleted = true;
-        entity.UpdatedAtUtc = DateTime.UtcNow;
-        return Task.CompletedTask;
-    }
-
-    public Task SaveChangesAsync(CancellationToken cancellationToken = default)
-        => _context.SaveChangesAsync(cancellationToken);
 }

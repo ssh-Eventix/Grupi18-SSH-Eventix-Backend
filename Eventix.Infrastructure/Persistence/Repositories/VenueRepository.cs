@@ -6,58 +6,38 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Eventix.Infrastructure.Persistence.Repositories;
 
-public class VenueRepository : IVenueRepository
+public class VenueRepository : TenantBaseRepository<Venue>, IVenueRepository
 {
-    private readonly TenantDbContext _context;
-    private readonly ITenantContext _tenantContext;
-
-    public VenueRepository(TenantDbContext context, ITenantContext tenantContext)
+    public VenueRepository(
+        TenantDbContext context,
+        ITenantContext tenantContext)
+        : base(context, tenantContext)
     {
-        _context = context;
-        _tenantContext = tenantContext;
     }
 
-    private Guid TenantId => _tenantContext.TenantId;
-
-    public async Task<List<Venue>> GetAllAsync(CancellationToken cancellationToken = default)
-        => await _context.Venues
+    public override Task<List<Venue>> GetAllAsync(CancellationToken ct = default)
+    {
+        return Query()
             .AsNoTracking()
-            .Where(x => x.TenantId == TenantId && !x.IsDeleted)
             .OrderBy(x => x.Name)
-            .ToListAsync(cancellationToken);
+            .ToListAsync(ct);
+    }
 
-    public async Task<Venue?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
-        => await _context.Venues
+    public override Task<Venue?> GetByIdAsync(Guid id, CancellationToken ct = default)
+    {
+        return Query()
             .Include(x => x.Sections)
-            .FirstOrDefaultAsync(x =>
-                x.Id == id &&
-                x.TenantId == TenantId &&
-                !x.IsDeleted,
-                cancellationToken);
+            .FirstOrDefaultAsync(x => x.Id == id, ct);
+    }
 
-    public async Task<bool> ExistsByCodeAsync(
+    public Task<bool> ExistsByCodeAsync(
         string code,
         Guid? excludeId = null,
-        CancellationToken cancellationToken = default)
-        => await _context.Venues.AnyAsync(x =>
-            x.TenantId == TenantId &&
+        CancellationToken ct = default)
+    {
+        return Query().AnyAsync(x =>
             x.Code == code &&
-            !x.IsDeleted &&
             (excludeId == null || x.Id != excludeId),
-            cancellationToken);
-
-    public async Task AddAsync(Venue venue, CancellationToken cancellationToken = default)
-    {
-        venue.TenantId = TenantId;
-        await _context.Venues.AddAsync(venue, cancellationToken);
+            ct);
     }
-
-    public Task UpdateAsync(Venue venue)
-    {
-        _context.Venues.Update(venue);
-        return Task.CompletedTask;
-    }
-
-    public Task SaveChangesAsync(CancellationToken cancellationToken = default)
-        => _context.SaveChangesAsync(cancellationToken);
 }
