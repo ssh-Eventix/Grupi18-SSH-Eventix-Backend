@@ -1,10 +1,8 @@
 ﻿using Eventix.Domain.Entities;
 
-namespace Eventix.Application.Interfaces.Repositories;
-
 public interface IEventSectionRepository
 {
-    Task<IReadOnlyList<EventSection>> GetAllAsync(CancellationToken cancellationToken = default);
+    Task<List<EventSection>> GetAllAsync(CancellationToken cancellationToken = default);
     Task<EventSection?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<EventSection>> GetByEventIdAsync(Guid eventId, CancellationToken cancellationToken = default);
 
