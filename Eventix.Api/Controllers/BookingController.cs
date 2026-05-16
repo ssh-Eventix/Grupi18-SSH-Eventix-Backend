@@ -46,5 +46,24 @@ namespace Eventix.Api.Controllers
 
             return Ok(result);
         }
+
+        [HttpPut("{id:guid}/status")]
+        public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateBookingStatusRequest request)
+        {
+            if (request == null)
+                return BadRequest("Request is null");
+
+            var result = await _bookingService.UpdateBookingStatus(id, request);
+
+            return result ? Ok(true) : NotFound(false);
+        }
+
+        [HttpDelete("{id:guid}")]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            var result = await _bookingService.DeleteBooking(id);
+
+            return result ? Ok(true) : NotFound(false);
+        }
     }
 }

@@ -146,14 +146,12 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<Venue>(entity =>
         {
-            entity.ToTable("Venue");
-
-            entity.HasIndex(x => new { x.TenantId, x.Code }).IsUnique();
-
-            entity.ToTable(t =>
+            entity.ToTable("Venue", t =>
             {
                 t.HasCheckConstraint("CK_Venue_TotalCapacity", "\"TotalCapacity\" >= 0");
             });
+
+            entity.HasIndex(x => new { x.TenantId, x.Code }).IsUnique();
         });
     }
 
@@ -161,7 +159,11 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<VenueSection>(entity =>
         {
-            entity.ToTable("VenueSection");
+            entity.ToTable("VenueSection", t =>
+            {
+                t.HasCheckConstraint("CK_VenueSection_Capacity", "\"Capacity\" >= 0");
+                t.HasCheckConstraint("CK_VenueSection_DefaultBasePrice", "\"DefaultBasePrice\" IS NULL OR \"DefaultBasePrice\" >= 0");
+            });
 
             entity.HasKey(x => x.Id);
 
@@ -176,11 +178,6 @@ public class TenantDbContext : DbContext
                 .HasForeignKey(x => x.VenueId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            entity.ToTable(t =>
-            {
-                t.HasCheckConstraint("CK_VenueSection_Capacity", "\"Capacity\" >= 0");
-                t.HasCheckConstraint("CK_VenueSection_DefaultBasePrice", "\"DefaultBasePrice\" IS NULL OR \"DefaultBasePrice\" >= 0");
-            });
         });
     }
 
@@ -190,7 +187,12 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<Event>(entity =>
         {
-            entity.ToTable("Event");
+            entity.ToTable("Event", t =>
+            {
+                t.HasCheckConstraint("CK_Event_DateRange", "\"EndUtc\" > \"StartUtc\"");
+                t.HasCheckConstraint("CK_Event_MinTicketsPerOrder", "\"MinTicketsPerOrder\" > 0");
+                t.HasCheckConstraint("CK_Event_MaxTicketsPerOrder", "\"MaxTicketsPerOrder\" >= \"MinTicketsPerOrder\"");
+            });
 
             entity.HasKey(x => x.Id);
 
@@ -213,12 +215,6 @@ public class TenantDbContext : DbContext
                 .HasForeignKey(x => x.EventCategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            entity.ToTable(t =>
-            {
-                t.HasCheckConstraint("CK_Event_DateRange", "\"EndUtc\" > \"StartUtc\"");
-                t.HasCheckConstraint("CK_Event_MinTicketsPerOrder", "\"MinTicketsPerOrder\" > 0");
-                t.HasCheckConstraint("CK_Event_MaxTicketsPerOrder", "\"MaxTicketsPerOrder\" >= \"MinTicketsPerOrder\"");
-            });
         });
     }
 
@@ -226,7 +222,14 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<EventSection>(entity =>
         {
-            entity.ToTable("EventSection");
+            entity.ToTable("EventSection", t =>
+            {
+                t.HasCheckConstraint("CK_EventSection_Capacity", "\"Capacity\" >= 0");
+                t.HasCheckConstraint(
+                    "CK_EventSection_SalesRange",
+                    "\"SalesStartUtc\" IS NULL OR \"SalesEndUtc\" IS NULL OR \"SalesEndUtc\" > \"SalesStartUtc\""
+                );
+            });
 
             entity.HasKey(x => x.Id);
 
@@ -246,14 +249,6 @@ public class TenantDbContext : DbContext
                 .HasForeignKey(x => x.VenueSectionId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            entity.ToTable(t =>
-            {
-                t.HasCheckConstraint("CK_EventSection_Capacity", "\"Capacity\" >= 0");
-                t.HasCheckConstraint(
-                    "CK_EventSection_SalesRange",
-                    "\"SalesStartUtc\" IS NULL OR \"SalesEndUtc\" IS NULL OR \"SalesEndUtc\" > \"SalesStartUtc\""
-                );
-            });
         });
     }
 
@@ -277,7 +272,10 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<EventSession>(entity =>
         {
-            entity.ToTable("EventSession");
+            entity.ToTable("EventSession", t =>
+            {
+                t.HasCheckConstraint("CK_EventSession_TimeRange", "\"EndTime\" > \"StartTime\"");
+            });
 
             entity.HasKey(x => x.Id);
 
@@ -294,10 +292,6 @@ public class TenantDbContext : DbContext
                 .HasForeignKey(x => x.SpeakerId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            entity.ToTable(t =>
-            {
-                t.HasCheckConstraint("CK_EventSession_TimeRange", "\"EndTime\" > \"StartTime\"");
-            });
         });
     }
 
@@ -348,7 +342,14 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<TicketType>(entity =>
         {
-            entity.ToTable("TicketType");
+            entity.ToTable("TicketType", t =>
+            {
+                t.HasCheckConstraint("CK_TicketType_Price", "\"Price\" >= 0");
+                t.HasCheckConstraint("CK_TicketType_QuantityAvailable", "\"QuantityAvailable\" >= 0");
+                t.HasCheckConstraint("CK_TicketType_SoldQuantity", "\"SoldQuantity\" >= 0");
+                t.HasCheckConstraint("CK_TicketType_SoldQuantity_Limit", "\"SoldQuantity\" <= \"QuantityAvailable\"");
+                t.HasCheckConstraint("CK_TicketType_SaleRange", "\"SaleStartDate\" IS NULL OR \"SaleEndDate\" IS NULL OR \"SaleEndDate\" > \"SaleStartDate\"");
+            });
 
             entity.HasKey(x => x.Id);
 
@@ -373,14 +374,6 @@ public class TenantDbContext : DbContext
             entity.Property(x => x.SaleEndDate)
                 .HasColumnType("timestamp with time zone");
 
-            entity.ToTable(t =>
-            {
-                t.HasCheckConstraint("CK_TicketType_Price", "\"Price\" >= 0");
-                t.HasCheckConstraint("CK_TicketType_QuantityAvailable", "\"QuantityAvailable\" >= 0");
-                t.HasCheckConstraint("CK_TicketType_SoldQuantity", "\"SoldQuantity\" >= 0");
-                t.HasCheckConstraint("CK_TicketType_SoldQuantity_Limit", "\"SoldQuantity\" <= \"QuantityAvailable\"");
-                t.HasCheckConstraint("CK_TicketType_SaleRange", "\"SaleStartDate\" IS NULL OR \"SaleEndDate\" IS NULL OR \"SaleEndDate\" > \"SaleStartDate\"");
-            });
         });
     }
 
@@ -414,7 +407,10 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<Booking>(entity =>
         {
-            entity.ToTable("Booking");
+            entity.ToTable("Booking", t =>
+            {
+                t.HasCheckConstraint("CK_Booking_TotalAmount", "\"TotalAmount\" >= 0");
+            });
 
             entity.HasKey(x => x.Id);
 
@@ -433,10 +429,6 @@ public class TenantDbContext : DbContext
                 .HasForeignKey(x => x.EventId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            entity.ToTable(t =>
-            {
-                t.HasCheckConstraint("CK_Booking_TotalAmount", "\"TotalAmount\" >= 0");
-            });
         });
     }
 
@@ -444,7 +436,11 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<BookingItem>(entity =>
         {
-            entity.ToTable("BookingItem");
+            entity.ToTable("BookingItem", t =>
+            {
+                t.HasCheckConstraint("CK_BookingItem_Quantity", "\"Quantity\" > 0");
+                t.HasCheckConstraint("CK_BookingItem_UnitPrice", "\"UnitPrice\" >= 0");
+            });
 
             entity.HasKey(x => x.Id);
 
@@ -465,11 +461,6 @@ public class TenantDbContext : DbContext
                 .HasForeignKey(x => x.EventSectionId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            entity.ToTable(t =>
-            {
-                t.HasCheckConstraint("CK_BookingItem_Quantity", "\"Quantity\" > 0");
-                t.HasCheckConstraint("CK_BookingItem_UnitPrice", "\"UnitPrice\" >= 0");
-            });
         });
     }
 
@@ -480,7 +471,10 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<Payment>(entity =>
         {
-            entity.ToTable("Payment");
+            entity.ToTable("Payment", t =>
+            {
+                t.HasCheckConstraint("CK_Payment_Amount", "\"Amount\" > 0");
+            });
 
             entity.HasKey(x => x.Id);
 
@@ -501,10 +495,6 @@ public class TenantDbContext : DbContext
                 .HasForeignKey(x => x.PaymentMethodId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            entity.ToTable(t =>
-            {
-                t.HasCheckConstraint("CK_Payment_Amount", "\"Amount\" > 0");
-            });
         });
     }
 
@@ -529,7 +519,10 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<Review>(entity =>
         {
-            entity.ToTable("Review");
+            entity.ToTable("Review", t =>
+            {
+                t.HasCheckConstraint("CK_Review_Rating", "\"Rating\" >= 1 AND \"Rating\" <= 5");
+            });
 
             entity.HasKey(x => x.Id);
 
@@ -547,10 +540,6 @@ public class TenantDbContext : DbContext
                 .HasForeignKey(x => x.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            entity.ToTable(t =>
-            {
-                t.HasCheckConstraint("CK_Review_Rating", "\"Rating\" >= 1 AND \"Rating\" <= 5");
-            });
         });
     }
 
@@ -560,7 +549,13 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<DiscountCoupon>(entity =>
         {
-            entity.ToTable("DiscountCoupon");
+            entity.ToTable("DiscountCoupon", t =>
+            {
+                t.HasCheckConstraint("CK_DiscountCoupon_DiscountValue", "\"DiscountValue\" > 0");
+                t.HasCheckConstraint("CK_DiscountCoupon_UsageLimit", "\"UsageLimit\" IS NULL OR \"UsageLimit\" > 0");
+                t.HasCheckConstraint("CK_DiscountCoupon_UsageCount", "\"UsageCount\" >= 0");
+                t.HasCheckConstraint("CK_DiscountCoupon_ValidRange", "\"ValidTo\" > \"ValidFrom\"");
+            });
 
             entity.HasKey(x => x.Id);
 
@@ -574,13 +569,6 @@ public class TenantDbContext : DbContext
                 .HasForeignKey(x => x.EventId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            entity.ToTable(t =>
-            {
-                t.HasCheckConstraint("CK_DiscountCoupon_DiscountValue", "\"DiscountValue\" > 0");
-                t.HasCheckConstraint("CK_DiscountCoupon_UsageLimit", "\"UsageLimit\" IS NULL OR \"UsageLimit\" > 0");
-                t.HasCheckConstraint("CK_DiscountCoupon_UsageCount", "\"UsageCount\" >= 0");
-                t.HasCheckConstraint("CK_DiscountCoupon_ValidRange", "\"ValidTo\" > \"ValidFrom\"");
-            });
         });
     }
 
@@ -617,7 +605,10 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<AIRequestLog>(entity =>
         {
-            entity.ToTable("AIRequestLog");
+            entity.ToTable("AIRequestLog", t =>
+            {
+                t.HasCheckConstraint("CK_AIRequestLog_TokensUsed", "\"TokensUsed\" >= 0");
+            });
 
             entity.HasKey(x => x.Id);
 
@@ -629,10 +620,6 @@ public class TenantDbContext : DbContext
                 .HasForeignKey(x => x.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            entity.ToTable(t =>
-            {
-                t.HasCheckConstraint("CK_AIRequestLog_TokensUsed", "\"TokensUsed\" >= 0");
-            });
         });
     }
 
