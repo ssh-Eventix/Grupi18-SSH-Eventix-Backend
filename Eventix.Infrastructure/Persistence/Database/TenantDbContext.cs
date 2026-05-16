@@ -88,7 +88,7 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<User>(entity =>
         {
-            entity.ToTable("Users");
+            entity.ToTable("User");
 
             entity.HasKey(x => x.Id);
 
@@ -105,7 +105,7 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<Role>(entity =>
         {
-            entity.ToTable("Roles");
+            entity.ToTable("Role");
 
             entity.HasKey(x => x.Id);
 
@@ -122,7 +122,7 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<UserRole>(entity =>
         {
-            entity.ToTable("UserRoles");
+            entity.ToTable("UserRole");
 
             entity.HasKey(x => x.Id);
 
@@ -145,7 +145,10 @@ public class TenantDbContext : DbContext
     private static void ConfigureVenue(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Venue>(entity =>
-        { entity.HasIndex(x => new { x.TenantId, x.Code }).IsUnique();
+        {
+            entity.ToTable("Venue");
+
+            entity.HasIndex(x => new { x.TenantId, x.Code }).IsUnique();
 
             entity.ToTable(t =>
             {
@@ -158,7 +161,7 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<VenueSection>(entity =>
         {
-            entity.ToTable("VenueSections");
+            entity.ToTable("VenueSection");
 
             entity.HasKey(x => x.Id);
 
@@ -187,7 +190,7 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<Event>(entity =>
         {
-            entity.ToTable("Events");
+            entity.ToTable("Event");
 
             entity.HasKey(x => x.Id);
 
@@ -223,7 +226,7 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<EventSection>(entity =>
         {
-            entity.ToTable("EventSections");
+            entity.ToTable("EventSection");
 
             entity.HasKey(x => x.Id);
 
@@ -258,7 +261,7 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<EventCategory>(entity =>
         {
-            entity.ToTable("EventCategories");
+            entity.ToTable("EventCategory");
 
             entity.HasKey(x => x.Id);
 
@@ -274,7 +277,7 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<EventSession>(entity =>
         {
-            entity.ToTable("EventSessions");
+            entity.ToTable("EventSession");
 
             entity.HasKey(x => x.Id);
 
@@ -302,7 +305,7 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<Speaker>(entity =>
         {
-            entity.ToTable("Speakers");
+            entity.ToTable("Speaker");
 
             entity.HasKey(x => x.Id);
 
@@ -324,7 +327,7 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<Ticket>(entity =>
         {
-            entity.ToTable("Tickets");
+            entity.ToTable("Ticket");
 
             entity.HasKey(x => x.Id);
 
@@ -345,7 +348,7 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<TicketType>(entity =>
         {
-            entity.ToTable("TicketTypes");
+            entity.ToTable("TicketType");
 
             entity.HasKey(x => x.Id);
 
@@ -385,7 +388,7 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<CheckIn>(entity =>
         {
-            entity.ToTable("CheckIns");
+            entity.ToTable("CheckIn");
 
             entity.HasKey(x => x.Id);
 
@@ -411,7 +414,7 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<Booking>(entity =>
         {
-            entity.ToTable("Bookings");
+            entity.ToTable("Booking");
 
             entity.HasKey(x => x.Id);
 
@@ -441,7 +444,7 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<BookingItem>(entity =>
         {
-            entity.ToTable("BookingItems");
+            entity.ToTable("BookingItem");
 
             entity.HasKey(x => x.Id);
 
@@ -477,7 +480,7 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<Payment>(entity =>
         {
-            entity.ToTable("Payments");
+            entity.ToTable("Payment");
 
             entity.HasKey(x => x.Id);
 
@@ -509,7 +512,7 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<PaymentMethod>(entity =>
         {
-            entity.ToTable("PaymentMethods");
+            entity.ToTable("PaymentMethod");
 
             entity.HasKey(x => x.Id);
 
@@ -526,7 +529,7 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<Review>(entity =>
         {
-            entity.ToTable("Reviews");
+            entity.ToTable("Review");
 
             entity.HasKey(x => x.Id);
 
@@ -557,7 +560,7 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<DiscountCoupon>(entity =>
         {
-            entity.ToTable("DiscountCoupons");
+            entity.ToTable("DiscountCoupon");
 
             entity.HasKey(x => x.Id);
 
@@ -586,7 +589,7 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<Notification>(entity =>
         {
-            entity.ToTable("Notifications");
+            entity.ToTable("Notification");
 
             entity.HasKey(x => x.Id);
 
@@ -614,7 +617,7 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<AIRequestLog>(entity =>
         {
-            entity.ToTable("AIRequestLogs");
+            entity.ToTable("AIRequestLog");
 
             entity.HasKey(x => x.Id);
 
@@ -638,7 +641,7 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<AuditLog>(entity =>
         {
-            entity.ToTable("AuditLogs");
+            entity.ToTable("AuditLog");
 
             entity.HasKey(x => x.Id);
 

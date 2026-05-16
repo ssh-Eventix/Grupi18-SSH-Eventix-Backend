@@ -9,11 +9,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace Eventix.Infrastructure.Migrations.TenantDb
+namespace Eventix.Infrastructure.Persistence.Migrations.Tenant
 {
     [DbContext(typeof(TenantDbContext))]
-    [Migration("20260508000038_FixReviewAndNotification")]
-    partial class FixReviewAndNotification
+    [Migration("20260516145617_UpdatedTenant")]
+    partial class UpdatedTenant
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -31,9 +31,6 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -72,8 +69,6 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
 
                     b.HasIndex("UserId");
 
-                    b.HasIndex("TenantId", "UserId", "CreatedAt");
-
                     b.ToTable("AIRequestLog", "public", t =>
                         {
                             t.HasCheckConstraint("CK_AIRequestLog_TokensUsed", "\"TokensUsed\" >= 0");
@@ -88,9 +83,6 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
 
                     b.Property<int>("Action")
                         .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -126,8 +118,6 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                     b.HasIndex("UserId");
 
                     b.HasIndex("TenantId", "EntityName", "EntityId");
-
-                    b.HasIndex("TenantId", "UserId", "CreatedAt");
 
                     b.ToTable("AuditLog", "public");
                 });
@@ -760,9 +750,6 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -815,6 +802,11 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsGlobal")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -843,9 +835,6 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                     b.Property<string>("Bio")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -1041,6 +1030,9 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<Guid?>("PublicUserId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
 
@@ -1102,23 +1094,19 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
 
                     b.Property<string>("AddressLine1")
                         .IsRequired()
-                        .HasMaxLength(250)
-                        .HasColumnType("character varying(250)");
+                        .HasColumnType("text");
 
                     b.Property<string>("City")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Code")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Country")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -1134,8 +1122,7 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                        .HasColumnType("text");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
@@ -1586,4 +1573,3 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
         }
     }
 }
-

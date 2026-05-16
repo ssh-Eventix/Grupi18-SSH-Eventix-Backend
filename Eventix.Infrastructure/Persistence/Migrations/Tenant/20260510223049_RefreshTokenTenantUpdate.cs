@@ -14,27 +14,27 @@ namespace Eventix.Infrastructure.Persistence.Migrations.Tenant
             migrationBuilder.DropIndex(
                 name: "IX_AuditLogs_TenantId_UserId_CreatedAt",
                 schema: "public",
-                table: "AuditLogs");
+                table: "AuditLog");
 
             migrationBuilder.DropIndex(
                 name: "IX_AIRequestLogs_TenantId_UserId_CreatedAt",
                 schema: "public",
-                table: "AIRequestLogs");
+                table: "AIRequestLog");
 
             migrationBuilder.DropColumn(
                 name: "CreatedAt",
                 schema: "public",
-                table: "AuditLogs");
+                table: "AuditLog");
 
             migrationBuilder.DropColumn(
                 name: "CreatedAt",
                 schema: "public",
-                table: "AIRequestLogs");
+                table: "AIRequestLog");
 
             migrationBuilder.AlterColumn<string>(
                 name: "Name",
                 schema: "public",
-                table: "Venues",
+                table: "Venue",
                 type: "text",
                 nullable: false,
                 oldClrType: typeof(string),
@@ -44,7 +44,7 @@ namespace Eventix.Infrastructure.Persistence.Migrations.Tenant
             migrationBuilder.AlterColumn<string>(
                 name: "Country",
                 schema: "public",
-                table: "Venues",
+                table: "Venue",
                 type: "text",
                 nullable: false,
                 oldClrType: typeof(string),
@@ -54,7 +54,7 @@ namespace Eventix.Infrastructure.Persistence.Migrations.Tenant
             migrationBuilder.AlterColumn<string>(
                 name: "Code",
                 schema: "public",
-                table: "Venues",
+                table: "Venue",
                 type: "text",
                 nullable: false,
                 oldClrType: typeof(string),
@@ -64,7 +64,7 @@ namespace Eventix.Infrastructure.Persistence.Migrations.Tenant
             migrationBuilder.AlterColumn<string>(
                 name: "City",
                 schema: "public",
-                table: "Venues",
+                table: "Venue",
                 type: "text",
                 nullable: false,
                 oldClrType: typeof(string),
@@ -74,7 +74,7 @@ namespace Eventix.Infrastructure.Persistence.Migrations.Tenant
             migrationBuilder.AlterColumn<string>(
                 name: "AddressLine1",
                 schema: "public",
-                table: "Venues",
+                table: "Venue",
                 type: "text",
                 nullable: false,
                 oldClrType: typeof(string),
@@ -84,14 +84,14 @@ namespace Eventix.Infrastructure.Persistence.Migrations.Tenant
             migrationBuilder.AddColumn<Guid>(
                 name: "PublicUserId",
                 schema: "public",
-                table: "Users",
+                table: "User",
                 type: "uuid",
                 nullable: true);
 
             migrationBuilder.AddColumn<bool>(
                 name: "IsGlobal",
                 schema: "public",
-                table: "Roles",
+                table: "Role",
                 type: "boolean",
                 nullable: false,
                 defaultValue: false);
@@ -103,17 +103,17 @@ namespace Eventix.Infrastructure.Persistence.Migrations.Tenant
             migrationBuilder.DropColumn(
                 name: "PublicUserId",
                 schema: "public",
-                table: "Users");
+                table: "User");
 
             migrationBuilder.DropColumn(
                 name: "IsGlobal",
                 schema: "public",
-                table: "Roles");
+                table: "Role");
 
             migrationBuilder.AlterColumn<string>(
                 name: "Name",
                 schema: "public",
-                table: "Venues",
+                table: "Venue",
                 type: "character varying(200)",
                 maxLength: 200,
                 nullable: false,
@@ -123,7 +123,7 @@ namespace Eventix.Infrastructure.Persistence.Migrations.Tenant
             migrationBuilder.AlterColumn<string>(
                 name: "Country",
                 schema: "public",
-                table: "Venues",
+                table: "Venue",
                 type: "character varying(100)",
                 maxLength: 100,
                 nullable: false,
@@ -133,7 +133,7 @@ namespace Eventix.Infrastructure.Persistence.Migrations.Tenant
             migrationBuilder.AlterColumn<string>(
                 name: "Code",
                 schema: "public",
-                table: "Venues",
+                table: "Venue",
                 type: "character varying(50)",
                 maxLength: 50,
                 nullable: false,
@@ -143,7 +143,7 @@ namespace Eventix.Infrastructure.Persistence.Migrations.Tenant
             migrationBuilder.AlterColumn<string>(
                 name: "City",
                 schema: "public",
-                table: "Venues",
+                table: "Venue",
                 type: "character varying(100)",
                 maxLength: 100,
                 nullable: false,
@@ -153,7 +153,7 @@ namespace Eventix.Infrastructure.Persistence.Migrations.Tenant
             migrationBuilder.AlterColumn<string>(
                 name: "AddressLine1",
                 schema: "public",
-                table: "Venues",
+                table: "Venue",
                 type: "character varying(250)",
                 maxLength: 250,
                 nullable: false,
@@ -163,7 +163,7 @@ namespace Eventix.Infrastructure.Persistence.Migrations.Tenant
             migrationBuilder.AddColumn<DateTime>(
                 name: "CreatedAt",
                 schema: "public",
-                table: "AuditLogs",
+                table: "AuditLog",
                 type: "timestamp with time zone",
                 nullable: false,
                 defaultValue: new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified));
@@ -171,7 +171,7 @@ namespace Eventix.Infrastructure.Persistence.Migrations.Tenant
             migrationBuilder.AddColumn<DateTime>(
                 name: "CreatedAt",
                 schema: "public",
-                table: "AIRequestLogs",
+                table: "AIRequestLog",
                 type: "timestamp with time zone",
                 nullable: false,
                 defaultValue: new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified));
@@ -179,14 +179,15 @@ namespace Eventix.Infrastructure.Persistence.Migrations.Tenant
             migrationBuilder.CreateIndex(
                 name: "IX_AuditLogs_TenantId_UserId_CreatedAt",
                 schema: "public",
-                table: "AuditLogs",
+                table: "AuditLog",
                 columns: new[] { "TenantId", "UserId", "CreatedAt" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_AIRequestLogs_TenantId_UserId_CreatedAt",
                 schema: "public",
-                table: "AIRequestLogs",
+                table: "AIRequestLog",
                 columns: new[] { "TenantId", "UserId", "CreatedAt" });
         }
     }
 }
+

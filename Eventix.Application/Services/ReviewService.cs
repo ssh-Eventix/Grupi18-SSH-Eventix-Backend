@@ -42,8 +42,7 @@ public class ReviewService : IReviewService
             EventId = dto.EventId,
             UserId = dto.UserId,
             Rating = dto.Rating,
-            Comment = dto.Comment,
-            CreatedAt = DateTime.UtcNow
+            Comment = dto.Comment
         };
 
         await _repo.AddAsync(entity, ct);
@@ -58,7 +57,6 @@ public class ReviewService : IReviewService
         EventId = x.EventId,
         UserId = x.UserId,
         Rating = x.Rating,
-        Comment = x.Comment,
-        CreatedAt = x.CreatedAt
+        Comment = x.Comment
     };
 }
