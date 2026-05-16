@@ -2,6 +2,7 @@ using Eventix.Application.Interfaces.Repositories;
 using Eventix.Domain.Entities;
 using Eventix.Infrastructure.Persistence.Database;
 using Microsoft.EntityFrameworkCore;
+using Eventix.Domain.Enums;
 
 namespace Eventix.Infrastructure.Persistence.Repositories
 {

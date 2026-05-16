@@ -20,7 +20,7 @@ namespace Eventix.Infrastructure.Persistence.Repositories
             return await _context.AIRequestLogs
                 .AsNoTracking()
                 .Include(a => a.User)
-                .OrderByDescending(a => a.CreatedAt)
+                .OrderByDescending(a => a.CreatedAtUtc)
                 .ToListAsync();
         }
 
@@ -37,7 +37,7 @@ namespace Eventix.Infrastructure.Persistence.Repositories
                 .AsNoTracking()
                 .Where(a => a.UserId == userId)
                 .Include(a => a.User)
-                .OrderByDescending(a => a.CreatedAt)
+                .OrderByDescending(a => a.CreatedAtUtc)
                 .ToListAsync();
         }
 
@@ -47,7 +47,7 @@ namespace Eventix.Infrastructure.Persistence.Repositories
                 .AsNoTracking()
                 .Where(a => a.Status == status)
                 .Include(a => a.User)
-                .OrderByDescending(a => a.CreatedAt)
+                .OrderByDescending(a => a.CreatedAtUtc)
                 .ToListAsync();
         }
 
@@ -57,7 +57,7 @@ namespace Eventix.Infrastructure.Persistence.Repositories
                 .AsNoTracking()
                 .Where(a => a.RequestType == requestType)
                 .Include(a => a.User)
-                .OrderByDescending(a => a.CreatedAt)
+                .OrderByDescending(a => a.CreatedAtUtc)
                 .ToListAsync();
         }
 

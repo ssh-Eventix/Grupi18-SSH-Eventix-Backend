@@ -1,5 +1,4 @@
 ﻿using Eventix.Application.DTOs.Archive;
-using Eventix.Application.DTOs.Archive;
 using Eventix.Application.Interfaces.Repositories;
 using Eventix.Application.Interfaces.Services;
 using Eventix.Domain.Entities;
