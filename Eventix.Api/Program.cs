@@ -80,11 +80,42 @@ builder.Services.AddSwaggerGen(c =>
         BearerFormat = "JWT"
     };
 
+    var tenantScheme = new OpenApiSecurityScheme
+    {
+        Name = "X-Tenant-Slug",
+        Description = "Enter tenant slug, for example: eventix-test",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Tenant"
+    };
+
     c.AddSecurityDefinition("Bearer", jwtScheme);
+    c.AddSecurityDefinition("Tenant", tenantScheme);
 
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
-        { jwtScheme, new List<string>() }
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new List<string>()
+        },
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Tenant"
+                }
+            },
+            new List<string>()
+        }
     });
 });
 
