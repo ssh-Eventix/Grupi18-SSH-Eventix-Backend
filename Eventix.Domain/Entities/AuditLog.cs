@@ -5,8 +5,6 @@ namespace Eventix.Domain.Entities
 {
     public class AuditLog : TenantBaseEntity
     {
-    
-=======
         public Guid UserId { get; set; } 
 
         public User User { get; set; } = default!;

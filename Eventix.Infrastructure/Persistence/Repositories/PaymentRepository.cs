@@ -1,5 +1,6 @@
 using Eventix.Application.Interfaces.Repositories;
 using Eventix.Domain.Entities;
+using Eventix.Domain.Enums;
 using Eventix.Infrastructure.Persistence.Database;
 using Microsoft.EntityFrameworkCore;
 
