@@ -7,8 +7,8 @@ using System;
 
 public interface IReviewRepository
 {
-    Task<List<Review>> GetAllAsync(Guid tenantId, CancellationToken ct);
-    Task<Review?> GetByIdAsync(Guid id, Guid tenantId, CancellationToken ct);
+    Task<List<Review>> GetAllAsync(CancellationToken ct = default);
+    Task<Review?> GetByIdAsync(Guid id, CancellationToken ct = default);
 
     Task AddAsync(Review entity, CancellationToken ct);
     Task SaveChangesAsync(CancellationToken ct);

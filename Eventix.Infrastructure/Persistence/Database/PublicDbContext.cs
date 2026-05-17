@@ -18,6 +18,7 @@ public class PublicDbContext : DbContext
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<TenantImpersonationLog> TenantImpersonationLogs => Set<TenantImpersonationLog>();
     public DbSet<ArchiveRecord> ArchiveRecords => Set<ArchiveRecord>();
+    public DbSet<TenantEmailDomain> TenantEmailDomains => Set<TenantEmailDomain>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -30,6 +31,7 @@ public class PublicDbContext : DbContext
         ConfigureTenantImpersonationLog(modelBuilder);
         ConfigureArchiveRecord(modelBuilder);
         ConfigureRefreshToken(modelBuilder);
+        ConfigureTenantEmailDomain(modelBuilder);
 
         base.OnModelCreating(modelBuilder);
     }
@@ -292,6 +294,35 @@ public class PublicDbContext : DbContext
                 .IsUnique();
 
             entity.HasIndex(x => x.SchemaName)
+                .IsUnique();
+        });
+    }
+
+    private static void ConfigureTenantEmailDomain(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<TenantEmailDomain>(entity =>
+        {
+            entity.ToTable("TenantEmailDomains");
+
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Domain)
+                .HasMaxLength(200)
+                .IsRequired();
+
+            entity.Property(x => x.DefaultRoleName)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entity.Property(x => x.AutoApprove)
+                .HasDefaultValue(false);
+
+            entity.HasOne(x => x.Tenant)
+                .WithMany()
+                .HasForeignKey(x => x.TenantId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => new { x.TenantId, x.Domain })
                 .IsUnique();
         });
     }

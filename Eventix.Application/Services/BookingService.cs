@@ -41,6 +41,9 @@ namespace Eventix.Application.Services
 
         public async Task<BookingDto> CreateBooking(CreateBookingRequest request)
         {
+            if (request.BookingItems == null || !request.BookingItems.Any())
+                throw new Exception("Booking must have at least one item");
+
             var booking = new Booking
             {
                 UserId = request.UserId,
@@ -64,9 +67,6 @@ namespace Eventix.Application.Services
 
                 if (item.Quantity <= 0)
                     throw new Exception("Quantity must be greater than zero");
-
-                if (request.BookingItems == null || !request.BookingItems.Any())
-                    throw new Exception("Booking must have at least one item");
 
                 var bookingItem = new BookingItem
                 {
@@ -98,6 +98,41 @@ namespace Eventix.Application.Services
             await _bookingRepository.SaveChangesAsync();
 
             return MapBooking(booking);
+        }
+
+        public async Task<bool> UpdateBookingStatus(Guid id, UpdateBookingStatusRequest request)
+        {
+            var booking = await _bookingRepository.GetByIdAsync(id);
+
+            if(booking == null || booking.IsDeleted)
+                return false;
+
+            if (!Enum.TryParse<BookingStatus>(request.Status, true, out var status))
+                { return false; }
+            
+            booking.Status = status;
+            booking.UpdatedAtUtc = DateTime.UtcNow;
+
+            await _bookingRepository.UpdateAsync(booking);
+            await _bookingRepository.SaveChangesAsync();
+
+            return true;
+        }
+
+        public async Task<bool> DeleteBooking(Guid id)
+        {
+            var booking = await _bookingRepository.GetByIdAsync(id);
+
+            if (booking == null || booking.IsDeleted)
+                return false;
+
+            booking.IsDeleted = true;
+            booking.UpdatedAtUtc = DateTime.UtcNow;
+
+            await _bookingRepository.UpdateAsync(booking);
+            await _bookingRepository.SaveChangesAsync();
+
+            return true;
         }
 
         private static BookingDto MapBooking(Booking booking)

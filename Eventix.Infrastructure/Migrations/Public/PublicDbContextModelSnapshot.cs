@@ -291,6 +291,47 @@ namespace Eventix.Infrastructure.Migrations.Public
                     b.ToTable("Tenants", "public");
                 });
 
+            modelBuilder.Entity("Eventix.Domain.Entities.TenantEmailDomain", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("AutoApprove")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DefaultRoleName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Domain")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "Domain")
+                        .IsUnique();
+
+                    b.ToTable("TenantEmailDomains", "public");
+                });
+
             modelBuilder.Entity("Eventix.Domain.Entities.TenantImpersonationLog", b =>
                 {
                     b.Property<Guid>("Id")
@@ -379,6 +420,17 @@ namespace Eventix.Infrastructure.Migrations.Public
                         .IsRequired();
 
                     b.Navigation("PublicUser");
+                });
+
+            modelBuilder.Entity("Eventix.Domain.Entities.TenantEmailDomain", b =>
+                {
+                    b.HasOne("Eventix.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("Eventix.Domain.Entities.TenantImpersonationLog", b =>

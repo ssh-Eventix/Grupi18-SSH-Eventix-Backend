@@ -19,11 +19,44 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Security.Claims;
 using System.Text;
-using Hangfire.Common;
-using Hangfire.Storage;
+using Eventix.API.Authorization;
+using Eventix.Domain.Enums;
+using DotNetEnv;
 
 
 var builder = WebApplication.CreateBuilder(args);
+
+Env.Load();
+
+builder.Configuration["JwtSettings:SecretKey"] = Environment.GetEnvironmentVariable("JWT_SECRET_KEY");
+builder.Configuration["JwtSettings:Issuer"] = Environment.GetEnvironmentVariable("JWT_ISSUER");
+builder.Configuration["JwtSettings:Audience"] = Environment.GetEnvironmentVariable("JWT_AUDIENCE");
+builder.Configuration["JwtSettings:ExpirationMinutes"] = Environment.GetEnvironmentVariable("JWT_EXPIRATION_MINUTES");
+
+var dbHost = Environment.GetEnvironmentVariable("POSTGRES_HOST");
+var dbPort = Environment.GetEnvironmentVariable("POSTGRES_PORT");
+var dbName = Environment.GetEnvironmentVariable("POSTGRES_DB");
+var dbUser = Environment.GetEnvironmentVariable("POSTGRES_USER");
+var dbPassword = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD");
+
+if (string.IsNullOrWhiteSpace(dbHost) ||
+    string.IsNullOrWhiteSpace(dbPort) ||
+    string.IsNullOrWhiteSpace(dbName) ||
+    string.IsNullOrWhiteSpace(dbUser) ||
+    string.IsNullOrWhiteSpace(dbPassword))
+{
+    throw new InvalidOperationException(
+        "Database environment variables are missing.");
+}
+
+
+
+var connectionString =
+    $"Host={dbHost};" +
+    $"Port={dbPort};" +
+    $"Database={dbName};" +
+    $"Username={dbUser};" +
+    $"Password={dbPassword}";
 
 builder.Services.AddControllers();
 
@@ -47,11 +80,42 @@ builder.Services.AddSwaggerGen(c =>
         BearerFormat = "JWT"
     };
 
+    var tenantScheme = new OpenApiSecurityScheme
+    {
+        Name = "X-Tenant-Slug",
+        Description = "Enter tenant slug, for example: eventix-test",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Tenant"
+    };
+
     c.AddSecurityDefinition("Bearer", jwtScheme);
+    c.AddSecurityDefinition("Tenant", tenantScheme);
 
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
-        { jwtScheme, new List<string>() }
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new List<string>()
+        },
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Tenant"
+                }
+            },
+            new List<string>()
+        }
     });
 });
 
@@ -67,7 +131,7 @@ var secretKey = jwtSection.GetValue<string>("SecretKey")
 var issuer = jwtSection.GetValue<string>("Issuer");
 var audience = jwtSection.GetValue<string>("Audience");
 
-builder.Services.AddSingleton<IJwtTokenService, JwtTokenService>();
+builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 
 builder.Services
     .AddAuthentication(options =>
@@ -102,11 +166,11 @@ builder.Services
 builder.Services.AddScoped<ITenantContext, TenantContext>();
 builder.Services.AddScoped<ITenantResolver, TenantResolver>();
 builder.Services.AddDbContext<PublicDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(connectionString));
 
 builder.Services.AddDbContext<TenantDbContext>((_, options) =>
 {
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+    options.UseNpgsql(connectionString);
     options.ReplaceService<IModelCacheKeyFactory, TenantModelCacheKeyFactory>();
 });
 builder.Services.AddScoped<ITenantSchemaProvisioner, TenantSchemaProvisioner>();
@@ -148,6 +212,10 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<IPublicUserRepository, PublicUserRepository>();
+builder.Services.AddScoped<IRolePermissionService, RolePermissionService>();
+builder.Services.AddScoped<IAuthorizationHandler, PermissionHandler>();
+builder.Services.AddScoped<IAuthorizationHandler, ImpersonationHandler>();
+builder.Services.AddScoped<ITenantEmailDomainRepository, TenantEmailDomainRepository>();
 builder.Services.AddScoped<BookingCleanupJob>();
 builder.Services.AddScoped<NotificationReminderJob>();
 builder.Services.AddScoped<TicketExpirationJob>();
@@ -171,6 +239,27 @@ builder.Services.AddAuthorization(options =>
     options.FallbackPolicy = new AuthorizationPolicyBuilder()
         .RequireAuthenticatedUser()
         .Build();
+
+    options.AddPolicy("SuperAdminOnly", policy =>
+        policy.RequireRole("SuperAdmin"));
+
+    options.AddPolicy("TenantAdminOnly", policy =>
+        policy.RequireRole("Admin", "SuperAdmin"));
+
+    options.AddPolicy("CanImpersonateTenant", policy =>
+        policy.Requirements.Add(new SuperAdminImpersonationRequirement()));
+
+    options.AddPolicy("ManageEvents", policy =>
+        policy.Requirements.Add(new PermissionRequirement(Permission.ManageEvents)));
+
+    options.AddPolicy("ManageUsers", policy =>
+        policy.Requirements.Add(new PermissionRequirement(Permission.ManageUsers)));
+
+    options.AddPolicy("ScanTickets", policy =>
+        policy.Requirements.Add(new PermissionRequirement(Permission.ScanTickets)));
+
+    options.AddPolicy("BuyTickets", policy =>
+        policy.Requirements.Add(new PermissionRequirement(Permission.BuyTickets)));
 });
 
 // hangfire
@@ -178,7 +267,7 @@ builder.Services.AddHangfire(config =>
 {
     config.UsePostgreSqlStorage(options =>
     {
-        options.UseNpgsqlConnection(builder.Configuration.GetConnectionString("DefaultConnection"));
+        options.UseNpgsqlConnection(connectionString);
     });
 });
 
@@ -213,7 +302,8 @@ app.MapGet("/api/health", () =>
         message = "Backend is working",
         time = DateTime.UtcNow
     });
-});
+})
+.AllowAnonymous();
 
 app.MapControllers();
 
@@ -286,9 +376,5 @@ public static class ImpersonationTokenValidation
             return;
         }
 
-        if (session.TargetUserId.HasValue && session.TargetUserId.Value != subjectUserId)
-        {
-            context.Fail("Impersonation subject mismatch");
-        }
     }
 }

@@ -4,9 +4,9 @@ namespace Eventix.Application.Interfaces.Repositories;
 
 public interface ICheckInRepository
 {
-    Task<List<CheckIn>> GetAllAsync(Guid tenantId, CancellationToken ct);
-    Task<CheckIn?> GetByIdAsync(Guid id, Guid tenantId, CancellationToken ct);
-    Task<CheckIn?> GetByTicketIdAsync(Guid ticketId, Guid tenantId, CancellationToken ct);
+    Task<List<CheckIn>> GetAllAsync(CancellationToken ct = default);
+    Task<CheckIn?> GetByIdAsync(Guid id, CancellationToken ct = default);
+    Task<CheckIn?> GetByTicketIdAsync(Guid ticketId, CancellationToken ct = default);
 
     Task AddAsync(CheckIn entity, CancellationToken ct);
     Task SaveChangesAsync(CancellationToken ct);
