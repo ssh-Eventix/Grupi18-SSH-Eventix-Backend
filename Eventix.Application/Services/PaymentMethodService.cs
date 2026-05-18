@@ -67,6 +67,37 @@ namespace Eventix.Application.Services
             await _paymentMethodRepository.SaveChangesAsync();
         }
 
+        // UPDATE
+        public async Task<PaymentMethodDto> UpdateAsync(Guid id, UpdatePaymentMethodDto request)
+        {
+            var method = await _paymentMethodRepository.GetByIdAsync(id);
+
+            if (method == null)
+                throw new Exception("Payment method not found");
+
+            method.Name = request.Name;
+            method.Description = request.Description;
+            method.Provider = request.Provider;
+
+            _paymentMethodRepository.Update(method);
+            await _paymentMethodRepository.SaveChangesAsync();
+
+            return Map(method);
+        }
+
+        // DELETE
+        public async Task DeleteAsync(Guid id)
+        {
+            var method = await _paymentMethodRepository.GetByIdAsync(id);
+
+            if (method == null)
+                throw new Exception("Payment method not found");
+
+            _paymentMethodRepository.Delete(method);
+            await _paymentMethodRepository.SaveChangesAsync();
+        }
+
+
         public async Task DeactivateAsync(Guid id)
         {
             var method = await _paymentMethodRepository.GetByIdAsync(id);

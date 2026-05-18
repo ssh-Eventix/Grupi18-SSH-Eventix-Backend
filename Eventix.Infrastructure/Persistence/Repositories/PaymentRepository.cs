@@ -71,5 +71,5 @@ namespace Eventix.Infrastructure.Persistence.Repositories
         {
             await _context.SaveChangesAsync();
         }
- x   }
+    }
 }
