@@ -1,3 +1,4 @@
+using Eventix.Domain.Enums;
 using System;
 
 namespace Eventix.Application.DTOs.Payment
@@ -12,9 +13,7 @@ namespace Eventix.Application.DTOs.Payment
 
         public Guid PaymentMethodId { get; set; }
 
-        public string? TransactionId { get; set; }
-
-        public string Status { get; set; } = string.Empty;
+        public String Status { get; set; } = String.Empty;
 
         public DateTime? PaidAt { get; set; }
     }

@@ -12,7 +12,6 @@ namespace Eventix.Domain.Entities
         public PaymentMethod PaymentMethod { get; set; } = default!;
         public string? TransactionId { get; set; }
         public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
-
         public DateTime? PaidAt { get; set; }
     }
 }
