@@ -46,7 +46,7 @@ namespace Eventix.Application.Services
 
         public async Task<PaymentDto> CreatePayment(CreatePaymentDto request)
         {
-            if(request.BookingId == null)
+            if (request.BookingId == null)
             {
                 throw new Exception("BookingId is required");
             }
@@ -57,7 +57,7 @@ namespace Eventix.Application.Services
                 throw new Exception("Booking not found");
 
             var payment = new Payment
-            { 
+            {
                 BookingId = request.BookingId,
                 Amount = request.Amount,
                 PaymentMethodId = request.PaymentMethodId,
@@ -67,7 +67,7 @@ namespace Eventix.Application.Services
 
             await _paymentRepository.AddAsync(payment);
             await _paymentRepository.SaveChangesAsync();
-            
+
             return MapPayment(payment);
         }
 
@@ -98,4 +98,5 @@ namespace Eventix.Application.Services
             }).ToList();
 
         }
+    }
 }
