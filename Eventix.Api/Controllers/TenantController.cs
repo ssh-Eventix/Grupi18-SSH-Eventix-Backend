@@ -1,5 +1,6 @@
 ﻿using Eventix.Application.DTOs.Tenants;
 using Eventix.Application.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Eventix.API.Controllers;
@@ -16,10 +17,12 @@ public class TenantsController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Policy = "Permission:ViewTenants")]
     public async Task<IActionResult> GetAll(CancellationToken ct)
         => Ok(await _service.GetAllAsync(ct));
 
     [HttpGet("{id:guid}")]
+    [Authorize(Policy = "Permission:ViewTenants")]
     public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
     {
         var tenant = await _service.GetByIdAsync(id, ct);
@@ -27,6 +30,7 @@ public class TenantsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "Permission:CreateTenants")]
     public async Task<IActionResult> Create(CreateTenantDTO dto, CancellationToken ct)
     {
         var result = await _service.CreateAsync(dto, ct);
@@ -34,6 +38,7 @@ public class TenantsController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Policy = "Permission:UpdateTenants")]
     public async Task<IActionResult> Update(Guid id, UpdateTenantDTO dto, CancellationToken ct)
     {
         var result = await _service.UpdateAsync(id, dto, ct);
@@ -41,6 +46,7 @@ public class TenantsController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Policy = "Permission:DeleteTenants")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         var success = await _service.DeleteAsync(id, ct);

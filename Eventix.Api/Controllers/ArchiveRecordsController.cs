@@ -18,6 +18,7 @@ public class ArchiveRecordsController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Policy = "Permission:ViewArchiveRecords")]
     public async Task<IActionResult> GetAll()
     {
         var records = await _service.GetAllAsync();
@@ -25,6 +26,7 @@ public class ArchiveRecordsController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
+    [Authorize(Policy = "Permission:ViewArchiveRecords")]
     public async Task<IActionResult> GetById(Guid id)
     {
         var record = await _service.GetByIdAsync(id);
@@ -36,6 +38,7 @@ public class ArchiveRecordsController : ControllerBase
     }
 
     [HttpGet("entity/{entityName}")]
+    [Authorize(Policy = "Permission:ViewArchiveRecords")]
     public async Task<IActionResult> GetByEntity(string entityName)
     {
         var records = await _service.GetByEntityAsync(entityName);
@@ -43,6 +46,7 @@ public class ArchiveRecordsController : ControllerBase
     }
 
     [HttpGet("year/{year:int}")]
+    [Authorize(Policy = "Permission:ViewArchiveRecords")]
     public async Task<IActionResult> GetByYear(int year)
     {
         var records = await _service.GetByYearAsync(year);
@@ -50,7 +54,7 @@ public class ArchiveRecordsController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin,SuperAdmin")]
+    [Authorize(Policy = "Permission:ManageArchiveRecords")]
     public async Task<IActionResult> Create(CreateArchiveRecordDTO dto)
     {
         var record = await _service.CreateAsync(dto);
@@ -58,7 +62,7 @@ public class ArchiveRecordsController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "Admin,SuperAdmin")]
+    [Authorize(Policy = "Permission:ManageArchiveRecords")]
     public async Task<IActionResult> Delete(Guid id)
     {
         var deleted = await _service.DeleteAsync(id);

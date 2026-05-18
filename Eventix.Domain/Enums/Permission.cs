@@ -3,7 +3,6 @@
 public enum Permission
 {
     // SuperAdmin / platform
-    ManageTenants,
     ViewTenants,
     CreateTenants,
     UpdateTenants,
@@ -18,14 +17,14 @@ public enum Permission
     DeleteUsers,
     ManageRoles,
     AssignRoles,
+    ViewRoles,
 
     // Events
-    ManageEvents,
+    SearchEvents,
     ViewEvents,
     CreateEvents,
     UpdateEvents,
     DeleteEvents,
-    PublishEvents,
 
     // Venues / sections
     ManageVenues,
@@ -37,6 +36,7 @@ public enum Permission
 
     // Event sections / ticket types
     ManageEventSections,
+    ViewEventSections,
     ManageTicketTypes,
     CreateTicketTypes,
     UpdateTicketTypes,
@@ -63,9 +63,10 @@ public enum Permission
     RefundPayments,
 
     // Reviews
-    ManageReviews,
     ViewReviews,
     DeleteReviews,
+    CreateReviews,
+    UpdateReviews,
 
     // Reports / dashboard
     ViewReports,
@@ -83,5 +84,51 @@ public enum Permission
     // Archive / audit
     ViewAuditLogs,
     ViewArchiveRecords,
-    RestoreArchiveRecords
+    ArchiveRecords,
+
+    //Event session, categories and speakers
+    ViewEventCategories,
+    CreateEventCategories,
+    UpdateEventCategories,
+    DeleteEventCategories,
+
+    ManageEventSessions,
+
+    CreateSpeakers,
+    UpdateSpeakers,
+    DeleteSpeakers,
+
+    //Discount coupons
+    ManageDiscountCoupons,
+    ViewDiscountCoupons,
+    CreateDiscountCoupons,
+    UpdateDiscountCoupons,
+    DeleteDiscountCoupons,
+
+    //Check ins
+    ViewCheckIns,
+    ManageCheckIns,
+
+    // Payment methods
+    ManagePaymentMethods,
+    ViewPaymentMethods,
+
+    // Tenant email domains
+    ManageTenantEmailDomains,
+    ViewTenantEmailDomains,
+
+    // Public users / public roles
+    ManagePublicUsers,
+    ViewPublicUsers,
+    ManagePublicRoles,
+    ViewPublicRoles,
+
+    // Refresh tokens / security
+    ViewRefreshTokens,
+    RevokeRefreshTokens,
+
+    ViewEventSessions,
+    ViewSpeakers,
+    ViewTicketTypes,
+    ViewVenueSections
 }
