@@ -96,7 +96,6 @@ namespace Eventix.Application.Services
                 Status = p.Status.ToString(), // konverton enum ne string (better for frontend)
                 PaidAt = p.PaidAt
             }).ToList();
-
         }
     }
 }
