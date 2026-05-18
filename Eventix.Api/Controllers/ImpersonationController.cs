@@ -40,7 +40,7 @@ public class ImpersonationController : ControllerBase
     }
 
     [HttpPost("start")]
-    [Authorize(Roles = "SuperAdmin")]
+    [Authorize(Policy = "Permission:ImpersonateTenant")]
     [ProducesResponseType(typeof(ImpersonationStartResult), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -101,7 +101,7 @@ public class ImpersonationController : ControllerBase
     }
 
     [HttpPost("stop")]
-    [Authorize(Roles = "SuperAdmin")]
+    [Authorize(Policy = "Permission:ImpersonateTenant")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

@@ -1,5 +1,6 @@
 using Eventix.Application.DTOs.User;
 using Eventix.Application.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Eventix.API.Controllers;
@@ -16,6 +17,7 @@ public class UserController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Policy = "Permission:ViewUsers")]
     public async Task<ActionResult<IEnumerable<UserResponseDTO>>> GetAll(CancellationToken ct)
     {
         var users = await _service.GetAllAsync(ct);
@@ -23,6 +25,7 @@ public class UserController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
+    [Authorize(Policy = "Permission:ViewUsers")]
     public async Task<ActionResult<UserResponseDTO>> GetById(Guid id, CancellationToken ct)
     {
         var dto = await _service.GetByIdAsync(id, ct);
@@ -33,6 +36,7 @@ public class UserController : ControllerBase
     }
 
     [HttpGet("by-email")]
+    [Authorize(Policy = "Permission:ViewUsers")]
     public async Task<ActionResult<UserResponseDTO>> GetByEmail([FromQuery] string email, CancellationToken ct)
     {
         var dto = await _service.GetByEmailAsync(email, ct);
@@ -43,6 +47,7 @@ public class UserController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "Permission:CreateUsers")]
     public async Task<ActionResult<UserResponseDTO>> Create(
         [FromBody] CreateUserDTO dto,
         CancellationToken ct)
@@ -53,6 +58,7 @@ public class UserController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Policy = "Permission:UpdateUsers")]
     public async Task<IActionResult> Update(
         Guid id,
         [FromBody] UpdateUserDTO dto,
@@ -61,4 +67,18 @@ public class UserController : ControllerBase
         var updated = await _service.UpdateAsync(id, dto, ct);
         return updated ? NoContent() : NotFound();
     }
+
+    [HttpDelete("{id:guid}")]
+    [Authorize(Policy = "Permission:DeleteUsers")]
+    public async Task<IActionResult> Delete(
+    Guid id,
+    CancellationToken ct)
+    {
+        var deleted = await _service.DeleteAsync(id, ct);
+
+        return deleted
+            ? NoContent()
+            : NotFound();
+    }
+
 }

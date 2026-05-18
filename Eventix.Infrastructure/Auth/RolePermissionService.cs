@@ -8,18 +8,7 @@ public class RolePermissionService : IRolePermissionService
     private static readonly Dictionary<string, Permission[]> PermissionsByRole =
         new(StringComparer.OrdinalIgnoreCase)
         {
-            ["SuperAdmin"] =
-            [
-                Permission.ManageTenants,
-                Permission.ViewTenants,
-                Permission.CreateTenants,
-                Permission.UpdateTenants,
-                Permission.DeleteTenants,
-                Permission.ImpersonateTenant,
-                Permission.ViewAuditLogs,
-                Permission.ViewArchiveRecords,
-                Permission.RestoreArchiveRecords
-            ],
+            ["SuperAdmin"] = Enum.GetValues<Permission>(),
 
             ["Admin"] =
             [
@@ -31,12 +20,11 @@ public class RolePermissionService : IRolePermissionService
                 Permission.ManageRoles,
                 Permission.AssignRoles,
 
-                Permission.ManageEvents,
+                Permission.SearchEvents,
                 Permission.ViewEvents,
                 Permission.CreateEvents,
                 Permission.UpdateEvents,
                 Permission.DeleteEvents,
-                Permission.PublishEvents,
 
                 Permission.ManageVenues,
                 Permission.ViewVenues,
@@ -70,30 +58,88 @@ public class RolePermissionService : IRolePermissionService
                 Permission.ViewNotifications,
 
                 Permission.UseAI,
-                Permission.ViewAIRequestLogs
+                Permission.ViewAIRequestLogs,
+
+                Permission.CreateTicketTypes,
+                Permission.UpdateTicketTypes,
+                Permission.DeleteTicketTypes,
+                Permission.ViewAuditLogs,
+
+                Permission.ViewEventCategories,
+                Permission.CreateEventCategories,
+                Permission.UpdateEventCategories,
+                Permission.DeleteEventCategories,
+
+                Permission.ManageEventSessions,
+
+                Permission.CreateSpeakers,
+                Permission.UpdateSpeakers,
+                Permission.DeleteSpeakers,
+
+                Permission.ManageDiscountCoupons,
+                Permission.ViewDiscountCoupons,
+                Permission.CreateDiscountCoupons,
+                Permission.UpdateDiscountCoupons,
+                Permission.DeleteDiscountCoupons,
+
+                Permission.ViewCheckIns,
+                Permission.ManageCheckIns,
+
+                Permission.ManagePaymentMethods,
+                Permission.ViewPaymentMethods,
+
+                Permission.ManageTenantEmailDomains,
+                Permission.ViewTenantEmailDomains,
+
+                Permission.ViewReviews,
+                Permission.CreateReviews,
+                Permission.UpdateReviews,
+                Permission.DeleteReviews,
+
+                Permission.ViewEventSections,
+                Permission.ViewEventSessions,
+                Permission.ViewRoles,
+                Permission.ViewSpeakers,
+                Permission.ViewTicketTypes,
+                Permission.ViewVenueSections
             ],
 
             ["Staff"] =
             [
                 Permission.ViewEvents,
+                Permission.SearchEvents,
                 Permission.ViewBookings,
                 Permission.ViewTickets,
                 Permission.ScanTickets,
                 Permission.CheckInTickets,
                 Permission.ValidateTickets,
                 Permission.ViewDashboard,
-                Permission.ViewNotifications
+                Permission.ViewNotifications,
+                Permission.CancelTickets,
+                Permission.ViewCheckIns,
+                Permission.ManageCheckIns,
+                Permission.ViewEventSessions,
+                Permission.ViewSpeakers,
+                Permission.ViewEventSections,
+                Permission.ViewTicketTypes
             ],
 
             ["Buyer"] =
             [
                 Permission.ViewEvents,
+                Permission.SearchEvents,
                 Permission.CreateBookings,
                 Permission.CancelBookings,
                 Permission.BuyTickets,
                 Permission.ViewTickets,
                 Permission.ViewNotifications,
-                Permission.UseAI
+                Permission.UseAI,
+                Permission.CreateReviews,
+                Permission.UpdateReviews,
+                Permission.ViewDiscountCoupons,
+                Permission.ViewSpeakers,
+                Permission.ViewEventSessions,
+                Permission.ViewTicketTypes
             ]
         };
 

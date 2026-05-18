@@ -16,7 +16,7 @@ namespace Eventix.Api.Controllers
         }
 
         [HttpGet("{id:guid}")]
-        [Authorize(Roles = "Admin,Buyer,SuperAdmin")]
+        [Authorize(Policy = "Permission:ViewTickets")]
         public async Task<IActionResult> GetById(Guid id)
         {
             var ticket = await _ticketService.GetByIdAsync(id);
@@ -28,7 +28,7 @@ namespace Eventix.Api.Controllers
         }
 
         [HttpGet("code/{ticketCode}")]
-        [Authorize(Roles = "Admin,Buyer,SuperAdmin")]
+        [Authorize(Policy = "Permission:ViewTickets")]
         public async Task<IActionResult> GetByCode(string ticketCode)
         {
             var ticket = await _ticketService.GetByCodeAsync(ticketCode);
@@ -40,7 +40,7 @@ namespace Eventix.Api.Controllers
         }
 
         [HttpPost("validate")]
-        [Authorize(Roles = "Admin,Buyer,SuperAdmin")]
+        [Authorize(Policy = "Permission:ValidateTickets")]
         public async Task<IActionResult> Validate([FromBody] string ticketCode)
         {
             var isValid = await _ticketService.ValidateTicketAsync(ticketCode);
@@ -52,7 +52,7 @@ namespace Eventix.Api.Controllers
         }
 
         [HttpPost("checkin")]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Policy = "Permission:CheckInTickets")]
         public async Task<IActionResult> CheckIn([FromBody] string ticketCode)
         {
             try

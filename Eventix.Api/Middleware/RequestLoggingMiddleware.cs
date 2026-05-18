@@ -19,22 +19,39 @@ public class RequestLoggingMiddleware
     {
         var stopwatch = Stopwatch.StartNew();
 
-        _logger.LogInformation(
-            "HTTP {Method} {Path} started",
-            context.Request.Method,
-            context.Request.Path
-        );
+        var method = context.Request.Method;
+        var path = context.Request.Path;
 
-        await _next(context);
+        try
+        {
+            _logger.LogInformation(
+                "HTTP {Method} {Path} started",
+                method,
+                path);
 
-        stopwatch.Stop();
+            await _next(context);
 
-        _logger.LogInformation(
-            "HTTP {Method} {Path} responded {StatusCode} in {Elapsed}ms",
-            context.Request.Method,
-            context.Request.Path,
-            context.Response.StatusCode,
-            stopwatch.ElapsedMilliseconds
-        );
+            stopwatch.Stop();
+
+            _logger.LogInformation(
+                "HTTP {Method} {Path} responded {StatusCode} in {Elapsed}ms",
+                method,
+                path,
+                context.Response.StatusCode,
+                stopwatch.ElapsedMilliseconds);
+        }
+        catch (Exception ex)
+        {
+            stopwatch.Stop();
+
+            _logger.LogError(
+                ex,
+                "HTTP {Method} {Path} failed after {Elapsed}ms",
+                method,
+                path,
+                stopwatch.ElapsedMilliseconds);
+
+            throw;
+        }
     }
 }

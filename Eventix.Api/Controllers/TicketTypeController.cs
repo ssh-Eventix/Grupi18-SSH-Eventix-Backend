@@ -1,6 +1,10 @@
-﻿using Eventix.Application.DTOs.TicketType;
+﻿using Eventix.API.Helpers;
+using Eventix.Application.DTOs.TicketType;
+using Eventix.Application.Interfaces.Common;
 using Eventix.Application.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Distributed;
 
 namespace Eventix.Api.Controllers
 {
@@ -9,67 +13,104 @@ namespace Eventix.Api.Controllers
     public class TicketTypeController : ControllerBase
     {
         private readonly ITicketTypeService _ticketTypeService;
+        private readonly IDistributedCache _cache;
+        private readonly ITenantContext _tenantContext;
 
-        public TicketTypeController(ITicketTypeService ticketTypeService)
+        public TicketTypeController(
+            ITicketTypeService ticketTypeService,
+            IDistributedCache cache,
+            ITenantContext tenantContext)
         {
             _ticketTypeService = ticketTypeService;
+            _cache = cache;
+            _tenantContext = tenantContext;
         }
 
         [HttpGet("event/{eventId:guid}")]
+        [Authorize(Policy = "Permission:ViewTicketTypes")]
         public async Task<IActionResult> GetByEventId(Guid eventId)
         {
-            var ticketTypes = await _ticketTypeService.GetByEventIdAsync(eventId);
+            var cacheKey = $"tenant:{_tenantContext.TenantId}:tickettypes:event:{eventId}";
 
-            var result = ticketTypes.Select(t => new TicketTypeDto
-            {
-                Id = t.Id,
-                Name = t.Name,
-                Price = t.Price,
-                QuantityAvailable = t.QuantityAvailable,
-                SaleStartDate = t.SaleStartDate,
-                SaleEndDate = t.SaleEndDate
-            });
+            var result = await CacheHelper.GetOrSetAsync(
+                _cache,
+                cacheKey,
+                async () =>
+                {
+                    var ticketTypes = await _ticketTypeService.GetByEventIdAsync(eventId);
+
+                    return ticketTypes.Select(t => new TicketTypeDto
+                    {
+                        Id = t.Id,
+                        Name = t.Name,
+                        Price = t.Price,
+                        QuantityAvailable = t.QuantityAvailable,
+                        SaleStartDate = t.SaleStartDate,
+                        SaleEndDate = t.SaleEndDate
+                    }).ToList();
+                },
+                TimeSpan.FromMinutes(5));
 
             return Ok(result);
         }
 
         [HttpGet("event/{eventId:guid}/available")]
+        [Authorize(Policy = "Permission:ViewTicketTypes")]
         public async Task<IActionResult> GetAvailableByEventId(Guid eventId)
         {
-            var ticketTypes = await _ticketTypeService.GetAvailableByEventIdAsync(eventId);
+            var cacheKey = $"tenant:{_tenantContext.TenantId}:tickettypes:event:{eventId}:available";
 
-            var result = ticketTypes.Select(t => new TicketTypeDto
-            {
-                Id = t.Id,
-                Name = t.Name,
-                Price = t.Price,
-                QuantityAvailable = t.QuantityAvailable,
-                SaleStartDate = t.SaleStartDate,
-                SaleEndDate = t.SaleEndDate
-            });
+            var result = await CacheHelper.GetOrSetAsync(
+                _cache,
+                cacheKey,
+                async () =>
+                {
+                    var ticketTypes = await _ticketTypeService.GetAvailableByEventIdAsync(eventId);
+
+                    return ticketTypes.Select(t => new TicketTypeDto
+                    {
+                        Id = t.Id,
+                        Name = t.Name,
+                        Price = t.Price,
+                        QuantityAvailable = t.QuantityAvailable,
+                        SaleStartDate = t.SaleStartDate,
+                        SaleEndDate = t.SaleEndDate
+                    }).ToList();
+                },
+                TimeSpan.FromMinutes(2));
 
             return Ok(result);
         }
 
         [HttpGet("{id:guid}")]
+        [Authorize(Policy = "Permission:ViewTicketTypes")]
         public async Task<IActionResult> GetById(Guid id)
         {
-            var ticketType = await _ticketTypeService.GetByIdAsync(id);
+            var cacheKey = $"tenant:{_tenantContext.TenantId}:tickettype:{id}";
 
-            if (ticketType == null)
-                return NotFound();
+            var result = await CacheHelper.GetOrSetAsync(
+                _cache,
+                cacheKey,
+                async () =>
+                {
+                    var ticketType = await _ticketTypeService.GetByIdAsync(id);
 
-            var result = new TicketTypeDto
-            {
-                Id = ticketType.Id,
-                Name = ticketType.Name,
-                Price = ticketType.Price,
-                QuantityAvailable = ticketType.QuantityAvailable,
-                SaleStartDate = ticketType.SaleStartDate,
-                SaleEndDate = ticketType.SaleEndDate
-            };
+                    if (ticketType == null)
+                        return null;
 
-            return Ok(result);
+                    return new TicketTypeDto
+                    {
+                        Id = ticketType.Id,
+                        Name = ticketType.Name,
+                        Price = ticketType.Price,
+                        QuantityAvailable = ticketType.QuantityAvailable,
+                        SaleStartDate = ticketType.SaleStartDate,
+                        SaleEndDate = ticketType.SaleEndDate
+                    };
+                },
+                TimeSpan.FromMinutes(5));
+
+            return result == null ? NotFound() : Ok(result);
         }
 
     }

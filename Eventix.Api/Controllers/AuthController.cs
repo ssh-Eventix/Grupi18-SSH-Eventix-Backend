@@ -50,6 +50,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
+    [AllowAnonymous]
     public async Task<ActionResult<LoginResponseDTO>> Register(
         [FromBody] RegisterRequestDTO dto,
         CancellationToken ct)
@@ -148,6 +149,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
+    [AllowAnonymous]
     public async Task<ActionResult<LoginResponseDTO>> Login(
         [FromBody] LoginRequestDTO dto,
         CancellationToken ct)
@@ -206,6 +208,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("refresh")]
+    [AllowAnonymous]
     public async Task<ActionResult<LoginResponseDTO>> Refresh(
         [FromBody] RefreshRequestDTO dto,
         CancellationToken ct)
@@ -263,6 +266,106 @@ public class AuthController : ControllerBase
             RefreshToken = newRefreshToken,
             RefreshTokenExpiresAtUtc = refreshExpires
         });
+    }
+
+    [HttpPost("logout")]
+    [Authorize(Policy = "Permission:RevokeRefreshTokens")]
+    public async Task<IActionResult> Logout(
+    [FromBody] RefreshRequestDTO dto,
+    CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(dto.RefreshToken))
+            return BadRequest("Refresh token is required.");
+
+        var hash = _refreshTokenService.Hash(dto.RefreshToken);
+
+        var token = await _refreshTokenRepository
+            .GetByTokenHashAsync(hash, ct);
+
+        if (token is null)
+            return NotFound();
+
+        if (token.IsRevoked)
+            return BadRequest("Token already revoked.");
+
+        token.RevokedAtUtc = DateTime.UtcNow;
+
+        await _refreshTokenRepository.UpdateAsync(token, ct);
+        await _refreshTokenRepository.SaveChangesAsync(ct);
+
+        return Ok("Logged out successfully.");
+    }
+
+    [HttpPost("revoke-refresh-token")]
+    [Authorize(Policy = "Permission:RevokeRefreshTokens")]
+    public async Task<IActionResult> RevokeRefreshToken(
+    [FromBody] RefreshRequestDTO dto,
+    CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(dto.RefreshToken))
+            return BadRequest("Refresh token is required.");
+
+        var hash = _refreshTokenService.Hash(dto.RefreshToken);
+
+        var token = await _refreshTokenRepository
+            .GetByTokenHashAsync(hash, ct);
+
+        if (token is null)
+            return NotFound();
+
+        if (token.IsRevoked)
+            return BadRequest("Token already revoked.");
+
+        token.RevokedAtUtc = DateTime.UtcNow;
+
+        await _refreshTokenRepository.UpdateAsync(token, ct);
+        await _refreshTokenRepository.SaveChangesAsync(ct);
+
+        return Ok("Refresh token revoked.");
+    }
+
+    [HttpGet("refresh-tokens")]
+    [Authorize(Policy = "Permission:ViewRefreshTokens")]
+    public async Task<IActionResult> GetRefreshTokens(
+    CancellationToken ct)
+    {
+        var tokens = await _refreshTokenRepository.GetAllAsync(ct);
+
+        var result = tokens.Select(x => new
+        {
+            x.Id,
+            x.PublicUserId,
+            x.PublicUser.Email,
+            x.CreatedAtUtc,
+            x.ExpiresAtUtc,
+            x.RevokedAtUtc,
+            x.ReplacedByTokenHash,
+            x.IsExpired,
+            x.IsRevoked
+        });
+
+        return Ok(result);
+    }
+
+    [HttpPost("revoke-all/{publicUserId:guid}")]
+    [Authorize(Policy = "Permission:RevokeRefreshTokens")]
+    public async Task<IActionResult> RevokeAllUserTokens(
+    Guid publicUserId,
+    CancellationToken ct)
+    {
+        var tokens = await _refreshTokenRepository
+            .GetByPublicUserIdAsync(publicUserId, ct);
+
+        foreach (var token in tokens.Where(x => !x.IsRevoked))
+        {
+            token.RevokedAtUtc = DateTime.UtcNow;
+
+            await _refreshTokenRepository.UpdateAsync(token, ct);
+        }
+
+        await _refreshTokenRepository.SaveChangesAsync(ct);
+
+        return Ok("All refresh tokens revoked.");
     }
 
     private static string GetEmailDomain(string email)

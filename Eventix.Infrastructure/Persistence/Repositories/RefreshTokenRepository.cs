@@ -13,7 +13,13 @@ public class RefreshTokenRepository : IRefreshTokenRepository
     {
         _context = context;
     }
-
+    public Task<List<RefreshToken>> GetAllAsync(CancellationToken ct)
+    {
+        return _context.RefreshTokens
+            .Include(x => x.PublicUser)
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .ToListAsync(ct);
+    }
     public async Task AddAsync(RefreshToken token, CancellationToken ct)
     {
         await _context.RefreshTokens.AddAsync(token, ct);
@@ -37,5 +43,16 @@ public class RefreshTokenRepository : IRefreshTokenRepository
     public Task SaveChangesAsync(CancellationToken ct)
     {
         return _context.SaveChangesAsync(ct);
+    }
+
+    public Task<List<RefreshToken>> GetByPublicUserIdAsync(
+    Guid publicUserId,
+    CancellationToken ct)
+    {
+        return _context.RefreshTokens
+            .Include(x => x.PublicUser)
+            .Where(x => x.PublicUserId == publicUserId)
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .ToListAsync(ct);
     }
 }

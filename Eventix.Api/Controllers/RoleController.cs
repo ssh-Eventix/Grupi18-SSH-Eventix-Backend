@@ -26,7 +26,7 @@ namespace Eventix.API.Controllers
             }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Policy = "Permission:ViewRoles")]
         public async Task<ActionResult<IEnumerable<RoleResponseDTO>>> GetAll(CancellationToken cancellationToken)
         {
             var roles = await _service.GetAllAsync(cancellationToken);
@@ -35,7 +35,7 @@ namespace Eventix.API.Controllers
         }
 
         [HttpGet("{id:guid}")]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Policy = "Permission:ViewRoles")]
         public async Task<ActionResult<RoleResponseDTO>> GetById(Guid id, CancellationToken cancellationToken)
         {
             var dto = await _service.GetByIdAsync(id, cancellationToken);
@@ -46,7 +46,7 @@ namespace Eventix.API.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Policy = "Permission:ManageRoles")]
         public async Task<ActionResult<RoleResponseDTO>> Create([FromBody] CreateRoleDTO dto, CancellationToken cancellationToken)
         {
             var response = await _service.CreateAsync(dto, _tenantContext.TenantId, cancellationToken);
@@ -54,7 +54,7 @@ namespace Eventix.API.Controllers
         }
 
         [HttpPut("{id:guid}")]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Policy = "Permission:ManageRoles")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateRoleDTO dto, CancellationToken cancellationToken)
         {
             var existing = await _service.GetByIdAsync(id, cancellationToken);
@@ -64,7 +64,7 @@ namespace Eventix.API.Controllers
         }
 
         [HttpDelete("{id:guid}")]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Policy = "Permission:ManageRoles")]
         public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
         {
             var existing = await _service.GetByIdAsync(id, cancellationToken);
