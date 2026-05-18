@@ -2,20 +2,17 @@
 using Eventix.Application.Interfaces.Services;
 using Eventix.Infrastructure.Persistence.Database;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Eventix.Infrastructure.MultiTenancy;
 
 public class TenantSchemaProvisioner : ITenantSchemaProvisioner
 {
-    private readonly TenantDbContext _tenantDbContext;
-    private readonly ITenantContext _tenantContext;
+    private readonly IServiceScopeFactory _scopeFactory;
 
-    public TenantSchemaProvisioner(
-        TenantDbContext tenantDbContext,
-        ITenantContext tenantContext)
+    public TenantSchemaProvisioner(IServiceScopeFactory scopeFactory)
     {
-        _tenantDbContext = tenantDbContext;
-        _tenantContext = tenantContext;
+        _scopeFactory = scopeFactory;
     }
 
     public async Task ProvisionTenantSchemaAsync(
@@ -25,13 +22,27 @@ public class TenantSchemaProvisioner : ITenantSchemaProvisioner
         if (string.IsNullOrWhiteSpace(schemaName))
             throw new ArgumentException("Schema name is required.", nameof(schemaName));
 
-        _tenantContext.SchemaName = schemaName;
+        await using var scope = _scopeFactory.CreateAsyncScope();
 
-        await _tenantDbContext.Database.ExecuteSqlRawAsync(
+        var tenantContext = scope.ServiceProvider.GetRequiredService<ITenantContext>();
+        tenantContext.SchemaName = schemaName;
+
+        var db = scope.ServiceProvider.GetRequiredService<TenantDbContext>();
+
+        await db.Database.ExecuteSqlRawAsync(
             $@"CREATE SCHEMA IF NOT EXISTS ""{schemaName}"";",
-            cancellationToken
-        );
+            cancellationToken);
 
-        await _tenantDbContext.Database.MigrateAsync(cancellationToken);
+        var createScript = db.Database.GenerateCreateScript();
+
+        await db.Database.ExecuteSqlRawAsync(createScript, cancellationToken);
+
+        var roleTableExists = await db.Database
+            .SqlQueryRaw<int>(
+                $@"SELECT CASE WHEN to_regclass('""{schemaName}"".""Role""') IS NULL THEN 0 ELSE 1 END AS ""Value""")
+            .SingleAsync(cancellationToken);
+
+        if (roleTableExists == 0)
+            throw new InvalidOperationException($@"Tenant schema was created, but ""{schemaName}"".""Role"" table was not created.");
     }
 }

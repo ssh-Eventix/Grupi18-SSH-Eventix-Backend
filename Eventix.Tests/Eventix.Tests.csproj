@@ -10,6 +10,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="ApiTests\**" />
+    <Compile Remove="IntegrationTests\**" />
+    <Compile Remove="UnitTests\**" />
+    <EmbeddedResource Remove="ApiTests\**" />
+    <EmbeddedResource Remove="IntegrationTests\**" />
+    <EmbeddedResource Remove="UnitTests\**" />
+    <None Remove="ApiTests\**" />
+    <None Remove="IntegrationTests\**" />
+    <None Remove="UnitTests\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
     <PackageReference Include="xunit" Version="2.5.3" />
@@ -25,12 +37,6 @@
     <ProjectReference Include="..\Eventix.Application\Eventix.Application.csproj" />
     <ProjectReference Include="..\Eventix.Domain\Eventix.Domain.csproj" />
     <ProjectReference Include="..\Eventix.Infrastructure\Eventix.Infrastructure.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="ApiTests\" />
-    <Folder Include="IntegrationTests\" />
-    <Folder Include="UnitTests\" />
   </ItemGroup>
 
 </Project>

@@ -1,10 +1,12 @@
 using Eventix.Application.DTOs.Auth;
 using Eventix.Application.Interfaces.Common;
 using Eventix.Application.Interfaces.Repositories;
+using Eventix.Infrastructure.Persistence.Database;
 using Eventix.Application.Interfaces.Services;
 using Eventix.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using UserRoleEnum = Eventix.Domain.Enums.UserRole;
 
 namespace Eventix.API.Controllers;
@@ -24,6 +26,7 @@ public class AuthController : ControllerBase
     private readonly IRefreshTokenRepository _refreshTokenRepository;
     private readonly ITenantContext _tenantContext;
     private readonly ITenantEmailDomainRepository _tenantEmailDomainRepository;
+    private readonly PublicDbContext _publicDb;
 
     public AuthController(
         IUserRepository userRepository,
@@ -35,7 +38,8 @@ public class AuthController : ControllerBase
         IRefreshTokenService refreshTokenService,
         IRefreshTokenRepository refreshTokenRepository,
         ITenantContext tenantContext,
-        ITenantEmailDomainRepository tenantEmailDomainRepository)
+        ITenantEmailDomainRepository tenantEmailDomainRepository,
+        PublicDbContext publicDb)
     {
         _userRepository = userRepository;
         _userRoleRepository = userRoleRepository;
@@ -47,6 +51,7 @@ public class AuthController : ControllerBase
         _refreshTokenRepository = refreshTokenRepository;
         _tenantContext = tenantContext;
         _tenantEmailDomainRepository = tenantEmailDomainRepository;
+        _publicDb = publicDb;
     }
 
     [HttpPost("register")]
@@ -169,6 +174,39 @@ public class AuthController : ControllerBase
 
         if (!_passwordHasher.Verify(publicUser.PasswordHash, dto.Password))
             return Unauthorized();
+
+        var publicRoles = await _publicDb.PublicUserRoles
+    .Where(x => x.PublicUserId == publicUser.Id)
+    .Select(x => x.PublicRole.Name)
+    .ToListAsync(ct);
+
+        if (publicRoles.Any(x =>
+     string.Equals(x, "SuperAdmin", StringComparison.OrdinalIgnoreCase)))
+        {
+            var (superAdminaccessToken, superAdminaccessExpires) = await _jwtTokenService.GenerateTokenAsync(
+                subjectId: publicUser.Id,
+                email: publicUser.Email,
+                tenantId: Guid.Empty,
+                roles: publicRoles,
+                isSuperAdmin: true,
+                cancellationToken: ct);
+
+            var (superAdminrefreshToken, superAdminrefreshExpires) = await _refreshTokenService.CreateAsync(
+                publicUser.Id,
+                ct);
+
+            publicUser.LastLoginAtUtc = DateTime.UtcNow;
+            await _publicUserRepository.UpdateAsync(publicUser, ct);
+            await _publicUserRepository.SaveChangesAsync(ct);
+
+            return Ok(new LoginResponseDTO
+            {
+                AccessToken = superAdminaccessToken,
+                AccessTokenExpiresAtUtc = superAdminaccessExpires,
+                RefreshToken = superAdminrefreshToken,
+                RefreshTokenExpiresAtUtc = superAdminrefreshExpires
+            });
+        }
 
         var user = await _userRepository.GetByPublicUserIdAsync(publicUser.Id, ct);
 
