@@ -17,7 +17,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Security.Claims;
 using System.Text;
 using Eventix.API.Authorization;
 using Eventix.Domain.Enums;
@@ -168,9 +167,17 @@ builder.Services.AddScoped<ITenantResolver, TenantResolver>();
 builder.Services.AddDbContext<PublicDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-builder.Services.AddDbContext<TenantDbContext>((_, options) =>
+builder.Services.AddDbContext<TenantDbContext>((sp, options) =>
 {
-    options.UseNpgsql(connectionString);
+    var tenantContext = sp.GetRequiredService<ITenantContext>();
+    var schema = tenantContext.SchemaName ?? "public";
+
+    options.UseNpgsql(connectionString, npgsql =>
+    {
+        npgsql.MigrationsAssembly("Eventix.Infrastructure");
+        npgsql.MigrationsHistoryTable("__EFMigrationsHistory", schema);
+    });
+
     options.ReplaceService<IModelCacheKeyFactory, TenantModelCacheKeyFactory>();
 });
 
@@ -183,6 +190,8 @@ builder.Services.AddStackExchangeRedisCache(options =>
 
 builder.Services.AddScoped<ITenantSchemaProvisioner, TenantSchemaProvisioner>();
 builder.Services.AddScoped<ITenantService, TenantService>();
+builder.Services.AddScoped<ITenantRoleSeeder, TenantRoleSeeder>();
+builder.Services.AddScoped<PublicSuperAdminSeeder>();
 
 builder.Services.AddScoped<ITenantRepository, TenantRepository>();
 builder.Services.AddScoped<IEventCategoryRepository, EventCategoryRepository>();
@@ -254,265 +263,265 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("TenantAdminOnly", policy =>
         policy.RequireRole("Admin", "SuperAdmin"));
 
-    options.AddPolicy("ViewTenants", policy =>
+    options.AddPolicy("Permission:ViewTenants", policy =>
      policy.Requirements.Add(new PermissionRequirement(Permission.ViewTenants)));
 
-    options.AddPolicy("CreateTenants", policy =>
+    options.AddPolicy("Permission:CreateTenants", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.CreateTenants)));
 
-    options.AddPolicy("UpdateTenants", policy =>
+    options.AddPolicy("Permission:UpdateTenants", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.UpdateTenants)));
 
-    options.AddPolicy("DeleteTenants", policy =>
+    options.AddPolicy("Permission:DeleteTenants", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.DeleteTenants)));
 
-    options.AddPolicy("ImpersonateTenant", policy =>
+    options.AddPolicy("Permission:ImpersonateTenant", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ImpersonateTenant)));
 
-    options.AddPolicy("ManageUsers", policy =>
+    options.AddPolicy("Permission:ManageUsers", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ManageUsers)));
 
-    options.AddPolicy("ViewUsers", policy =>
+    options.AddPolicy("Permission:ViewUsers", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ViewUsers)));
 
-    options.AddPolicy("CreateUsers", policy =>
+    options.AddPolicy("Permission:CreateUsers", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.CreateUsers)));
 
-    options.AddPolicy("UpdateUsers", policy =>
+    options.AddPolicy("Permission:UpdateUsers", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.UpdateUsers)));
 
-    options.AddPolicy("DeleteUsers", policy =>
+    options.AddPolicy("Permission:DeleteUsers", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.DeleteUsers)));
 
-    options.AddPolicy("ManageRoles", policy =>
+    options.AddPolicy("Permission:ManageRoles", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ManageRoles)));
 
-    options.AddPolicy("AssignRoles", policy =>
+    options.AddPolicy("Permission:AssignRoles", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.AssignRoles)));
 
-    options.AddPolicy("ViewRoles", policy =>
+    options.AddPolicy("Permission:ViewRoles", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ViewRoles)));
 
-    options.AddPolicy("SearchEvents", policy =>
+    options.AddPolicy("Permission:SearchEvents", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.SearchEvents)));
 
-    options.AddPolicy("ViewEvents", policy =>
+    options.AddPolicy("Permission:ViewEvents", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ViewEvents)));
 
-    options.AddPolicy("CreateEvents", policy =>
+    options.AddPolicy("Permission:CreateEvents", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.CreateEvents)));
 
-    options.AddPolicy("UpdateEvents", policy =>
+    options.AddPolicy("Permission:UpdateEvents", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.UpdateEvents)));
 
-    options.AddPolicy("DeleteEvents", policy =>
+    options.AddPolicy("Permission:DeleteEvents", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.DeleteEvents)));
 
-    options.AddPolicy("ManageVenues", policy =>
+    options.AddPolicy("Permission:ManageVenues", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ManageVenues)));
 
-    options.AddPolicy("ViewVenues", policy =>
+    options.AddPolicy("Permission:ViewVenues", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ViewVenues)));
 
-    options.AddPolicy("CreateVenues", policy =>
+    options.AddPolicy("Permission:CreateVenues", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.CreateVenues)));
 
-    options.AddPolicy("UpdateVenues", policy =>
+    options.AddPolicy("Permission:UpdateVenues", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.UpdateVenues)));
 
-    options.AddPolicy("DeleteVenues", policy =>
+    options.AddPolicy("Permission:DeleteVenues", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.DeleteVenues)));
 
-    options.AddPolicy("ManageVenueSections", policy =>
+    options.AddPolicy("Permission:ManageVenueSections", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ManageVenueSections)));
 
-    options.AddPolicy("ManageEventSections", policy =>
+    options.AddPolicy("Permission:ManageEventSections", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ManageEventSections)));
 
-    options.AddPolicy("ViewEventSections", policy =>
+    options.AddPolicy("Permission:ViewEventSections", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ViewEventSections)));
 
-    options.AddPolicy("ManageTicketTypes", policy =>
+    options.AddPolicy("Permission:ManageTicketTypes", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ManageTicketTypes)));
 
-    options.AddPolicy("CreateTicketTypes", policy =>
+    options.AddPolicy("Permission:CreateTicketTypes", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.CreateTicketTypes)));
 
-    options.AddPolicy("UpdateTicketTypes", policy =>
+    options.AddPolicy("Permission:UpdateTicketTypes", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.UpdateTicketTypes)));
 
-    options.AddPolicy("DeleteTicketTypes", policy =>
+    options.AddPolicy("Permission:DeleteTicketTypes", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.DeleteTicketTypes)));
 
-    options.AddPolicy("ManageBookings", policy =>
+    options.AddPolicy("Permission:ManageBookings", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ManageBookings)));
 
-    options.AddPolicy("ViewBookings", policy =>
+    options.AddPolicy("Permission:ViewBookings", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ViewBookings)));
 
-    options.AddPolicy("CreateBookings", policy =>
+    options.AddPolicy("Permission:CreateBookings", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.CreateBookings)));
 
-    options.AddPolicy("CancelBookings", policy =>
+    options.AddPolicy("Permission:CancelBookings", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.CancelBookings)));
 
-    options.AddPolicy("RefundBookings", policy =>
+    options.AddPolicy("Permission:RefundBookings", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.RefundBookings)));
 
-    options.AddPolicy("ViewTickets", policy =>
+    options.AddPolicy("Permission:ViewTickets", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ViewTickets)));
 
-    options.AddPolicy("BuyTickets", policy =>
+    options.AddPolicy("Permission:BuyTickets", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.BuyTickets)));
 
-    options.AddPolicy("ScanTickets", policy =>
+    options.AddPolicy("Permission:ScanTickets", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ScanTickets)));
 
-    options.AddPolicy("CheckInTickets", policy =>
+    options.AddPolicy("Permission:CheckInTickets", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.CheckInTickets)));
 
-    options.AddPolicy("ValidateTickets", policy =>
+    options.AddPolicy("Permission:ValidateTickets", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ValidateTickets)));
 
-    options.AddPolicy("CancelTickets", policy =>
+    options.AddPolicy("Permission:CancelTickets", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.CancelTickets)));
 
-    options.AddPolicy("ManagePayments", policy =>
+    options.AddPolicy("Permission:ManagePayments", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ManagePayments)));
 
-    options.AddPolicy("ViewPayments", policy =>
+    options.AddPolicy("Permission:ViewPayments", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ViewPayments)));
 
-    options.AddPolicy("RefundPayments", policy =>
+    options.AddPolicy("Permission:RefundPayments", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.RefundPayments)));
 
-    options.AddPolicy("ViewReviews", policy =>
+    options.AddPolicy("Permission:ViewReviews", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ViewReviews)));
 
-    options.AddPolicy("DeleteReviews", policy =>
+    options.AddPolicy("Permission:DeleteReviews", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.DeleteReviews)));
 
-    options.AddPolicy("CreateReviews", policy =>
+    options.AddPolicy("Permission:CreateReviews", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.CreateReviews)));
 
-    options.AddPolicy("UpdateReviews", policy =>
+    options.AddPolicy("Permission:UpdateReviews", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.UpdateReviews)));
 
-    options.AddPolicy("ViewReports", policy =>
+    options.AddPolicy("Permission:ViewReports", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ViewReports)));
 
-    options.AddPolicy("ViewDashboard", policy =>
+    options.AddPolicy("Permission:ViewDashboard", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ViewDashboard)));
 
-    options.AddPolicy("ExportReports", policy =>
+    options.AddPolicy("Permission:ExportReports", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ExportReports)));
 
-    options.AddPolicy("ManageNotifications", policy =>
+    options.AddPolicy("Permission:ManageNotifications", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ManageNotifications)));
 
-    options.AddPolicy("ViewNotifications", policy =>
+    options.AddPolicy("Permission:ViewNotifications", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ViewNotifications)));
 
-    options.AddPolicy("UseAI", policy =>
+    options.AddPolicy("Permission:UseAI", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.UseAI)));
 
-    options.AddPolicy("ViewAIRequestLogs", policy =>
+    options.AddPolicy("Permission:ViewAIRequestLogs", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ViewAIRequestLogs)));
 
-    options.AddPolicy("ViewAuditLogs", policy =>
+    options.AddPolicy("Permission:ViewAuditLogs", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ViewAuditLogs)));
 
-    options.AddPolicy("ViewArchiveRecords", policy =>
+    options.AddPolicy("Permission:ViewArchiveRecords", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ViewArchiveRecords)));
 
-    options.AddPolicy("ArchiveRecords", policy =>
+    options.AddPolicy("Permission:ArchiveRecords", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ArchiveRecords)));
 
-    options.AddPolicy("ViewEventCategories", policy =>
+    options.AddPolicy("Permission:ViewEventCategories", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ViewEventCategories)));
 
-    options.AddPolicy("CreateEventCategories", policy =>
+    options.AddPolicy("Permission:CreateEventCategories", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.CreateEventCategories)));
 
-    options.AddPolicy("UpdateEventCategories", policy =>
+    options.AddPolicy("Permission:UpdateEventCategories", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.UpdateEventCategories)));
 
-    options.AddPolicy("DeleteEventCategories", policy =>
+    options.AddPolicy("Permission:DeleteEventCategories", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.DeleteEventCategories)));
 
-    options.AddPolicy("ManageEventSessions", policy =>
+    options.AddPolicy("Permission:ManageEventSessions", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ManageEventSessions)));
 
-    options.AddPolicy("CreateSpeakers", policy =>
+    options.AddPolicy("Permission:CreateSpeakers", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.CreateSpeakers)));
 
-    options.AddPolicy("UpdateSpeakers", policy =>
+    options.AddPolicy("Permission:UpdateSpeakers", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.UpdateSpeakers)));
 
-    options.AddPolicy("DeleteSpeakers", policy =>
+    options.AddPolicy("Permission:DeleteSpeakers", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.DeleteSpeakers)));
 
-    options.AddPolicy("ManageDiscountCoupons", policy =>
+    options.AddPolicy("Permission:ManageDiscountCoupons", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ManageDiscountCoupons)));
 
-    options.AddPolicy("ViewDiscountCoupons", policy =>
+    options.AddPolicy("Permission:ViewDiscountCoupons", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ViewDiscountCoupons)));
 
-    options.AddPolicy("CreateDiscountCoupons", policy =>
+    options.AddPolicy("Permission:CreateDiscountCoupons", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.CreateDiscountCoupons)));
 
-    options.AddPolicy("UpdateDiscountCoupons", policy =>
+    options.AddPolicy("Permission:UpdateDiscountCoupons", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.UpdateDiscountCoupons)));
 
-    options.AddPolicy("DeleteDiscountCoupons", policy =>
+    options.AddPolicy("Permission:DeleteDiscountCoupons", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.DeleteDiscountCoupons)));
 
-    options.AddPolicy("ViewCheckIns", policy =>
+    options.AddPolicy("Permission:ViewCheckIns", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ViewCheckIns)));
 
-    options.AddPolicy("ManageCheckIns", policy =>
+    options.AddPolicy("Permission:ManageCheckIns", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ManageCheckIns)));
 
-    options.AddPolicy("ManagePaymentMethods", policy =>
+    options.AddPolicy("Permission:ManagePaymentMethods", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ManagePaymentMethods)));
 
-    options.AddPolicy("ViewPaymentMethods", policy =>
+    options.AddPolicy("Permission:ViewPaymentMethods", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ViewPaymentMethods)));
 
-    options.AddPolicy("ManageTenantEmailDomains", policy =>
+    options.AddPolicy("Permission:ManageTenantEmailDomains", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ManageTenantEmailDomains)));
 
-    options.AddPolicy("ViewTenantEmailDomains", policy =>
+    options.AddPolicy("Permission:ViewTenantEmailDomains", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ViewTenantEmailDomains)));
 
-    options.AddPolicy("ManagePublicUsers", policy =>
+    options.AddPolicy("Permission:ManagePublicUsers", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ManagePublicUsers)));
 
-    options.AddPolicy("ViewPublicUsers", policy =>
+    options.AddPolicy("Permission:ViewPublicUsers", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ViewPublicUsers)));
 
-    options.AddPolicy("ManagePublicRoles", policy =>
+    options.AddPolicy("Permission:ManagePublicRoles", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ManagePublicRoles)));
 
-    options.AddPolicy("ViewPublicRoles", policy =>
+    options.AddPolicy("Permission:ViewPublicRoles", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ViewPublicRoles)));
 
-    options.AddPolicy("ViewRefreshTokens", policy =>
+    options.AddPolicy("Permission:ViewRefreshTokens", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ViewRefreshTokens)));
 
-    options.AddPolicy("RevokeRefreshTokens", policy =>
+    options.AddPolicy("Permission:RevokeRefreshTokens", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.RevokeRefreshTokens)));
 
-    options.AddPolicy("ViewEventSessions", policy =>
+    options.AddPolicy("Permission:ViewEventSessions", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ViewEventSessions)));
 
-    options.AddPolicy("ViewSpeakers", policy =>
+    options.AddPolicy("Permission:ViewSpeakers", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ViewSpeakers)));
 
-    options.AddPolicy("ViewTicketTypes", policy =>
+    options.AddPolicy("Permission:ViewTicketTypes", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ViewTicketTypes)));
 
-    options.AddPolicy("ViewVenueSections", policy =>
+    options.AddPolicy("Permission:ViewVenueSections", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ViewVenueSections)));
 });
 
@@ -528,6 +537,12 @@ builder.Services.AddHangfire(config =>
 builder.Services.AddHangfireServer();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var seeder = scope.ServiceProvider.GetRequiredService<PublicSuperAdminSeeder>();
+    await seeder.SeedAsync();
+}
 
 app.UseHangfireDashboard("/hangfire");
 

@@ -13,24 +13,24 @@ public class TenantMiddleware
     }
 
     public async Task InvokeAsync(
-        HttpContext httpContext,
-        ITenantResolver tenantResolver,
-        ITenantContext tenantContext)
+    HttpContext httpContext,
+    ITenantResolver tenantResolver,
+    ITenantContext tenantContext)
     {
-        var path = httpContext.Request.Path.Value?.ToLower();
-
-        if (path != null &&
-            (path.StartsWith("/swagger") ||
-             path.StartsWith("/api/tenants") ||
-             path.StartsWith("/api/auth")||
-             path.StartsWith("/api/health")||
-             path.StartsWith("/hangfire")))
+        if (
+            httpContext.Request.Path.StartsWithSegments("/swagger") ||
+            httpContext.Request.Path.StartsWithSegments("/api/auth") ||
+            httpContext.Request.Path.StartsWithSegments("/api/tenants") ||
+            httpContext.Request.Path.StartsWithSegments("/api/health") ||
+            httpContext.Request.Path.StartsWithSegments("/hangfire")
+           )
         {
             await _next(httpContext);
             return;
         }
 
-        var slug = httpContext.Request.Headers["X-Tenant-Slug"].FirstOrDefault();
+        var slug = httpContext.Request.Headers["X-Tenant-Slug"]
+            .FirstOrDefault();
 
         if (string.IsNullOrWhiteSpace(slug))
         {
