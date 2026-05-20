@@ -1,4 +1,5 @@
 ﻿using Eventix.Domain.Entities;
+using Eventix.Application.DTOs.TicketType;
 
 namespace Eventix.Application.Interfaces.Services
 {
@@ -13,5 +14,7 @@ namespace Eventix.Application.Interfaces.Services
         Task<bool> IsAvailableAsync(Guid ticketTypeId, int quantity);
 
         Task ReduceStockAsync(Guid ticketTypeId, int quantity);
+        Task<TicketType> CreateAsync(CreateTicketTypeDto dto, Guid tenantId);
+
     }
 }
