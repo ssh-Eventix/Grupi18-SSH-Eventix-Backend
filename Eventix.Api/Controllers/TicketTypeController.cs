@@ -8,6 +8,7 @@ using Microsoft.Extensions.Caching.Distributed;
 
 namespace Eventix.Api.Controllers
 {
+
     [ApiController]
     [Route("api/[controller]")]
     public class TicketTypeController : ControllerBase
@@ -24,6 +25,21 @@ namespace Eventix.Api.Controllers
             _ticketTypeService = ticketTypeService;
             _cache = cache;
             _tenantContext = tenantContext;
+        }
+        [HttpPost]
+        [Authorize(Policy = "Permission:CreateTicketTypes")]
+        public async Task<IActionResult> Create(
+     [FromBody] CreateTicketTypeDto dto)
+        {
+            var result = await _ticketTypeService.CreateAsync(dto, _tenantContext.TenantId);
+
+            await _cache.RemoveAsync(
+                $"tenant:{_tenantContext.TenantId}:tickettypes:event:{result.EventId}");
+
+            await _cache.RemoveAsync(
+                $"tenant:{_tenantContext.TenantId}:tickettypes:event:{result.EventId}:available");
+
+            return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
         }
 
         [HttpGet("event/{eventId:guid}")]

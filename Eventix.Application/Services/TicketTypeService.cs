@@ -1,11 +1,33 @@
 ﻿using Eventix.Application.Interfaces.Repositories;
 using Eventix.Application.Interfaces.Services;
 using Eventix.Domain.Entities;
+using Eventix.Application.DTOs.TicketType;
 
 namespace Eventix.Application.Services
 {
     public class TicketTypeService : ITicketTypeService
     {
+        public async Task<TicketType> CreateAsync(CreateTicketTypeDto dto, Guid tenantId)
+        {
+            var ticketType = new TicketType
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenantId,
+                EventId = dto.EventId,
+                EventSectionId = dto.EventSectionId,
+                Name = dto.Name,
+                Price = dto.Price,
+                QuantityAvailable = dto.QuantityAvailable,
+                SoldQuantity = 0,
+                SaleStartDate = dto.SaleStartDate,
+                SaleEndDate = dto.SaleEndDate
+            };
+
+            await _ticketTypeRepository.AddAsync(ticketType);
+            await _ticketTypeRepository.SaveChangesAsync();
+
+            return ticketType;
+        }
         private readonly ITicketTypeRepository _ticketTypeRepository;
 
         public TicketTypeService(ITicketTypeRepository ticketTypeRepository)
