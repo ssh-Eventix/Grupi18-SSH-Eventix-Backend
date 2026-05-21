@@ -22,19 +22,28 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: '8.0.x'
 
       - name: Restore packages
-        run: dotnet restore
+        run: |
+          dotnet restore Eventix.Tests/Eventix.UnitTests/Eventix.UnitTests.csproj
+          dotnet restore Eventix.Tests/Eventix.IntegrationTests/Eventix.IntegrationTests.csproj
+          dotnet restore Eventix.Tests/Eventix.ApiTests/Eventix.ApiTests.csproj
 
-      - name: Build solution
-        run: dotnet build --no-restore
+      - name: Build Unit Tests
+        run: dotnet build Eventix.Tests/Eventix.UnitTests/Eventix.UnitTests.csproj --configuration Release --no-restore
 
-      - name: Run unit tests
-        run: dotnet test Eventix.Tests/Eventix.UnitTests/Eventix.UnitTests.csproj --no-build
+      - name: Build Integration Tests
+        run: dotnet build Eventix.Tests/Eventix.IntegrationTests/Eventix.IntegrationTests.csproj --configuration Release --no-restore
 
-      - name: Run integration tests
-        run: dotnet test Eventix.Tests/Eventix.IntegrationTests/Eventix.IntegrationTests.csproj --no-build
+      - name: Build API Tests
+        run: dotnet build Eventix.Tests/Eventix.ApiTests/Eventix.ApiTests.csproj --configuration Release --no-restore
 
-      - name: Run API tests
-        run: dotnet test Eventix.Tests/Eventix.ApiTests/Eventix.ApiTests.csproj --no-build
+      - name: Run Unit Tests
+        run: dotnet test Eventix.Tests/Eventix.UnitTests/Eventix.UnitTests.csproj --configuration Release --no-build --verbosity normal
+
+      - name: Run Integration Tests
+        run: dotnet test Eventix.Tests/Eventix.IntegrationTests/Eventix.IntegrationTests.csproj --configuration Release --no-build --verbosity normal
+
+      - name: Run API Tests
+        run: dotnet test Eventix.Tests/Eventix.ApiTests/Eventix.ApiTests.csproj --configuration Release --no-build --verbosity normal
