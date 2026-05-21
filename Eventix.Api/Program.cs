@@ -192,9 +192,10 @@ builder.Services.AddScoped<ITenantSchemaProvisioner, TenantSchemaProvisioner>();
 builder.Services.AddScoped<ITenantService, TenantService>();
 builder.Services.AddScoped<ITenantRoleSeeder, TenantRoleSeeder>();
 builder.Services.AddScoped<PublicSuperAdminSeeder>();
-
+builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<ITenantRepository, TenantRepository>();
 builder.Services.AddScoped<IEventCategoryRepository, EventCategoryRepository>();
+builder.Services.AddScoped<IEventCategoryService, EventCategoryService>();
 builder.Services.AddScoped<IVenueRepository, VenueRepository>();
 builder.Services.AddScoped<IVenueSectionRepository, VenueSectionRepository>();
 builder.Services.AddScoped<IEventRepository, EventRepository>();

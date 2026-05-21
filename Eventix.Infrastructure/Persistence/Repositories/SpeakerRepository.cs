@@ -1,19 +1,15 @@
-﻿using Eventix.Domain.Entities;
+﻿using Eventix.Application.Interfaces.Repositories;
+using Eventix.Domain.Entities;
 using Eventix.Infrastructure.Persistence.Database;
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using Eventix.Application.Interfaces.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 namespace Eventix.Infrastructure.Persistence.Repositories;
 
 public class SpeakerRepository : ISpeakerRepository
 {
-    private readonly PublicDbContext _context;
+    private readonly TenantDbContext _context;
 
-    public SpeakerRepository(PublicDbContext context)
+    public SpeakerRepository(TenantDbContext context)
     {
         _context = context;
     }
