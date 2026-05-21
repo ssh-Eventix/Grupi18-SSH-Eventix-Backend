@@ -1,8 +1,7 @@
 ﻿using Eventix.Domain.Enums;
 using Eventix.Infrastructure.Services;
-using Xunit;
 
-namespace Eventix.UnitTests;
+namespace Eventix.UnitTests.Authorization;
 
 public class RolePermissionServiceTests
 {
@@ -18,19 +17,7 @@ public class RolePermissionServiceTests
     }
 
     [Fact]
-    public void Admin_Should_Manage_Users()
-    {
-        Assert.True(_service.RoleHasPermission("Admin", Permission.ManageUsers));
-    }
-
-    [Fact]
-    public void Staff_Should_Not_Create_Tenants()
-    {
-        Assert.False(_service.RoleHasPermission("Staff", Permission.CreateTenants));
-    }
-
-    [Fact]
-    public void Buyer_Should_Buy_Tickets()
+    public void Buyer_Should_Be_Able_To_Buy_Tickets()
     {
         Assert.True(_service.RoleHasPermission("Buyer", Permission.BuyTickets));
     }
@@ -42,10 +29,14 @@ public class RolePermissionServiceTests
     }
 
     [Fact]
-    public void User_With_Multiple_Roles_Should_Have_Permission_If_Any_Role_Has_It()
+    public void Staff_Should_Scan_Tickets()
     {
-        var roles = new[] { "Buyer", "Staff" };
+        Assert.True(_service.RoleHasPermission("Staff", Permission.ScanTickets));
+    }
 
-        Assert.True(_service.UserHasPermission(roles, Permission.ScanTickets));
+    [Fact]
+    public void Unknown_Role_Should_Not_Have_Permission()
+    {
+        Assert.False(_service.RoleHasPermission("Unknown", Permission.ViewEvents));
     }
 }

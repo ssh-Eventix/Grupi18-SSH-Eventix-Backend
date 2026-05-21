@@ -1,9 +1,0 @@
-[33m009e38b[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mEVENTIX-68[m[33m, [m[1;31morigin/EVENTIX-68[m[33m)[m Added repos and interfaces for Ai and Audit Logs
-[33mcab2ad2[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Merge pull request #47 from ssh-Eventix/feature/EVENTIX-63
-[33m7f529f7[m[33m ([m[1;31morigin/feature/EVENTIX-63[m[33m, [m[1;32mfeature/EVENTIX-63[m[33m)[m repo for payments
-[33mdc6ff19[m Merge pull request #46 from ssh-Eventix/feature/EVENTIX-63
-[33m94d1c28[m Merge branch 'main' into feature/EVENTIX-63
-[33m4f98568[m paymentsrepo
-[33m57f0a07[m EVENTIX-63 added repos and interfaces for payment/method
-[33mfb425b2[m[33m ([m[1;31morigin/feature/EVENTIX-57[m[33m, [m[1;32mfeature/EVENTIX-57[m[33m)[m EVENTIX-57
-[33m4129d71[m EVENTIX-57 Created Ai and Audit Logs

@@ -583,3 +583,5 @@ JobScheduler.RegisterJobs();
 
 app.Run();
 
+public partial class Program { }
+
