@@ -1,4 +1,4 @@
-﻿using Eventix.API.Helpers;
+﻿using Eventix.Api.Helpers;
 using Eventix.Application.DTOs.EventSessions;
 using Eventix.Application.Interfaces.Common;
 using Microsoft.AspNetCore.Authorization;

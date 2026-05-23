@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Eventix.API\Eventix.API.csproj" />
+    <ProjectReference Include="..\..\Eventix.Api\Eventix.Api.csproj" />
   </ItemGroup>
 
 </Project>

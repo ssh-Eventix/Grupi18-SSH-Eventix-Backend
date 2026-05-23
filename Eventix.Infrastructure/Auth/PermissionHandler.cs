@@ -2,7 +2,7 @@ using Eventix.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 
-namespace Eventix.API.Authorization;
+namespace Eventix.Api.Authorization;
 
 public class PermissionHandler : AuthorizationHandler<PermissionRequirement>
 {

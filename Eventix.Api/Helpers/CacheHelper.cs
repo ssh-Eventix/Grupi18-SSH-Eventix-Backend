@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Caching.Distributed;
 using System.Text.Json;
 
-namespace Eventix.API.Helpers;
+namespace Eventix.Api.Helpers;
 
 public static class CacheHelper
 {
