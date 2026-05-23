@@ -129,6 +129,7 @@ public class RolePermissionService : IRolePermissionService
                 Permission.ViewEvents,
                 Permission.SearchEvents,
                 Permission.CreateBookings,
+                Permission.ViewBookings,
                 Permission.CancelBookings,
                 Permission.BuyTickets,
                 Permission.ViewTickets,

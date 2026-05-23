@@ -58,9 +58,12 @@ namespace Eventix.Api.Controllers
                     return ticketTypes.Select(t => new TicketTypeDto
                     {
                         Id = t.Id,
+                        EventId = t.EventId,
+                        EventSectionId = t.EventSectionId,
                         Name = t.Name,
                         Price = t.Price,
                         QuantityAvailable = t.QuantityAvailable,
+                        SoldQuantity = t.SoldQuantity,
                         SaleStartDate = t.SaleStartDate,
                         SaleEndDate = t.SaleEndDate
                     }).ToList();
@@ -86,9 +89,12 @@ namespace Eventix.Api.Controllers
                     return ticketTypes.Select(t => new TicketTypeDto
                     {
                         Id = t.Id,
+                        EventId = t.EventId,
+                        EventSectionId = t.EventSectionId,
                         Name = t.Name,
                         Price = t.Price,
                         QuantityAvailable = t.QuantityAvailable,
+                        SoldQuantity = t.SoldQuantity,
                         SaleStartDate = t.SaleStartDate,
                         SaleEndDate = t.SaleEndDate
                     }).ToList();
@@ -117,9 +123,12 @@ namespace Eventix.Api.Controllers
                     return new TicketTypeDto
                     {
                         Id = ticketType.Id,
+                        EventId = ticketType.EventId,
+                        EventSectionId = ticketType.EventSectionId,
                         Name = ticketType.Name,
                         Price = ticketType.Price,
                         QuantityAvailable = ticketType.QuantityAvailable,
+                        SoldQuantity = ticketType.SoldQuantity,
                         SaleStartDate = ticketType.SaleStartDate,
                         SaleEndDate = ticketType.SaleEndDate
                     };

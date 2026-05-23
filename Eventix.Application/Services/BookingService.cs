@@ -50,43 +50,55 @@ namespace Eventix.Application.Services
                 EventId = request.EventId,
                 BookingDate = DateTime.UtcNow,
                 Status = BookingStatus.Confirmed,
-                ReferenceNumber = Guid.NewGuid().ToString()
+                ReferenceNumber = $"BK-{DateTime.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid().ToString()[..8].ToUpper()}"
             };
                 
             decimal total = 0;
+            var now = DateTime.UtcNow;
 
             foreach (var item in request.BookingItems)
             {
+                if (item.Quantity <= 0)
+                    throw new Exception("Quantity must be greater than zero");
+
                 var ticketType = await _ticketTypeRepository.GetByIdAsync(item.TicketTypeId);
 
                 if (ticketType == null)
                     throw new Exception("TicketType not found");
 
+                if (ticketType.EventId != request.EventId)
+                    throw new Exception("TicketType does not belong to this event");
+
+                if (ticketType.SaleStartDate > now || ticketType.SaleEndDate < now)
+                    throw new Exception("Ticket sales are not active for this ticket type");
+
                 if (ticketType.QuantityAvailable < item.Quantity)
                     throw new Exception("Not enough tickets available");
-
-                if (item.Quantity <= 0)
-                    throw new Exception("Quantity must be greater than zero");
 
                 var bookingItem = new BookingItem
                 {
                     TicketTypeId = item.TicketTypeId,
+                    EventSectionId = ticketType.EventSectionId,
                     Quantity = item.Quantity,
                     UnitPrice = ticketType.Price
                 };
 
                 for (int i = 0; i < item.Quantity; i++)
                 {
+                    var ticketCode = $"TKT-{Guid.NewGuid().ToString()[..8].ToUpper()}";
+
                     bookingItem.Tickets.Add(new Ticket
                     {
-                        TicketCode = Guid.NewGuid().ToString(),
-                        QRCode = Guid.NewGuid().ToString(),
+                        TicketCode = ticketCode,
+                        QRCode = ticketCode,
                         Status = TicketStatus.Active,
                         IssuedAt = DateTime.UtcNow
                     });
                 }
 
                 ticketType.QuantityAvailable -= item.Quantity;
+                ticketType.SoldQuantity += item.Quantity;
+
                 total += item.Quantity * ticketType.Price;
 
                 booking.BookingItems.Add(bookingItem);
@@ -137,19 +149,33 @@ namespace Eventix.Application.Services
 
         private static BookingDto MapBooking(Booking booking)
         {
+            var tickets = booking.BookingItems
+                .SelectMany(bi => bi.Tickets)
+                .ToList();
+
             return new BookingDto
             {
                 Id = booking.Id,
+                UserId = booking.UserId,
+                EventId = booking.EventId,
                 ReferenceNumber = booking.ReferenceNumber,
                 TotalAmount = booking.TotalAmount,
                 Status = booking.Status.ToString(),
+                EventTitle = booking.Event?.Title,
+                BuyerEmail = booking.User?.Email,
+                Quantity = booking.BookingItems.Sum(bi => bi.Quantity),
+                TicketCode = tickets.FirstOrDefault()?.TicketCode,
+                BookingDate = booking.BookingDate,
                 Tickets = booking.BookingItems
                     .SelectMany(bi => bi.Tickets)
                     .Select(t => new TicketDto
                     {
                         Id = t.Id,
                         TicketCode = t.TicketCode,
-                        QRCode = t.QRCode
+                        QRCode = t.QRCode,
+                        Status = (int)t.Status,
+                        IssuedAt = t.IssuedAt,
+                        UsedAt = t.UsedAt
                     }).ToList()
             };
         }

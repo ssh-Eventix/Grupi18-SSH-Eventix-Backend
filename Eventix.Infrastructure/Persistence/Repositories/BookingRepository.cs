@@ -24,6 +24,8 @@ namespace Eventix.Infrastructure.Persistence.Repositories
             return await _context.Bookings
                 .AsNoTracking()
                 .Where(b => !b.IsDeleted)
+                .Include(b => b.Event)
+                .Include(b => b.User)
                 .Include(b => b.BookingItems)
                 .ThenInclude(bi => bi.Tickets)
                 .ToListAsync();
@@ -33,6 +35,8 @@ namespace Eventix.Infrastructure.Persistence.Repositories
         {
             return await _context.Bookings
                 .Where(b => !b.IsDeleted)
+                .Include(b => b.Event)
+                .Include(b => b.User)
                 .Include(b => b.BookingItems)
                 .ThenInclude(bi => bi.Tickets)
                 .FirstOrDefaultAsync(b => b.Id == id);
@@ -43,6 +47,8 @@ namespace Eventix.Infrastructure.Persistence.Repositories
             return await _context.Bookings
                 .AsNoTracking()
                 .Where(b => b.UserId == userId && !b.IsDeleted)
+                .Include(b => b.Event)
+                .Include(b => b.User)
                 .Include(b => b.BookingItems)
                 .ThenInclude(bi => bi.Tickets)
                 .ToListAsync();
@@ -53,6 +59,8 @@ namespace Eventix.Infrastructure.Persistence.Repositories
             return await _context.Bookings
                 .AsNoTracking()
                 .Where(b => !b.IsDeleted)
+                .Include(b => b.Event)
+                .Include(b => b.User)
                 .Include(b => b.BookingItems)
                 .ThenInclude(bi => bi.Tickets)
                 .FirstOrDefaultAsync(b => b.Id == id);

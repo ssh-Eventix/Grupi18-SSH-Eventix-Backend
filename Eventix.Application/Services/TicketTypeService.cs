@@ -9,6 +9,9 @@ namespace Eventix.Application.Services
     {
         public async Task<TicketType> CreateAsync(CreateTicketTypeDto dto, Guid tenantId)
         {
+            var saleStartUtc = NormalizeUtc(dto.SaleStartDate);
+            var saleEndUtc = NormalizeUtc(dto.SaleEndDate);
+
             var ticketType = new TicketType
             {
                 Id = Guid.NewGuid(),
@@ -19,8 +22,8 @@ namespace Eventix.Application.Services
                 Price = dto.Price,
                 QuantityAvailable = dto.QuantityAvailable,
                 SoldQuantity = 0,
-                SaleStartDate = dto.SaleStartDate,
-                SaleEndDate = dto.SaleEndDate
+                SaleStartDate = saleStartUtc,
+                SaleEndDate = saleEndUtc
             };
 
             await _ticketTypeRepository.AddAsync(ticketType);
@@ -28,6 +31,17 @@ namespace Eventix.Application.Services
 
             return ticketType;
         }
+
+        private static DateTime NormalizeUtc(DateTime value)
+        {
+            return value.Kind switch
+            {
+                DateTimeKind.Utc => value,
+                DateTimeKind.Local => value.ToUniversalTime(),
+                _ => DateTime.SpecifyKind(value, DateTimeKind.Utc)
+            };
+        }
+
         private readonly ITicketTypeRepository _ticketTypeRepository;
 
         public TicketTypeService(ITicketTypeRepository ticketTypeRepository)

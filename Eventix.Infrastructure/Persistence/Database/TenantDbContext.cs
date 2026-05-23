@@ -347,7 +347,6 @@ public class TenantDbContext : DbContext
                 t.HasCheckConstraint("CK_TicketType_Price", "\"Price\" >= 0");
                 t.HasCheckConstraint("CK_TicketType_QuantityAvailable", "\"QuantityAvailable\" >= 0");
                 t.HasCheckConstraint("CK_TicketType_SoldQuantity", "\"SoldQuantity\" >= 0");
-                t.HasCheckConstraint("CK_TicketType_SoldQuantity_Limit", "\"SoldQuantity\" <= \"QuantityAvailable\"");
                 t.HasCheckConstraint("CK_TicketType_SaleRange", "\"SaleStartDate\" IS NULL OR \"SaleEndDate\" IS NULL OR \"SaleEndDate\" > \"SaleStartDate\"");
             });
 
