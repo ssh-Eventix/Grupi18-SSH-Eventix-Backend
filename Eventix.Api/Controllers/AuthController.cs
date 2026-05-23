@@ -68,6 +68,11 @@ public class AuthController : ControllerBase
             return BadRequest("FirstName, LastName, Email and Password are required.");
         }
 
+        if (_tenantContext.TenantId == Guid.Empty || string.IsNullOrWhiteSpace(_tenantContext.SchemaName))
+        {
+            return BadRequest("Tenant context is missing.");
+        }
+           
         var email = dto.Email.Trim().ToLower();
 
         var existingPublicUser = await _publicUserRepository.GetByEmailAsync(email, ct);
@@ -206,6 +211,11 @@ public class AuthController : ControllerBase
                 RefreshToken = superAdminrefreshToken,
                 RefreshTokenExpiresAtUtc = superAdminrefreshExpires
             });
+        }
+
+        if (_tenantContext.TenantId == Guid.Empty || string.IsNullOrWhiteSpace(_tenantContext.SchemaName))
+        {
+            return BadRequest("Tenant slug is required for tenant users.");
         }
 
         var user = await _userRepository.GetByPublicUserIdAsync(publicUser.Id, ct);

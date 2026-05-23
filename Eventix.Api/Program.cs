@@ -237,6 +237,7 @@ builder.Services.AddScoped<IRolePermissionService, RolePermissionService>();
 builder.Services.AddScoped<IAuthorizationHandler, PermissionHandler>();
 builder.Services.AddScoped<IAuthorizationHandler, ImpersonationHandler>();
 builder.Services.AddScoped<ITenantEmailDomainRepository, TenantEmailDomainRepository>();
+builder.Services.AddScoped<ITenantEmailDomainService, TenantEmailDomainService>();
 builder.Services.AddScoped<BookingCleanupJob>();
 builder.Services.AddScoped<NotificationReminderJob>();
 builder.Services.AddScoped<TicketExpirationJob>();
@@ -556,7 +557,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseCors("ReactClient");
 
