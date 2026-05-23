@@ -17,19 +17,15 @@ public class EventStatusUpdateJob
     {
         var now = DateTime.UtcNow;
 
-        var events = await _context.Events.ToListAsync();
+        var events = await _context.Events
+             .Where(x =>
+                 x.Status == EventStatus.Published &&
+                 x.EndUtc < now)
+             .ToListAsync();
 
         foreach (var ev in events)
         {
-            if (ev.Status == EventStatus.Draft && ev.StartUtc <= now)
-            {
-                ev.Status = EventStatus.Published;
-            }
-
-            if (ev.Status == EventStatus.Published && ev.EndUtc < now)
-            {
-                ev.Status = EventStatus.Completed;
-            }
+            ev.Status = EventStatus.Completed;
         }
 
         await _context.SaveChangesAsync();

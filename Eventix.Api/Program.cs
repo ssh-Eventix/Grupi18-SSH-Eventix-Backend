@@ -239,13 +239,13 @@ builder.Services.AddScoped<IAuthorizationHandler, ImpersonationHandler>();
 builder.Services.AddScoped<ITenantEmailDomainRepository, TenantEmailDomainRepository>();
 builder.Services.AddScoped<ITenantEmailDomainService, TenantEmailDomainService>();
 builder.Services.AddScoped<ITenantAdminService, TenantAdminService>();
+builder.Services.AddScoped<TenantJobRunner>();
 builder.Services.AddScoped<BookingCleanupJob>();
 builder.Services.AddScoped<NotificationReminderJob>();
 builder.Services.AddScoped<TicketExpirationJob>();
 builder.Services.AddScoped<ReviewReminderJob>();
 builder.Services.AddScoped<PaymentRetryJob>();
 builder.Services.AddScoped<EventStatusUpdateJob>();
-builder.Services.AddScoped<CouponExpirationJob>();
 builder.Services.AddScoped<CheckInAnalyticsJob>();
 builder.Services.AddCors(options =>
 {
@@ -558,7 +558,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-//app.UseHttpsRedirection();
+JobScheduler.RegisterJobs();
+
+app.UseHttpsRedirection();
 
 app.UseCors("ReactClient");
 

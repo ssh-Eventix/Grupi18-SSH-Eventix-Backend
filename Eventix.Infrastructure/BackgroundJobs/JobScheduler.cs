@@ -1,49 +1,51 @@
 ﻿using Hangfire;
-using Eventix.Infrastructure.BackgroundJobs;
+using Microsoft.Extensions.DependencyInjection;
 namespace Eventix.Infrastructure.BackgroundJobs;
 
 public static class JobScheduler
 {
     public static void RegisterJobs()
     {
-        RecurringJob.AddOrUpdate<BookingCleanupJob>(
+        RecurringJob.AddOrUpdate<TenantJobRunner>(
             "booking-cleanup",
-            x => x.Cleanup(),
-            Cron.Minutely);
+            runner => runner.RunForAllTenants(sp =>
+                sp.GetRequiredService<BookingCleanupJob>().Cleanup()),
+            Cron.Hourly);
 
-        RecurringJob.AddOrUpdate<NotificationReminderJob>(
+        RecurringJob.AddOrUpdate<TenantJobRunner>(
             "notification-reminder",
-            x => x.SendReminders(),
-            Cron.Minutely);
+            runner => runner.RunForAllTenants(sp =>
+                sp.GetRequiredService<NotificationReminderJob>().SendEventReminders()),
+            Cron.Hourly);
 
-        RecurringJob.AddOrUpdate<TicketExpirationJob>(
+        RecurringJob.AddOrUpdate<TenantJobRunner>(
             "ticket-expiration",
-            x => x.ExpireTickets(),
+            runner => runner.RunForAllTenants(sp =>
+                sp.GetRequiredService<TicketExpirationJob>().ExpireOldTickets()),
             Cron.Hourly);
 
-        RecurringJob.AddOrUpdate<PaymentRetryJob>(
+        RecurringJob.AddOrUpdate<TenantJobRunner>(
             "payment-retry",
-            x => x.RetryFailedPayments(),
+            runner => runner.RunForAllTenants(sp =>
+                sp.GetRequiredService<PaymentRetryJob>().RetryFailedPayments()),
             Cron.Hourly);
 
-        RecurringJob.AddOrUpdate<ReviewReminderJob>(
+        RecurringJob.AddOrUpdate<TenantJobRunner>(
             "review-reminder",
-            x => x.SendReminders(),
+            runner => runner.RunForAllTenants(sp =>
+                sp.GetRequiredService<ReviewReminderJob>().SendReviewReminders()),
             Cron.Daily);
 
-        RecurringJob.AddOrUpdate<EventStatusUpdateJob>(
+        RecurringJob.AddOrUpdate<TenantJobRunner>(
             "event-status-update",
-            x => x.UpdateEventStatuses(),
-            Cron.Minutely);
+            runner => runner.RunForAllTenants(sp =>
+                sp.GetRequiredService<EventStatusUpdateJob>().UpdateEventStatuses()),
+            Cron.Hourly);
 
-        RecurringJob.AddOrUpdate<CouponExpirationJob>(
-            "coupon-expiration",
-            x => x.ExpireCoupons(),
-            Cron.Daily);
-
-        RecurringJob.AddOrUpdate<CheckInAnalyticsJob>(
+        RecurringJob.AddOrUpdate<TenantJobRunner>(
             "checkin-analytics",
-            x => x.GenerateStats(),
+            runner => runner.RunForAllTenants(sp =>
+                sp.GetRequiredService<CheckInAnalyticsJob>().GenerateStats()),
             Cron.Hourly);
     }
 }
