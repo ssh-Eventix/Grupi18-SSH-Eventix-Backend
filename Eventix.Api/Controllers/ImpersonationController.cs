@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 
-namespace Eventix.API.Controllers;
+namespace Eventix.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]

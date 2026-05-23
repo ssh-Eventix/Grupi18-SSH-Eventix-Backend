@@ -1,4 +1,4 @@
-﻿using Eventix.API.Helpers;
+﻿using Eventix.Api.Helpers;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
 

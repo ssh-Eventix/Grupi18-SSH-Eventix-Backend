@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 
-namespace Eventix.API.Middleware;
+namespace Eventix.Api.Middleware;
 
 public class RequestLoggingMiddleware
 {

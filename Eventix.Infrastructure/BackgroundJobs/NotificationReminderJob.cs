@@ -7,11 +7,7 @@ namespace Eventix.Infrastructure.BackgroundJobs;
 
 public class NotificationReminderJob
 {
-    public Task SendReminders()
-    {
-        Console.WriteLine("Sending notifications...");
-        return Task.CompletedTask;
-    }
+   
     private readonly TenantDbContext _context;
 
     public NotificationReminderJob(TenantDbContext context)
@@ -21,20 +17,29 @@ public class NotificationReminderJob
 
     public async Task SendEventReminders()
     {
-        var tomorrow = DateTime.UtcNow.AddDays(1);
+        var tomorrow = DateTime.UtcNow.Date.AddDays(1);
 
-        var upcomingEvents = await _context.Events
+        var events = await _context.Events
             .Include(x => x.Bookings)
             .Where(x =>
-                x.StartUtc.Date == tomorrow.Date &&
-                x.Status == EventStatus.Published)
+                x.Status == EventStatus.Published &&
+                x.StartUtc.Date == tomorrow)
             .ToListAsync();
 
-        foreach (var ev in upcomingEvents)
+        foreach (var ev in events)
         {
             foreach (var booking in ev.Bookings)
             {
-                var notification = new Notification
+                bool alreadySent = await _context.Notifications.AnyAsync(x =>
+                    x.UserId == booking.UserId &&
+                    x.EventId == ev.Id &&
+                    x.Type == NotificationType.Reminder &&
+                    x.Title == "Event Reminder");
+
+                if (alreadySent)
+                    continue;
+
+                _context.Notifications.Add(new Notification
                 {
                     Id = Guid.NewGuid(),
                     TenantId = booking.TenantId,
@@ -44,9 +49,7 @@ public class NotificationReminderJob
                     Title = "Event Reminder",
                     Message = $"Your event '{ev.Title}' starts tomorrow.",
                     SentAt = DateTime.UtcNow
-                };
-
-                await _context.Notifications.AddAsync(notification);
+                });
             }
         }
 

@@ -15,6 +15,32 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: "BORVYdb2026SSH!"
+          POSTGRES_DB: eventix_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d eventix_test"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: eventix_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "BORVYdb2026SSH!"
+      JWT_SECRET_KEY: "BGH61iKya8BlXwizOZRBETXgQyWSBiIXLeSMDRlaciE="
+      JWT_ISSUER: Eventix.Api
+      JWT_AUDIENCE: Eventix.Client
+      JWT_EXPIRATION_MINUTES: 60
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -22,7 +48,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: '9.0.x'
 
       - name: Restore packages
         run: |
