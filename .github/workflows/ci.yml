@@ -21,7 +21,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: eventix_test
+          POSTGRES_DB: EventManagementDB
         ports:
           - 5432:5432
         options: >-
@@ -29,6 +29,17 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
+
+    env:
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: EventManagementDB
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      JWT_SECRET_KEY: BGH61iKya8BlXwizOZRBETXgQyWSBiIXLeSMDRlaciE=
+      JWT_ISSUER: Eventix.Api
+      JWT_AUDIENCE: Eventix.Client
+      JWT_EXPIRATION_MINUTES: 60
 
     steps:
       - name: Checkout repository
@@ -58,8 +69,6 @@ jobs:
         run: dotnet test Eventix.Tests/Eventix.UnitTests/Eventix.UnitTests.csproj --configuration Release --no-build --verbosity normal
 
       - name: Run Integration Tests
-        env:
-          ConnectionStrings__DefaultConnection: Host=localhost;Port=5432;Database=eventix_test;Username=postgres;Password=postgres
         run: dotnet test Eventix.Tests/Eventix.IntegrationTests/Eventix.IntegrationTests.csproj --configuration Release --no-build --verbosity normal
 
       - name: Run API Tests
