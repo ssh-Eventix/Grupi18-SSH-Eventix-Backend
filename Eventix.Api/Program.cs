@@ -583,8 +583,6 @@ app.MapGet("/api/health", () =>
 })
 .AllowAnonymous();
 
-JobScheduler.RegisterJobs();
-
 app.Run();
 
 public partial class Program { }
