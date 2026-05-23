@@ -11,5 +11,8 @@ namespace Eventix.Application.DTOs.Ticket
         public Guid Id { get; set; }
         public string TicketCode { get; set; } = string.Empty;
         public string QRCode { get; set; } = string.Empty;
+        public int Status { get; set; }
+        public DateTime IssuedAt { get; set; }
+        public DateTime? UsedAt { get; set; }
     }
 }

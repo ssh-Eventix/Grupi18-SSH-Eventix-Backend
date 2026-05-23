@@ -85,6 +85,7 @@ namespace Eventix.Application.Services
                 throw new Exception("Ticket is not valid");
 
             ticket.Status = TicketStatus.Used;
+            ticket.UsedAt = DateTime.UtcNow;
 
             _ticketRepository.Update(ticket);
             await _ticketRepository.SaveChangesAsync();
