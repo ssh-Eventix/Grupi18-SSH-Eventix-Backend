@@ -18,7 +18,49 @@ public class TenantJobRunner
         _scopeFactory = scopeFactory;
     }
 
-    public async Task RunForAllTenants(Func<IServiceProvider, Task> job)
+    public async Task RunBookingCleanup()
+    {
+        await RunForAllTenants(async sp =>
+            await sp.GetRequiredService<BookingCleanupJob>().Cleanup());
+    }
+
+    public async Task RunNotificationReminder()
+    {
+        await RunForAllTenants(async sp =>
+            await sp.GetRequiredService<NotificationReminderJob>().SendEventReminders());
+    }
+
+    public async Task RunTicketExpiration()
+    {
+        await RunForAllTenants(async sp =>
+            await sp.GetRequiredService<TicketExpirationJob>().ExpireOldTickets());
+    }
+
+    public async Task RunPaymentRetry()
+    {
+        await RunForAllTenants(async sp =>
+            await sp.GetRequiredService<PaymentRetryJob>().RetryFailedPayments());
+    }
+
+    public async Task RunReviewReminder()
+    {
+        await RunForAllTenants(async sp =>
+            await sp.GetRequiredService<ReviewReminderJob>().SendReviewReminders());
+    }
+
+    public async Task RunEventStatusUpdate()
+    {
+        await RunForAllTenants(async sp =>
+            await sp.GetRequiredService<EventStatusUpdateJob>().UpdateEventStatuses());
+    }
+
+    public async Task RunCheckInAnalytics()
+    {
+        await RunForAllTenants(async sp =>
+            await sp.GetRequiredService<CheckInAnalyticsJob>().GenerateStats());
+    }
+
+    private async Task RunForAllTenants(Func<IServiceProvider, Task> job)
     {
         var tenants = await _publicDbContext.Tenants
             .Where(x => x.IsActive)
