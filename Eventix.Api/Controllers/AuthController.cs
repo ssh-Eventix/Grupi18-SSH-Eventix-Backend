@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using UserRoleEnum = Eventix.Domain.Enums.UserRole;
 
-namespace Eventix.API.Controllers;
+namespace Eventix.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]

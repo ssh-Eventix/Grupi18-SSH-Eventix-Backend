@@ -1,7 +1,7 @@
 using Eventix.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 
-namespace Eventix.API.Authorization;
+namespace Eventix.Api.Authorization;
 
 public class PermissionRequirement : IAuthorizationRequirement
 {

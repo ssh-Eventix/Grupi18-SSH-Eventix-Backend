@@ -3,7 +3,7 @@ using Eventix.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Eventix.API.Controllers;
+namespace Eventix.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]

@@ -1,4 +1,4 @@
-using Eventix.API.Helpers;
+using Eventix.Api.Helpers;
 using Eventix.Application.DTOs.DiscountCoupons;
 using Eventix.Application.Interfaces.Common;
 using Eventix.Application.Interfaces.Services;
@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
 
-namespace Eventix.API.Controllers
+namespace Eventix.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]

@@ -1,4 +1,4 @@
-﻿using Eventix.API.Helpers;
+﻿using Eventix.Api.Helpers;
 using Eventix.Application.DTOs.TicketType;
 using Eventix.Application.Interfaces.Common;
 using Eventix.Application.Interfaces.Services;

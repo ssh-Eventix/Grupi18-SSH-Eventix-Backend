@@ -1,5 +1,5 @@
 ﻿using System.Security.Claims;
-using Eventix.API.Authorization;
+using Eventix.Api.Authorization;
 using Microsoft.AspNetCore.Authorization;
 
 namespace Eventix.UnitTests.Authorization;
