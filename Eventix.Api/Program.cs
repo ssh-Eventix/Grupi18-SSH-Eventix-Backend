@@ -238,6 +238,7 @@ builder.Services.AddScoped<IAuthorizationHandler, PermissionHandler>();
 builder.Services.AddScoped<IAuthorizationHandler, ImpersonationHandler>();
 builder.Services.AddScoped<ITenantEmailDomainRepository, TenantEmailDomainRepository>();
 builder.Services.AddScoped<ITenantEmailDomainService, TenantEmailDomainService>();
+builder.Services.AddScoped<ITenantAdminService, TenantAdminService>();
 builder.Services.AddScoped<BookingCleanupJob>();
 builder.Services.AddScoped<NotificationReminderJob>();
 builder.Services.AddScoped<TicketExpirationJob>();
