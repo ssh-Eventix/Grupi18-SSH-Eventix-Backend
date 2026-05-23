@@ -19,7 +19,7 @@ public class TenantMiddleware
     {
         if (
             httpContext.Request.Path.StartsWithSegments("/swagger") ||
-            httpContext.Request.Path.StartsWithSegments("/api/auth") ||
+            //httpContext.Request.Path.StartsWithSegments("/api/auth") ||
             httpContext.Request.Path.StartsWithSegments("/api/tenants") ||
             httpContext.Request.Path.StartsWithSegments("/api/health") ||
             httpContext.Request.Path.StartsWithSegments("/hangfire")
@@ -42,6 +42,7 @@ public class TenantMiddleware
 
         if (tenant is null)
         {
+            httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
             await _next(httpContext);
             return;
         }
