@@ -1,4 +1,4 @@
-using Eventix.API.Middleware;
+using Eventix.Api.Middleware;
 using Eventix.Application.Interfaces.Common;
 using Eventix.Application.Interfaces.Repositories;
 using Eventix.Application.Interfaces.Services;
@@ -18,7 +18,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
-using Eventix.API.Authorization;
+using Eventix.Api.Authorization;
 using Eventix.Domain.Enums;
 using DotNetEnv;
 

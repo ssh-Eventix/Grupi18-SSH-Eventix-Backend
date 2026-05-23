@@ -26,7 +26,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Eventix.Domain\Eventix.Domain.csproj" />
     <ProjectReference Include="..\..\Eventix.Infrastructure\Eventix.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\Eventix.API\Eventix.API.csproj" />
+    <ProjectReference Include="..\..\Eventix.Api\Eventix.Api.csproj" />
   </ItemGroup>
 
 </Project>

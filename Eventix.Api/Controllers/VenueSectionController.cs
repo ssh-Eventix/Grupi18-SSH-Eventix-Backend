@@ -1,4 +1,4 @@
-﻿using Eventix.API.Helpers;
+﻿using Eventix.Api.Helpers;
 using Eventix.Application.DTOs.VenueSections;
 using Eventix.Application.Interfaces.Common;
 using Eventix.Application.Interfaces.Repositories;
@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
 
-namespace Eventix.API.Controllers;
+namespace Eventix.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
