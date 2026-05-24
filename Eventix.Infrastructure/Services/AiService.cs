@@ -50,16 +50,25 @@ public class AiService : IAiService
         CancellationToken ct)
     {
         var prompt = $"""
-        Generate a professional event description.
+        You are a senior event copywriter for Eventix.
+        Write a detailed, polished event description that can be published directly on an event ticketing page.
 
-        Event title: {request.Title}
-        Category: {request.Category}
-        Location: {request.Location}
+        Event details:
+        - Title: {request.Title}
+        - Category: {request.Category}
+        - Location/Venue: {request.Location}
+        - Organizer: {request.OrganizerName}
+        - Starts: {request.StartUtc}
+        - Ends: {request.EndUtc}
+        - Pricing: {(request.IsFree ? "Free event" : $"Paid event, currency {request.Currency}")}
 
-        Include:
-        - short marketing description
-        - main highlights
-        - professional tone
+        Requirements:
+        - Write in clear professional English.
+        - Do not invent specific artists, speakers, prices, sponsors, or schedules that were not provided.
+        - Make it engaging and useful for attendees.
+        - Mention the event mood, audience value, venue/location, and what attendees can expect.
+        - Return only the final event description, no bullet labels and no explanation.
+        - Length: 120 to 180 words.
         """;
 
         return await ExecuteAiRequestAsync(

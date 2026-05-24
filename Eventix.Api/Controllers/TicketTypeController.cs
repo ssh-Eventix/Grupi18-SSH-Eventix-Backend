@@ -31,15 +31,22 @@ namespace Eventix.Api.Controllers
         public async Task<IActionResult> Create(
      [FromBody] CreateTicketTypeDto dto)
         {
-            var result = await _ticketTypeService.CreateAsync(dto, _tenantContext.TenantId);
+            try
+            {
+                var result = await _ticketTypeService.CreateAsync(dto, _tenantContext.TenantId);
 
-            await _cache.RemoveAsync(
-                $"tenant:{_tenantContext.TenantId}:tickettypes:event:{result.EventId}");
+                await _cache.RemoveAsync(
+                    $"tenant:{_tenantContext.TenantId}:tickettypes:event:{result.EventId}");
 
-            await _cache.RemoveAsync(
-                $"tenant:{_tenantContext.TenantId}:tickettypes:event:{result.EventId}:available");
+                await _cache.RemoveAsync(
+                    $"tenant:{_tenantContext.TenantId}:tickettypes:event:{result.EventId}:available");
 
-            return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+                return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ex.Message);
+            }
         }
 
         [HttpGet("event/{eventId:guid}")]

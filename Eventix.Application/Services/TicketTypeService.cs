@@ -11,6 +11,17 @@ namespace Eventix.Application.Services
         {
             var saleStartUtc = NormalizeUtc(dto.SaleStartDate);
             var saleEndUtc = NormalizeUtc(dto.SaleEndDate);
+            var name = dto.Name.Trim();
+
+            if (string.IsNullOrWhiteSpace(name))
+                throw new InvalidOperationException("Ticket type name is required.");
+
+            var existingTicketTypes = await _ticketTypeRepository.GetByEventIdAsync(dto.EventId);
+            var duplicateName = existingTicketTypes.Any(x =>
+                string.Equals(x.Name.Trim(), name, StringComparison.OrdinalIgnoreCase));
+
+            if (duplicateName)
+                throw new InvalidOperationException("A ticket type with this name already exists for this event.");
 
             var ticketType = new TicketType
             {
@@ -18,7 +29,7 @@ namespace Eventix.Application.Services
                 TenantId = tenantId,
                 EventId = dto.EventId,
                 EventSectionId = dto.EventSectionId,
-                Name = dto.Name,
+                Name = name,
                 Price = dto.Price,
                 QuantityAvailable = dto.QuantityAvailable,
                 SoldQuantity = 0,
