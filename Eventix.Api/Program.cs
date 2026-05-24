@@ -207,7 +207,8 @@ builder.Services.AddScoped<IVenueService, VenueService>();
 builder.Services.AddScoped<IVenueSectionRepository, VenueSectionRepository>();
 builder.Services.AddScoped<IVenueSectionService, VenueSectionService>();
 builder.Services.AddScoped<IEventRepository, EventRepository>();
-builder.Services.AddScoped<ISpeakerService, SpeakerService>(); 
+builder.Services.AddScoped<ISpeakerService, SpeakerService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<ISpeakerRepository, SpeakerRepository>();
 builder.Services.AddScoped<IEventSectionRepository, EventSectionRepository>();
 builder.Services.AddScoped<IEventSectionService, EventSectionService>();
@@ -233,6 +234,7 @@ builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<IImpersonationService, ImpersonationService>();
 builder.Services.AddScoped<ICheckInRepository, CheckInRepository>();
+builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 builder.Services.AddScoped<ICheckInService, CheckInService>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
@@ -414,6 +416,9 @@ builder.Services.AddAuthorization(options =>
 
     options.AddPolicy("Permission:RefundPayments", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.RefundPayments)));
+
+    options.AddPolicy("Permission:CreatePayments", policy =>
+    policy.Requirements.Add(new PermissionRequirement(Permission.CreatePayments)));
 
     options.AddPolicy("Permission:ViewReviews", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ViewReviews)));
