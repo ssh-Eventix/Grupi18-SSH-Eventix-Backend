@@ -72,7 +72,7 @@ builder.Services.AddSwaggerGen(c =>
     var jwtScheme = new OpenApiSecurityScheme
     {
         Name = "Authorization",
-        Description = "Enter: Bearer {your JWT}",
+        Description = "Paste ONLY the JWT token, without the word Bearer.",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.Http,
         Scheme = "bearer",
@@ -253,6 +253,14 @@ builder.Services.AddScoped<ReviewReminderJob>();
 builder.Services.AddScoped<PaymentRetryJob>();
 builder.Services.AddScoped<EventStatusUpdateJob>();
 builder.Services.AddScoped<CheckInAnalyticsJob>();
+builder.Services.AddScoped<IAIRequestLogRepository, AIRequestLogRepository>();
+builder.Services.AddScoped<IAiService, AiService>();
+builder.Services.AddHttpClient<IOllamaClient, OllamaClient>(client =>
+{
+    client.BaseAddress = new Uri(
+        builder.Configuration["Ollama:BaseUrl"] ?? "http://localhost:11434");
+});
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactClient", policy =>
@@ -435,7 +443,7 @@ builder.Services.AddAuthorization(options =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ViewNotifications)));
 
     options.AddPolicy("Permission:UseAI", policy =>
-        policy.Requirements.Add(new PermissionRequirement(Permission.UseAI)));
+    policy.Requirements.Add(new PermissionRequirement(Permission.UseAI)));
 
     options.AddPolicy("Permission:ViewAIRequestLogs", policy =>
         policy.Requirements.Add(new PermissionRequirement(Permission.ViewAIRequestLogs)));

@@ -27,6 +27,7 @@ public class AuthController : ControllerBase
     private readonly ITenantContext _tenantContext;
     private readonly ITenantEmailDomainRepository _tenantEmailDomainRepository;
     private readonly PublicDbContext _publicDb;
+    private readonly TenantDbContext _tenantDb;
 
     public AuthController(
         IUserRepository userRepository,
@@ -39,7 +40,8 @@ public class AuthController : ControllerBase
         IRefreshTokenRepository refreshTokenRepository,
         ITenantContext tenantContext,
         ITenantEmailDomainRepository tenantEmailDomainRepository,
-        PublicDbContext publicDb)
+        PublicDbContext publicDb,
+        TenantDbContext tenantDb)
     {
         _userRepository = userRepository;
         _userRoleRepository = userRoleRepository;
@@ -52,6 +54,7 @@ public class AuthController : ControllerBase
         _tenantContext = tenantContext;
         _tenantEmailDomainRepository = tenantEmailDomainRepository;
         _publicDb = publicDb;
+        _tenantDb = tenantDb;
     }
 
     [HttpPost("register")]
@@ -161,8 +164,8 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     [AllowAnonymous]
     public async Task<ActionResult<LoginResponseDTO>> Login(
-        [FromBody] LoginRequestDTO dto,
-        CancellationToken ct)
+    [FromBody] LoginRequestDTO dto,
+    CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(dto.Email) ||
             string.IsNullOrWhiteSpace(dto.Password))
@@ -171,6 +174,62 @@ public class AuthController : ControllerBase
         }
 
         var email = dto.Email.Trim().ToLower();
+
+        if (_tenantContext.TenantId != Guid.Empty &&
+            !string.IsNullOrWhiteSpace(_tenantContext.SchemaName))
+        {
+            var user = await _tenantDb.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x =>
+                    x.Email.ToLower() == email &&
+                    x.TenantId == _tenantContext.TenantId &&
+                    !x.IsDeleted &&
+                    x.IsActive,
+                    ct);
+
+            if (user is null)
+                return Unauthorized("Tenant user not found.");
+
+            if (!_passwordHasher.Verify(user.PasswordHash, dto.Password))
+                return Unauthorized("Invalid password.");
+
+            var roles = await _tenantDb.UserRoles
+                .AsNoTracking()
+                .Include(x => x.Role)
+                .Where(x =>
+                    x.UserId == user.Id &&
+                    x.TenantId == _tenantContext.TenantId &&
+                    !x.IsDeleted &&
+                    !x.Role.IsDeleted)
+                .Select(x => x.Role.Name)
+                .Distinct()
+                .ToListAsync(ct);
+
+            if (!roles.Any())
+                return Unauthorized("User has no roles in this tenant.");
+
+            var (accessToken, accessExpires) =
+                await _jwtTokenService.GenerateTokenAsync(
+                    subjectId: user.Id,
+                    email: user.Email,
+                    tenantId: _tenantContext.TenantId,
+                    roles: roles,
+                    cancellationToken: ct);
+
+            if (user.PublicUserId is null)
+                return StatusCode(500, "Tenant user is not linked to PublicUser.");
+
+            var (refreshToken, refreshExpires) =
+                await _refreshTokenService.CreateAsync(user.PublicUserId.Value, ct);
+
+            return Ok(new LoginResponseDTO
+            {
+                AccessToken = accessToken,
+                AccessTokenExpiresAtUtc = accessExpires,
+                RefreshToken = refreshToken,
+                RefreshTokenExpiresAtUtc = refreshExpires
+            });
+        }
 
         var publicUser = await _publicUserRepository.GetByEmailAsync(email, ct);
 
@@ -181,14 +240,19 @@ public class AuthController : ControllerBase
             return Unauthorized();
 
         var publicRoles = await _publicDb.PublicUserRoles
-    .Where(x => x.PublicUserId == publicUser.Id)
-    .Select(x => x.PublicRole.Name)
-    .ToListAsync(ct);
+            .AsNoTracking()
+            .Where(x => x.PublicUserId == publicUser.Id)
+            .Select(x => x.PublicRole.Name)
+            .ToListAsync(ct);
 
-        if (publicRoles.Any(x =>
-     string.Equals(x, "SuperAdmin", StringComparison.OrdinalIgnoreCase)))
+        if (!publicRoles.Any(x =>
+            string.Equals(x, "SuperAdmin", StringComparison.OrdinalIgnoreCase)))
         {
-            var (superAdminaccessToken, superAdminaccessExpires) = await _jwtTokenService.GenerateTokenAsync(
+            return BadRequest("Tenant slug is required for tenant users.");
+        }
+
+        var (superToken, superExpires) =
+            await _jwtTokenService.GenerateTokenAsync(
                 subjectId: publicUser.Id,
                 email: publicUser.Email,
                 tenantId: Guid.Empty,
@@ -196,51 +260,8 @@ public class AuthController : ControllerBase
                 isSuperAdmin: true,
                 cancellationToken: ct);
 
-            var (superAdminrefreshToken, superAdminrefreshExpires) = await _refreshTokenService.CreateAsync(
-                publicUser.Id,
-                ct);
-
-            publicUser.LastLoginAtUtc = DateTime.UtcNow;
-            await _publicUserRepository.UpdateAsync(publicUser, ct);
-            await _publicUserRepository.SaveChangesAsync(ct);
-
-            return Ok(new LoginResponseDTO
-            {
-                AccessToken = superAdminaccessToken,
-                AccessTokenExpiresAtUtc = superAdminaccessExpires,
-                RefreshToken = superAdminrefreshToken,
-                RefreshTokenExpiresAtUtc = superAdminrefreshExpires
-            });
-        }
-
-        if (_tenantContext.TenantId == Guid.Empty || string.IsNullOrWhiteSpace(_tenantContext.SchemaName))
-        {
-            return BadRequest("Tenant slug is required for tenant users.");
-        }
-
-        var user = await _userRepository.GetByPublicUserIdAsync(publicUser.Id, ct);
-
-        if (user is null || user.IsDeleted || !user.IsActive)
-            return Unauthorized("User does not belong to this tenant.");
-
-        var tenantRoles = await _userRoleRepository.GetRoleNamesByUserIdAsync(user.Id, ct);
-
-        var roles = tenantRoles
-            .Where(r => !string.IsNullOrWhiteSpace(r))
-            .Select(r => r.Trim())
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
-
-        var (accessToken, accessExpires) = await _jwtTokenService.GenerateTokenAsync(
-            subjectId: user.Id,
-            email: user.Email,
-            tenantId: _tenantContext.TenantId,
-            roles: roles,
-            cancellationToken: ct);
-
-        var (refreshToken, refreshExpires) = await _refreshTokenService.CreateAsync(
-            publicUser.Id,
-            ct);
+        var (superRefresh, superRefreshExpires) =
+            await _refreshTokenService.CreateAsync(publicUser.Id, ct);
 
         publicUser.LastLoginAtUtc = DateTime.UtcNow;
         await _publicUserRepository.UpdateAsync(publicUser, ct);
@@ -248,10 +269,10 @@ public class AuthController : ControllerBase
 
         return Ok(new LoginResponseDTO
         {
-            AccessToken = accessToken,
-            AccessTokenExpiresAtUtc = accessExpires,
-            RefreshToken = refreshToken,
-            RefreshTokenExpiresAtUtc = refreshExpires
+            AccessToken = superToken,
+            AccessTokenExpiresAtUtc = superExpires,
+            RefreshToken = superRefresh,
+            RefreshTokenExpiresAtUtc = superRefreshExpires
         });
     }
 
@@ -283,13 +304,21 @@ public class AuthController : ControllerBase
 
         existing.RevokedAtUtc = DateTime.UtcNow;
 
-        var tenantRoles = await _userRoleRepository.GetRoleNamesByUserIdAsync(user.Id, ct);
+        var roles = await _tenantDb.UserRoles
+            .AsNoTracking()
+            .Include(x => x.Role)
+            .Where(x =>
+                x.UserId == user.Id &&
+                x.TenantId == _tenantContext.TenantId &&
+                !x.IsDeleted &&
+                !x.Role.IsDeleted)
+            .Select(x => x.Role.Name)
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct()
+            .ToListAsync(ct);
 
-        var roles = tenantRoles
-            .Where(r => !string.IsNullOrWhiteSpace(r))
-            .Select(r => r.Trim())
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
+        if (!roles.Any())
+            return Unauthorized("User has no roles in this tenant.");
 
         var (accessToken, accessExpires) = await _jwtTokenService.GenerateTokenAsync(
             subjectId: user.Id,
