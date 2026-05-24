@@ -64,6 +64,47 @@ public class EventsController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("public")]
+    [AllowAnonymous]
+    public async Task<ActionResult<IEnumerable<EventResponseDTO>>> PublicSearch(
+    [FromQuery] string? search,
+    CancellationToken cancellationToken)
+    {
+        var cacheKey =
+            $"tenant:{_tenantContext.TenantId}:events:public:search:{search ?? "all"}";
+
+        var result = await CacheHelper.GetOrSetAsync(
+            _cache,
+            cacheKey,
+            () => _eventService.GetAllAsync(search, cancellationToken),
+            TimeSpan.FromMinutes(5),
+            cancellationToken);
+
+        return Ok(result);
+    }
+
+    [HttpGet("public/{id:guid}")]
+    [AllowAnonymous]
+    public async Task<ActionResult<EventResponseDTO>> PublicGetById(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var cacheKey = $"tenant:{_tenantContext.TenantId}:event:public:{id}";
+
+        var result = await CacheHelper.GetOrSetAsync(
+            _cache,
+            cacheKey,
+            () => _eventService.GetByIdAsync(id, cancellationToken),
+            TimeSpan.FromMinutes(5),
+            cancellationToken);
+
+        if (result is null)
+            return NotFound();
+
+        return Ok(result);
+    }
+
+
     [HttpGet("{id:guid}")]
     [Authorize(Policy = "Permission:ViewEvents")]
     public async Task<ActionResult<EventResponseDTO>> GetById(
