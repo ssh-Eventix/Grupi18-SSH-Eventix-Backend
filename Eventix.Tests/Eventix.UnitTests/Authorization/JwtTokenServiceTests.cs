@@ -1,5 +1,7 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using Eventix.Application.Interfaces.Services;
+using Eventix.Domain.Enums;
 using Eventix.Infrastructure.Auth;
 using Eventix.Infrastructure.Services;
 using Microsoft.Extensions.Options;
@@ -21,7 +23,8 @@ public class JwtTokenServiceTests
         };
 
         _service = new JwtTokenService(
-            Options.Create(settings));
+            Options.Create(settings),
+            new FakeRolePermissionService());
     }
 
     [Fact]
@@ -41,7 +44,7 @@ public class JwtTokenServiceTests
     }
 
     [Fact]
-    public async Task Generated_Token_Should_Contain_Role_And_TenantId()
+    public async Task Generated_Token_Should_Contain_Role_TenantId_And_Permission()
     {
         var userId = Guid.NewGuid();
         var tenantId = Guid.NewGuid();
@@ -52,8 +55,8 @@ public class JwtTokenServiceTests
             tenantId: tenantId,
             roles: new[] { "Admin" });
 
-        var handler = new JwtSecurityTokenHandler();
-        var token = handler.ReadJwtToken(result.Token);
+        var token = new JwtSecurityTokenHandler()
+            .ReadJwtToken(result.Token);
 
         Assert.Contains(token.Claims, x =>
             x.Type == "tenantId" &&
@@ -62,6 +65,14 @@ public class JwtTokenServiceTests
         Assert.Contains(token.Claims, x =>
             x.Type == ClaimTypes.Role &&
             x.Value == "Admin");
+
+        Assert.Contains(token.Claims, x =>
+            x.Type == "role" &&
+            x.Value == "Admin");
+
+        Assert.Contains(token.Claims, x =>
+            x.Type == "permission" &&
+            x.Value == Permission.UseAI.ToString());
     }
 
     [Fact]
@@ -80,6 +91,10 @@ public class JwtTokenServiceTests
         Assert.Contains(token.Claims, x =>
             x.Type == "isSuperAdmin" &&
             x.Value == "true");
+
+        Assert.Contains(token.Claims, x =>
+            x.Type == "permission" &&
+            x.Value == Permission.UseAI.ToString());
     }
 
     [Fact]
@@ -107,5 +122,28 @@ public class JwtTokenServiceTests
         Assert.Contains(token.Claims, x =>
             x.Type == "impersonationSessionId" &&
             x.Value == sessionId.ToString());
+
+        Assert.Contains(token.Claims, x =>
+            x.Type == "impersonatorPublicUserId" &&
+            x.Value == impersonatorId.ToString());
+    }
+
+    private class FakeRolePermissionService : IRolePermissionService
+    {
+        public bool RoleHasPermission(string role, Permission permission)
+        {
+            if (role == "SuperAdmin")
+                return true;
+
+            if (role == "Admin" && permission == Permission.UseAI)
+                return true;
+
+            return false;
+        }
+
+        public bool UserHasPermission(IEnumerable<string> roles, Permission permission)
+        {
+            return roles.Any(role => RoleHasPermission(role, permission));
+        }
     }
 }
