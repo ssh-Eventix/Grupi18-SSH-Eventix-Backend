@@ -11,14 +11,239 @@ public class PublicDbContext : DbContext
     }
 
     public DbSet<Tenant> Tenants => Set<Tenant>();
+    public DbSet<PublicUser> PublicUsers => Set<PublicUser>();
+    public DbSet<PublicRole> PublicRoles => Set<PublicRole>();
+    public DbSet<PublicUserRole> PublicUserRoles => Set<PublicUserRole>();
+
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<TenantImpersonationLog> TenantImpersonationLogs => Set<TenantImpersonationLog>();
+    public DbSet<ArchiveRecord> ArchiveRecords => Set<ArchiveRecord>();
+    public DbSet<TenantEmailDomain> TenantEmailDomains => Set<TenantEmailDomain>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("public");
 
         ConfigureTenant(modelBuilder);
+        ConfigurePublicRole(modelBuilder);
+        ConfigurePublicUserRole(modelBuilder);
+        ConfigurePublicUser(modelBuilder);
+        ConfigureTenantImpersonationLog(modelBuilder);
+        ConfigureArchiveRecord(modelBuilder);
+        ConfigureRefreshToken(modelBuilder);
+        ConfigureTenantEmailDomain(modelBuilder);
 
         base.OnModelCreating(modelBuilder);
+    }
+
+    private static void ConfigurePublicRole(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<PublicRole>(entity =>
+        {
+            entity.ToTable("PublicRoles");
+
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Name)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entity.Property(x => x.NormalizedName)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entity.HasIndex(x => x.NormalizedName)
+                .IsUnique();
+
+            entity.Property(x => x.Description)
+                .HasMaxLength(500);
+
+            entity.Property(x => x.CreatedAtUtc)
+                .HasColumnType("timestamp with time zone");
+
+            entity.Property(x => x.UpdatedAtUtc)
+                .HasColumnType("timestamp with time zone");
+        });
+    }
+
+    private static void ConfigureArchiveRecord(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<ArchiveRecord>(entity =>
+        {
+            entity.ToTable("ArchiveRecords", "public");
+
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.SchemaName)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entity.Property(x => x.EntityName)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entity.Property(x => x.DataJson)
+                .HasColumnType("jsonb")
+                .IsRequired();
+
+            entity.Property(x => x.ArchivedAtUtc)
+                .HasColumnType("timestamp with time zone")
+                .IsRequired();
+
+            entity.HasIndex(x => x.TenantId);
+            entity.HasIndex(x => x.SchemaName);
+            entity.HasIndex(x => new { x.TenantId, x.EntityName, x.EntityId });
+            entity.HasIndex(x => x.ArchiveYear);
+        });
+    }
+
+    private static void ConfigurePublicUser(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<PublicUser>(entity =>
+        {
+            entity.ToTable("PublicUsers");
+
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Email)
+                .HasMaxLength(200)
+                .IsRequired();
+
+            entity.HasIndex(x => x.Email)
+                .IsUnique();
+
+            entity.Property(x => x.PasswordHash)
+                .IsRequired();
+
+            entity.Property(x => x.FullName)
+                .HasMaxLength(200)
+                .IsRequired();
+
+            entity.Property(x => x.IsActive)
+                .HasDefaultValue(true);
+
+            entity.Property(x => x.CreatedAtUtc)
+                .HasColumnType("timestamp with time zone");
+
+            entity.Property(x => x.UpdatedAtUtc)
+                .HasColumnType("timestamp with time zone");
+
+            entity.Property(x => x.LastLoginAtUtc)
+                .HasColumnType("timestamp with time zone");
+        });
+    }
+
+    private static void ConfigurePublicUserRole(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<PublicUserRole>(entity =>
+        {
+            entity.ToTable("PublicUserRoles");
+
+            entity.HasKey(x => new
+            {
+                x.PublicUserId,
+                x.PublicRoleId
+            });
+
+            entity.HasOne(x => x.PublicUser)
+                .WithMany(x => x.PublicUserRoles)
+                .HasForeignKey(x => x.PublicUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.PublicRole)
+                .WithMany(x => x.PublicUserRoles)
+                .HasForeignKey(x => x.PublicRoleId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+    }
+
+    private static void ConfigureRefreshToken(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.ToTable("RefreshTokens");
+
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.TokenHash)
+                .HasMaxLength(500)
+                .IsRequired();
+
+            entity.HasIndex(x => x.TokenHash)
+                .IsUnique();
+
+            entity.Property(x => x.ExpiresAtUtc)
+                .HasColumnType("timestamp with time zone")
+                .IsRequired();
+
+            entity.Property(x => x.CreatedAtUtc)
+                .HasColumnType("timestamp with time zone");
+
+            entity.Property(x => x.UpdatedAtUtc)
+                .HasColumnType("timestamp with time zone");
+
+            entity.Property(x => x.RevokedAtUtc)
+                .HasColumnType("timestamp with time zone");
+
+            entity.Property(x => x.ReplacedByTokenHash)
+                .HasMaxLength(500);
+
+            entity.HasOne(x => x.PublicUser)
+                .WithMany(x => x.RefreshTokens)
+                .HasForeignKey(x => x.PublicUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+    }
+
+    private static void ConfigureTenantImpersonationLog(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<TenantImpersonationLog>(entity =>
+        {
+            entity.ToTable("TenantImpersonationLogs");
+
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.StartedAtUtc)
+                .HasColumnType("timestamp with time zone")
+                .IsRequired();
+
+            entity.Property(x => x.ExpiresAtUtc)
+                .HasColumnType("timestamp with time zone")
+                .IsRequired();
+
+            entity.Property(x => x.RevokedAtUtc)
+                .HasColumnType("timestamp with time zone");
+
+            entity.Property(x => x.Reason)
+                .HasMaxLength(1000);
+
+            entity.Property(x => x.Event)
+                .HasConversion<string>()
+                .HasMaxLength(50)
+                .IsRequired();
+
+            entity.Property(x => x.IsActive)
+                .HasDefaultValue(true);
+
+            entity.HasOne(x => x.SuperAdminUser)
+                .WithMany()
+                .HasForeignKey(x => x.SuperAdminUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.TargetUser)
+                .WithMany()
+                .HasForeignKey(x => x.TargetUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.TargetTenant)
+                .WithMany()
+                .HasForeignKey(x => x.TargetTenantId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(x => x.SuperAdminUserId);
+            entity.HasIndex(x => x.TargetTenantId);
+            entity.HasIndex(x => new { x.TargetTenantId, x.IsActive });
+        });
     }
 
     private static void ConfigureTenant(ModelBuilder modelBuilder)
@@ -69,6 +294,35 @@ public class PublicDbContext : DbContext
                 .IsUnique();
 
             entity.HasIndex(x => x.SchemaName)
+                .IsUnique();
+        });
+    }
+
+    private static void ConfigureTenantEmailDomain(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<TenantEmailDomain>(entity =>
+        {
+            entity.ToTable("TenantEmailDomains");
+
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Domain)
+                .HasMaxLength(200)
+                .IsRequired();
+
+            entity.Property(x => x.DefaultRoleName)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entity.Property(x => x.AutoApprove)
+                .HasDefaultValue(false);
+
+            entity.HasOne(x => x.Tenant)
+                .WithMany()
+                .HasForeignKey(x => x.TenantId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => new { x.TenantId, x.Domain })
                 .IsUnique();
         });
     }

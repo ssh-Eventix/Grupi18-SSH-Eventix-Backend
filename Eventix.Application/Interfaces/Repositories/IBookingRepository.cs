@@ -15,6 +15,7 @@ namespace Eventix.Application.Interfaces.Repositories
         Task<Booking?> GetWithItemsAsync(Guid id);
 
         Task AddAsync(Booking booking);
+        Task UpdateAsync(Booking booking);
         Task SaveChangesAsync();
     }
 }

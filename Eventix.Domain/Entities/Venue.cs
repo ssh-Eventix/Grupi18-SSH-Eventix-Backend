@@ -1,5 +1,4 @@
 ﻿using Eventix.Domain.Common;
-using Eventix.Domain.Enums;
 
 namespace Eventix.Domain.Entities;
 
@@ -17,8 +16,6 @@ public class Venue : TenantBaseEntity
     public bool IsIndoor { get; set; } = true;
     public bool IsAccessible { get; set; } = true;
 
-
     public ICollection<Event> Events { get; set; } = new List<Event>();
-
     public ICollection<VenueSection> Sections { get; set; } = new List<VenueSection>();
 }

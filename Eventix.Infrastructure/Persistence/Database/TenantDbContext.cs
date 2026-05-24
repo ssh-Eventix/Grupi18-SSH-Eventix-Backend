@@ -41,6 +41,10 @@ public class TenantDbContext : DbContext
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<DiscountCoupon> DiscountCoupons => Set<DiscountCoupon>();
     public DbSet<Review> Reviews => Set<Review>();
+    public DbSet<Payment> Payments => Set<Payment>();
+    public DbSet<PaymentMethod> PaymentMethods => Set<PaymentMethod>();
+    public DbSet<AIRequestLog> AIRequestLogs => Set<AIRequestLog>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -53,60 +57,47 @@ public class TenantDbContext : DbContext
         ConfigureVenue(modelBuilder);
         ConfigureVenueSection(modelBuilder);
 
-        ConfigureEventCategory(modelBuilder);
         ConfigureEvent(modelBuilder);
         ConfigureEventSection(modelBuilder);
-        ConfigureEventSession(modelBuilder);
-        ConfigureSpeaker(modelBuilder);
+        ConfigureEventCategory(modelBuilder);
 
-        ConfigureTicketType(modelBuilder);
-        ConfigureBooking(modelBuilder);
-        ConfigureBookingItem(modelBuilder);
         ConfigureTicket(modelBuilder);
         ConfigureCheckIn(modelBuilder);
+        ConfigureTicketType(modelBuilder);
+        ConfigureEventSession(modelBuilder);
 
+        ConfigureBooking(modelBuilder);
+        ConfigureBookingItem(modelBuilder);
+        ConfigureSpeaker(modelBuilder);
+
+        ConfigurePayment(modelBuilder);
+        ConfigurePaymentMethod(modelBuilder);
         ConfigureNotification(modelBuilder);
-        ConfigureDiscountCoupon(modelBuilder);
+
         ConfigureReview(modelBuilder);
+        ConfigureDiscountCoupon(modelBuilder);
+        ConfigureAIRequestLog(modelBuilder);
+        ConfigureAuditLog(modelBuilder);
 
         base.OnModelCreating(modelBuilder);
     }
+
+    // ================= USERS =================
 
     private static void ConfigureUser(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<User>(entity =>
         {
-            entity.ToTable("Users");
+            entity.ToTable("User");
 
             entity.HasKey(x => x.Id);
 
-            entity.Property(x => x.FirstName)
-                .HasMaxLength(100)
-                .IsRequired();
+            entity.Property(x => x.FirstName).IsRequired().HasMaxLength(100);
+            entity.Property(x => x.LastName).IsRequired().HasMaxLength(100);
+            entity.Property(x => x.Email).IsRequired().HasMaxLength(200);
+            entity.Property(x => x.PasswordHash).IsRequired().HasMaxLength(500);
 
-            entity.Property(x => x.LastName)
-                .HasMaxLength(100)
-                .IsRequired();
-
-            entity.Property(x => x.Email)
-                .HasMaxLength(200)
-                .IsRequired();
-
-            entity.Property(x => x.PasswordHash)
-                .IsRequired();
-
-            entity.Property(x => x.IsActive)
-                .HasDefaultValue(true);
-
-            entity.HasIndex(x => x.TenantId);
-
-            entity.HasIndex(x => new { x.TenantId, x.Email })
-                .IsUnique();
-
-            entity.HasMany(x => x.Bookings)
-                .WithOne(x => x.User)
-                .HasForeignKey(x => x.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(x => new { x.TenantId, x.Email }).IsUnique();
         });
     }
 
@@ -114,21 +105,16 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<Role>(entity =>
         {
-            entity.ToTable("Roles");
+            entity.ToTable("Role");
 
             entity.HasKey(x => x.Id);
 
-            entity.Property(x => x.Name)
-                .HasMaxLength(100)
-                .IsRequired();
+            entity.Property(x => x.Name).IsRequired().HasMaxLength(100);
+            entity.Property(x => x.Description).HasMaxLength(500);
 
-            entity.Property(x => x.Description)
-                .HasMaxLength(500);
+            entity.Property(x => x.IsGlobal).HasDefaultValue(false);
 
-            entity.HasIndex(x => x.TenantId);
-
-            entity.HasIndex(x => new { x.TenantId, x.Name })
-                .IsUnique();
+            entity.HasIndex(x => new { x.TenantId, x.Name }).IsUnique();
         });
     }
 
@@ -136,12 +122,11 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<UserRole>(entity =>
         {
-            entity.ToTable("UserRoles");
+            entity.ToTable("UserRole");
 
             entity.HasKey(x => x.Id);
 
-            entity.Property(x => x.AssignedAt)
-                .HasColumnType("timestamp with time zone");
+            entity.HasIndex(x => new { x.TenantId, x.UserId, x.RoleId }).IsUnique();
 
             entity.HasOne(x => x.User)
                 .WithMany(x => x.UserRoles)
@@ -151,41 +136,22 @@ public class TenantDbContext : DbContext
             entity.HasOne(x => x.Role)
                 .WithMany(x => x.UserRoles)
                 .HasForeignKey(x => x.RoleId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            entity.HasIndex(x => x.TenantId);
-
-            entity.HasIndex(x => new { x.TenantId, x.UserId, x.RoleId })
-                .IsUnique();
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
+
+    // ================= VENUE =================
 
     private static void ConfigureVenue(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Venue>(entity =>
         {
-            entity.ToTable("Venues");
+            entity.ToTable("Venue", t =>
+            {
+                t.HasCheckConstraint("CK_Venue_TotalCapacity", "\"TotalCapacity\" >= 0");
+            });
 
-            entity.HasKey(x => x.Id);
-
-            entity.Property(x => x.Name).HasMaxLength(200).IsRequired();
-            entity.Property(x => x.Code).HasMaxLength(100).IsRequired();
-            entity.Property(x => x.AddressLine1).HasMaxLength(200).IsRequired();
-            entity.Property(x => x.City).HasMaxLength(100).IsRequired();
-            entity.Property(x => x.Country).HasMaxLength(100).IsRequired();
-
-            entity.Property(x => x.IsIndoor).HasDefaultValue(true);
-            entity.Property(x => x.IsAccessible).HasDefaultValue(true);
-
-            entity.HasMany(x => x.Sections)
-                .WithOne(x => x.Venue)
-                .HasForeignKey(x => x.VenueId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            entity.HasIndex(x => x.TenantId);
-
-            entity.HasIndex(x => new { x.TenantId, x.Code })
-                .IsUnique();
+            entity.HasIndex(x => new { x.TenantId, x.Code }).IsUnique();
         });
     }
 
@@ -193,91 +159,51 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<VenueSection>(entity =>
         {
-            entity.ToTable("VenueSections");
+            entity.ToTable("VenueSection", t =>
+            {
+                t.HasCheckConstraint("CK_VenueSection_Capacity", "\"Capacity\" >= 0");
+                t.HasCheckConstraint("CK_VenueSection_DefaultBasePrice", "\"DefaultBasePrice\" IS NULL OR \"DefaultBasePrice\" >= 0");
+            });
 
             entity.HasKey(x => x.Id);
 
-            entity.Property(x => x.Name).HasMaxLength(150).IsRequired();
-            entity.Property(x => x.Code).HasMaxLength(100).IsRequired();
+            entity.Property(x => x.Name).IsRequired().HasMaxLength(200);
+            entity.Property(x => x.Code).IsRequired().HasMaxLength(50);
+            entity.Property(x => x.DefaultBasePrice).HasPrecision(18, 2);
 
-            entity.Property(x => x.DefaultBasePrice)
-                .HasColumnType("numeric(18,2)");
-
-            entity.Property(x => x.SeatType)
-                .HasConversion<int>();
-
-            entity.Property(x => x.DisplayOrder)
-                .HasDefaultValue(0);
-
-            entity.Property(x => x.IsActive)
-                .HasDefaultValue(true);
+            entity.HasIndex(x => new { x.TenantId, x.VenueId, x.Code }).IsUnique();
 
             entity.HasOne(x => x.Venue)
                 .WithMany(x => x.Sections)
                 .HasForeignKey(x => x.VenueId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            entity.HasMany(x => x.EventSections)
-                .WithOne(x => x.VenueSection)
-                .HasForeignKey(x => x.VenueSectionId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            entity.HasIndex(x => x.TenantId);
-
-            entity.HasIndex(x => new { x.TenantId, x.VenueId, x.Code })
-                .IsUnique();
         });
     }
 
-    private static void ConfigureEventCategory(ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<EventCategory>(entity =>
-        {
-            entity.ToTable("EventCategories");
-
-            entity.HasKey(x => x.Id);
-
-            entity.Property(x => x.Name).HasMaxLength(150).IsRequired();
-            entity.Property(x => x.Description).HasMaxLength(500);
-            entity.Property(x => x.Icon).HasMaxLength(250);
-
-            entity.Property(x => x.DisplayOrder).HasDefaultValue(0);
-            entity.Property(x => x.IsActive).HasDefaultValue(true);
-
-            entity.HasMany(x => x.Events)
-                .WithOne(x => x.EventCategory)
-                .HasForeignKey(x => x.EventCategoryId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            entity.HasIndex(x => x.TenantId);
-
-            entity.HasIndex(x => new { x.TenantId, x.Name })
-                .IsUnique();
-        });
-    }
+    // ================= EVENTS =================
 
     private static void ConfigureEvent(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Event>(entity =>
         {
-            entity.ToTable("Events");
+            entity.ToTable("Event", t =>
+            {
+                t.HasCheckConstraint("CK_Event_DateRange", "\"EndUtc\" > \"StartUtc\"");
+                t.HasCheckConstraint("CK_Event_MinTicketsPerOrder", "\"MinTicketsPerOrder\" > 0");
+                t.HasCheckConstraint("CK_Event_MaxTicketsPerOrder", "\"MaxTicketsPerOrder\" >= \"MinTicketsPerOrder\"");
+            });
 
             entity.HasKey(x => x.Id);
 
-            entity.Property(x => x.Title).HasMaxLength(200).IsRequired();
-            entity.Property(x => x.Slug).HasMaxLength(200).IsRequired();
-            entity.Property(x => x.Description).HasMaxLength(4000);
-            entity.Property(x => x.OrganizerName).HasMaxLength(150);
+            entity.Property(x => x.Title).IsRequired().HasMaxLength(250);
+            entity.Property(x => x.Slug).IsRequired().HasMaxLength(250);
+            entity.Property(x => x.Description).HasMaxLength(3000);
+            entity.Property(x => x.OrganizerName).HasMaxLength(200);
             entity.Property(x => x.BannerImageUrl).HasMaxLength(500);
-            entity.Property(x => x.Currency).HasMaxLength(10).IsRequired();
+            entity.Property(x => x.Currency).IsRequired().HasMaxLength(3);
 
-            entity.Property(x => x.Status).HasConversion<int>();
-            entity.Property(x => x.Visibility).HasConversion<int>();
-
-            entity.Property(x => x.MaxTicketsPerOrder).HasDefaultValue(10);
-            entity.Property(x => x.MinTicketsPerOrder).HasDefaultValue(1);
-            entity.Property(x => x.IsFree).HasDefaultValue(false);
-            entity.Property(x => x.IsPublished).HasDefaultValue(false);
+            entity.HasIndex(x => new { x.TenantId, x.Slug }).IsUnique();
 
             entity.HasOne(x => x.Venue)
                 .WithMany(x => x.Events)
@@ -289,16 +215,6 @@ public class TenantDbContext : DbContext
                 .HasForeignKey(x => x.EventCategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            entity.HasIndex(x => x.TenantId);
-
-            entity.HasIndex(x => new { x.TenantId, x.Slug })
-                .IsUnique();
-
-            entity.ToTable(t =>
-            {
-                t.HasCheckConstraint("CK_Event_MaxTickets", "\"MaxTicketsPerOrder\" >= \"MinTicketsPerOrder\"");
-                t.HasCheckConstraint("CK_Event_DateRange", "\"EndUtc\" > \"StartUtc\"");
-            });
         });
     }
 
@@ -306,14 +222,22 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<EventSection>(entity =>
         {
-            entity.ToTable("EventSections");
+            entity.ToTable("EventSection", t =>
+            {
+                t.HasCheckConstraint("CK_EventSection_Capacity", "\"Capacity\" >= 0");
+                t.HasCheckConstraint(
+                    "CK_EventSection_SalesRange",
+                    "\"SalesStartUtc\" IS NULL OR \"SalesEndUtc\" IS NULL OR \"SalesEndUtc\" > \"SalesStartUtc\""
+                );
+            });
 
             entity.HasKey(x => x.Id);
 
-            entity.Property(x => x.Name).HasMaxLength(150).IsRequired();
-            entity.Property(x => x.Code).HasMaxLength(100).IsRequired();
-            entity.Property(x => x.Price).HasColumnType("numeric(18,2)");
-            entity.Property(x => x.IsActive).HasDefaultValue(true);
+            entity.Property(x => x.Name).IsRequired().HasMaxLength(200);
+            entity.Property(x => x.Code).IsRequired().HasMaxLength(50);
+
+            entity.HasIndex(x => new { x.TenantId, x.EventId, x.Code }).IsUnique();
+            entity.HasIndex(x => new { x.TenantId, x.EventId, x.VenueSectionId }).IsUnique();
 
             entity.HasOne(x => x.Event)
                 .WithMany(x => x.EventSections)
@@ -325,16 +249,22 @@ public class TenantDbContext : DbContext
                 .HasForeignKey(x => x.VenueSectionId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            entity.HasIndex(x => x.TenantId);
+        });
+    }
 
-            entity.HasIndex(x => new { x.TenantId, x.EventId, x.Code })
-                .IsUnique();
+    private static void ConfigureEventCategory(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<EventCategory>(entity =>
+        {
+            entity.ToTable("EventCategory");
 
-            entity.ToTable(t =>
-            {
-                t.HasCheckConstraint("CK_EventSection_Capacity", "\"Capacity\" >= 0");
-                t.HasCheckConstraint("CK_EventSection_Price", "\"Price\" >= 0");
-            });
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Name).IsRequired().HasMaxLength(150);
+            entity.Property(x => x.Description).HasMaxLength(500);
+            entity.Property(x => x.Icon).HasMaxLength(100);
+
+            entity.HasIndex(x => new { x.TenantId, x.Name }).IsUnique();
         });
     }
 
@@ -342,12 +272,15 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<EventSession>(entity =>
         {
-            entity.ToTable("EventSessions");
+            entity.ToTable("EventSession", t =>
+            {
+                t.HasCheckConstraint("CK_EventSession_TimeRange", "\"EndTime\" > \"StartTime\"");
+            });
 
             entity.HasKey(x => x.Id);
 
-            entity.Property(x => x.Title).HasMaxLength(200).IsRequired();
-            entity.Property(x => x.Description).HasMaxLength(1000);
+            entity.Property(x => x.Title).IsRequired().HasMaxLength(250);
+            entity.Property(x => x.Description).HasMaxLength(2000);
 
             entity.HasOne(x => x.Event)
                 .WithMany(x => x.Sessions)
@@ -359,13 +292,6 @@ public class TenantDbContext : DbContext
                 .HasForeignKey(x => x.SpeakerId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            entity.HasIndex(x => x.TenantId);
-            entity.HasIndex(x => x.EventId);
-
-            entity.ToTable(t =>
-            {
-                t.HasCheckConstraint("CK_EventSession_DateRange", "\"EndTime\" > \"StartTime\"");
-            });
         });
     }
 
@@ -373,29 +299,42 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<Speaker>(entity =>
         {
-            entity.ToTable("Speakers");
+            entity.ToTable("Speaker");
 
             entity.HasKey(x => x.Id);
 
-            entity.Property(x => x.FullName)
-                .HasMaxLength(200)
-                .IsRequired();
+            entity.Property(x => x.FullName).IsRequired().HasMaxLength(200);
+            entity.Property(x => x.Bio).HasMaxLength(2000);
+            entity.Property(x => x.Email).HasMaxLength(200);
+            entity.Property(x => x.Phone).HasMaxLength(50);
+            entity.Property(x => x.ProfileImageUrl).HasMaxLength(500);
 
-            entity.Property(x => x.Bio)
-                .HasMaxLength(1000);
+            entity.HasIndex(x => new { x.TenantId, x.Email })
+                    .IsUnique()
+                    .HasFilter("\"Email\" IS NOT NULL");
+        });
+    }
 
-            entity.Property(x => x.Email)
-                .HasMaxLength(200);
+    // ================= TICKETS =================
 
-            entity.Property(x => x.Phone)
-                .HasMaxLength(50);
+    private static void ConfigureTicket(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Ticket>(entity =>
+        {
+            entity.ToTable("Ticket");
 
-            entity.Property(x => x.ProfileImageUrl)
-                .HasMaxLength(500);
+            entity.HasKey(x => x.Id);
 
-            entity.HasIndex(x => x.TenantId);
+            entity.Property(x => x.TicketCode).IsRequired().HasMaxLength(100);
+            entity.Property(x => x.QRCode).IsRequired().HasMaxLength(500);
 
-            entity.HasIndex(x => new { x.TenantId, x.Email });
+            entity.HasIndex(x => new { x.TenantId, x.TicketCode }).IsUnique();
+            entity.HasIndex(x => new { x.TenantId, x.QRCode }).IsUnique();
+
+            entity.HasOne(x => x.BookingItem)
+                .WithMany(x => x.Tickets)
+                .HasForeignKey(x => x.BookingItemId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 
@@ -403,139 +342,37 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<TicketType>(entity =>
         {
-            entity.ToTable("TicketTypes");
-
-            entity.HasKey(x => x.Id);
-
-            entity.Property(x => x.Name).HasMaxLength(100).IsRequired();
-            entity.Property(x => x.Price).HasColumnType("numeric(18,2)");
-            entity.Property(x => x.SoldQuantity).HasDefaultValue(0);
-
-            entity.HasOne(x => x.Event)
-                .WithMany(e => e.TicketTypes)
-                .HasForeignKey(x => x.EventId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            entity.HasIndex(x => x.TenantId);
-            entity.HasIndex(x => x.EventId);
-
-            entity.HasIndex(x => new { x.TenantId, x.EventId, x.Name })
-                .IsUnique();
-
-            entity.ToTable(t =>
+            entity.ToTable("TicketType", t =>
             {
                 t.HasCheckConstraint("CK_TicketType_Price", "\"Price\" >= 0");
                 t.HasCheckConstraint("CK_TicketType_QuantityAvailable", "\"QuantityAvailable\" >= 0");
                 t.HasCheckConstraint("CK_TicketType_SoldQuantity", "\"SoldQuantity\" >= 0");
-                t.HasCheckConstraint("CK_TicketType_SoldNotGreaterThanAvailable", "\"SoldQuantity\" <= \"QuantityAvailable\"");
-                t.HasCheckConstraint("CK_TicketType_SaleDateRange", "\"SaleEndDate\" > \"SaleStartDate\"");
+                t.HasCheckConstraint("CK_TicketType_SaleRange", "\"SaleStartDate\" IS NULL OR \"SaleEndDate\" IS NULL OR \"SaleEndDate\" > \"SaleStartDate\"");
             });
-        });
-    }
-
-    private static void ConfigureBooking(ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<Booking>(entity =>
-        {
-            entity.ToTable("Bookings");
 
             entity.HasKey(x => x.Id);
 
-            entity.Property(x => x.ReferenceNumber)
-                .HasMaxLength(100)
-                .IsRequired();
+            entity.Property(x => x.Name).IsRequired().HasMaxLength(150);
+            entity.Property(x => x.Price).HasPrecision(18, 2);
 
-            entity.Property(x => x.TotalAmount)
-                .HasColumnType("numeric(18,2)");
-
-            entity.Property(x => x.Status)
-                .HasConversion<int>();
-
-            entity.HasOne(x => x.User)
-                .WithMany(u => u.Bookings)
-                .HasForeignKey(x => x.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(x => new { x.TenantId, x.EventId, x.Name }).IsUnique();
 
             entity.HasOne(x => x.Event)
-                .WithMany(e => e.Bookings)
+                .WithMany(x => x.TicketTypes)
                 .HasForeignKey(x => x.EventId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            entity.HasIndex(x => x.TenantId);
-            entity.HasIndex(x => x.UserId);
-            entity.HasIndex(x => x.EventId);
-
-            entity.HasIndex(x => new { x.TenantId, x.ReferenceNumber })
-                .IsUnique();
-
-            entity.ToTable(t =>
-            {
-                t.HasCheckConstraint("CK_Booking_TotalAmount", "\"TotalAmount\" >= 0");
-            });
-        });
-    }
-
-    private static void ConfigureBookingItem(ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<BookingItem>(entity =>
-        {
-            entity.ToTable("BookingItems");
-
-            entity.HasKey(x => x.Id);
-
-            entity.Property(x => x.UnitPrice)
-                .HasColumnType("numeric(18,2)");
-
-            entity.HasOne(x => x.Booking)
-                .WithMany(b => b.BookingItems)
-                .HasForeignKey(x => x.BookingId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            entity.HasOne(x => x.TicketType)
-                .WithMany(t => t.BookingItems)
-                .HasForeignKey(x => x.TicketTypeId)
+            entity.HasOne(x => x.EventSection)
+                .WithMany(x => x.TicketTypes)
+                .HasForeignKey(x => x.EventSectionId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            entity.HasIndex(x => x.TenantId);
-            entity.HasIndex(x => x.BookingId);
-            entity.HasIndex(x => x.TicketTypeId);
+            entity.Property(x => x.SaleStartDate)
+                .HasColumnType("timestamp with time zone");
 
-            entity.ToTable(t =>
-            {
-                t.HasCheckConstraint("CK_BookingItem_Quantity", "\"Quantity\" > 0");
-                t.HasCheckConstraint("CK_BookingItem_UnitPrice", "\"UnitPrice\" >= 0");
-            });
-        });
-    }
+            entity.Property(x => x.SaleEndDate)
+                .HasColumnType("timestamp with time zone");
 
-    private static void ConfigureTicket(ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<Ticket>(entity =>
-        {
-            entity.ToTable("Tickets");
-
-            entity.HasKey(x => x.Id);
-
-            entity.Property(x => x.TicketCode)
-                .HasMaxLength(100)
-                .IsRequired();
-
-            entity.Property(x => x.QRCode)
-                .IsRequired();
-
-            entity.Property(x => x.Status)
-                .HasConversion<int>();
-
-            entity.HasOne(x => x.BookingItem)
-                .WithMany(bi => bi.Tickets)
-                .HasForeignKey(x => x.BookingItemId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            entity.HasIndex(x => x.TenantId);
-            entity.HasIndex(x => x.BookingItemId);
-
-            entity.HasIndex(x => new { x.TenantId, x.TicketCode })
-                .IsUnique();
         });
     }
 
@@ -543,128 +380,268 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<CheckIn>(entity =>
         {
-            entity.ToTable("CheckIns");
+            entity.ToTable("CheckIn");
 
             entity.HasKey(x => x.Id);
 
-            entity.Property(x => x.Notes)
-                .HasMaxLength(1000);
+            entity.Property(x => x.Notes).HasMaxLength(1000);
+
+            entity.HasIndex(x => new { x.TenantId, x.TicketId }).IsUnique();
 
             entity.HasOne(x => x.Ticket)
-                .WithOne()
+                .WithOne(x => x.CheckIn)
                 .HasForeignKey<CheckIn>(x => x.TicketId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasOne(x => x.CheckedInByUser)
-                .WithMany()
+                .WithMany(x => x.CheckIns)
                 .HasForeignKey(x => x.CheckedInByUserId)
                 .OnDelete(DeleteBehavior.Restrict);
-
-            entity.HasIndex(x => x.TenantId);
-            entity.HasIndex(x => x.TicketId);
-
-            entity.HasIndex(x => new { x.TenantId, x.TicketId })
-                .IsUnique();
         });
     }
 
-    private static void ConfigureNotification(ModelBuilder modelBuilder)
+    // ================= BOOKINGS =================
+
+    private static void ConfigureBooking(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Notification>(entity =>
+        modelBuilder.Entity<Booking>(entity =>
         {
-            entity.ToTable("Notifications");
+            entity.ToTable("Booking", t =>
+            {
+                t.HasCheckConstraint("CK_Booking_TotalAmount", "\"TotalAmount\" >= 0");
+            });
 
             entity.HasKey(x => x.Id);
 
-            entity.Property(x => x.Type)
-                .HasMaxLength(100)
-                .IsRequired();
+            entity.Property(x => x.ReferenceNumber).IsRequired().HasMaxLength(100);
+            entity.Property(x => x.TotalAmount).HasPrecision(18, 2);
 
-            entity.Property(x => x.Title)
-                .HasMaxLength(200)
-                .IsRequired();
-
-            entity.Property(x => x.Message)
-                .IsRequired();
-
-            entity.Property(x => x.IsRead)
-                .HasDefaultValue(false);
+            entity.HasIndex(x => new { x.TenantId, x.ReferenceNumber }).IsUnique();
 
             entity.HasOne(x => x.User)
-                .WithMany()
+                .WithMany(x => x.Bookings)
                 .HasForeignKey(x => x.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasOne(x => x.Event)
-                .WithMany()
+                .WithMany(x => x.Bookings)
                 .HasForeignKey(x => x.EventId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.Restrict);
 
-            entity.HasIndex(x => x.TenantId);
-            entity.HasIndex(x => x.UserId);
-            entity.HasIndex(x => x.EventId);
         });
     }
 
-    private static void ConfigureDiscountCoupon(ModelBuilder modelBuilder)
+    private static void ConfigureBookingItem(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<DiscountCoupon>(entity =>
+        modelBuilder.Entity<BookingItem>(entity =>
         {
-            entity.ToTable("DiscountCoupons");
+            entity.ToTable("BookingItem", t =>
+            {
+                t.HasCheckConstraint("CK_BookingItem_Quantity", "\"Quantity\" > 0");
+                t.HasCheckConstraint("CK_BookingItem_UnitPrice", "\"UnitPrice\" >= 0");
+            });
 
             entity.HasKey(x => x.Id);
 
-            entity.Property(x => x.Code)
-                .HasMaxLength(100)
-                .IsRequired();
+            entity.Property(x => x.UnitPrice).HasPrecision(18, 2);
 
-            entity.Property(x => x.DiscountValue)
-                .HasColumnType("numeric(18,2)");
+            entity.HasOne(x => x.Booking)
+                .WithMany(x => x.BookingItems)
+                .HasForeignKey(x => x.BookingId)
+                .OnDelete(DeleteBehavior.Cascade);
 
-            entity.HasIndex(x => x.TenantId);
+            entity.HasOne(x => x.TicketType)
+                .WithMany(x => x.BookingItems)
+                .HasForeignKey(x => x.TicketTypeId)
+                .OnDelete(DeleteBehavior.Restrict);
 
-            entity.HasIndex(x => new { x.TenantId, x.Code })
-                .IsUnique();
+            entity.HasOne(x => x.EventSection)
+                .WithMany(x => x.BookingItems)
+                .HasForeignKey(x => x.EventSectionId)
+                .OnDelete(DeleteBehavior.Restrict);
 
-            entity.ToTable(t =>
-            {
-                t.HasCheckConstraint("CK_DiscountCoupon_DiscountValue", "\"DiscountValue\" >= 0");
-            });
         });
     }
+
+
+    // ================= PAYMENTS =================
+
+    private static void ConfigurePayment(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Payment>(entity =>
+        {
+            entity.ToTable("Payment", t =>
+            {
+                t.HasCheckConstraint("CK_Payment_Amount", "\"Amount\" > 0");
+            });
+
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Amount).HasPrecision(18, 2);
+            entity.Property(x => x.TransactionId).HasMaxLength(200);
+
+            entity.HasIndex(x => new { x.TenantId, x.TransactionId })
+                   .IsUnique()
+                   .HasFilter("\"TransactionId\" IS NOT NULL");
+
+            entity.HasOne(x => x.Booking)
+                .WithMany(x => x.Payments)
+                .HasForeignKey(x => x.BookingId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.PaymentMethod)
+                .WithMany(x => x.Payments)
+                .HasForeignKey(x => x.PaymentMethodId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+        });
+    }
+
+    private static void ConfigurePaymentMethod(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<PaymentMethod>(entity =>
+        {
+            entity.ToTable("PaymentMethod");
+
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Name).IsRequired().HasMaxLength(100);
+            entity.Property(x => x.Description).HasMaxLength(500);
+
+            entity.HasIndex(x => new { x.TenantId, x.Name }).IsUnique();
+        });
+    }
+
+    // ================= REVIEW =================
 
     private static void ConfigureReview(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Review>(entity =>
         {
-            entity.ToTable("Reviews");
+            entity.ToTable("Review", t =>
+            {
+                t.HasCheckConstraint("CK_Review_Rating", "\"Rating\" >= 1 AND \"Rating\" <= 5");
+            });
 
             entity.HasKey(x => x.Id);
 
-            entity.Property(x => x.Comment)
-                .HasMaxLength(1000);
+            entity.Property(x => x.Comment).HasMaxLength(2000);
+
+            entity.HasIndex(x => new { x.TenantId, x.EventId, x.UserId }).IsUnique();
 
             entity.HasOne(x => x.Event)
-                .WithMany()
+                .WithMany(x => x.Reviews)
                 .HasForeignKey(x => x.EventId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasOne(x => x.User)
-                .WithMany()
+                .WithMany(x => x.Reviews)
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+        });
+    }
+
+    // ================= COUPONS =================
+
+    private static void ConfigureDiscountCoupon(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<DiscountCoupon>(entity =>
+        {
+            entity.ToTable("DiscountCoupon", t =>
+            {
+                t.HasCheckConstraint("CK_DiscountCoupon_DiscountValue", "\"DiscountValue\" > 0");
+                t.HasCheckConstraint("CK_DiscountCoupon_UsageLimit", "\"UsageLimit\" IS NULL OR \"UsageLimit\" > 0");
+                t.HasCheckConstraint("CK_DiscountCoupon_UsageCount", "\"UsageCount\" >= 0");
+                t.HasCheckConstraint("CK_DiscountCoupon_ValidRange", "\"ValidTo\" > \"ValidFrom\"");
+            });
+
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Code).IsRequired().HasMaxLength(100);
+            entity.Property(x => x.DiscountValue).HasPrecision(18, 2);
+
+            entity.HasIndex(x => new { x.TenantId, x.EventId, x.Code }).IsUnique();
+
+            entity.HasOne(x => x.Event)
+                .WithMany(x => x.DiscountCoupons)
+                .HasForeignKey(x => x.EventId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+        });
+    }
+
+    // ================= NOTIFICATIONS =================
+    private static void ConfigureNotification(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Notification>(entity =>
+        {
+            entity.ToTable("Notification");
+
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Title).IsRequired().HasMaxLength(200);
+            entity.Property(x => x.Message).IsRequired().HasMaxLength(2000);
+
+            entity.HasIndex(x => new { x.TenantId, x.UserId, x.IsRead });
+
+            entity.HasOne(x => x.User)
+                .WithMany(x => x.Notifications)
                 .HasForeignKey(x => x.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            entity.HasIndex(x => x.TenantId);
-            entity.HasIndex(x => x.EventId);
-            entity.HasIndex(x => x.UserId);
-
-            entity.HasIndex(x => new { x.TenantId, x.EventId, x.UserId })
-                .IsUnique();
-
-            entity.ToTable(t =>
-            {
-                t.HasCheckConstraint("CK_Review_Rating", "\"Rating\" >= 1 AND \"Rating\" <= 5");
-            });
+            entity.HasOne(x => x.Event)
+                .WithMany(x => x.Notifications)
+                .HasForeignKey(x => x.EventId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
     }
+
+
+    // ================= AI =================
+
+    private static void ConfigureAIRequestLog(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<AIRequestLog>(entity =>
+        {
+            entity.ToTable("AIRequestLog", t =>
+            {
+                t.HasCheckConstraint("CK_AIRequestLog_TokensUsed", "\"TokensUsed\" >= 0");
+            });
+
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Prompt).IsRequired().HasMaxLength(4000);
+            entity.Property(x => x.ResponseSummary).HasMaxLength(4000);
+
+            entity.HasOne(x => x.User)
+                .WithMany(x => x.AIRequestLogs)
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+        });
+    }
+
+    // ================= AUDIT =================
+    private static void ConfigureAuditLog(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<AuditLog>(entity =>
+        {
+            entity.ToTable("AuditLog");
+
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.EntityName).IsRequired().HasMaxLength(200);
+            entity.Property(x => x.OldValues).HasColumnType("jsonb");
+            entity.Property(x => x.NewValues).HasColumnType("jsonb");
+
+            entity.HasIndex(x => new { x.TenantId, x.EntityName, x.EntityId });
+
+            entity.HasOne(x => x.User)
+                .WithMany(x => x.AuditLogs)
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+    }
+
 }

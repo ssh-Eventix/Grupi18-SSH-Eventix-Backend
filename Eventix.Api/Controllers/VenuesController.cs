@@ -1,44 +1,122 @@
-﻿using Eventix.Application.DTOs.Venues;
-using Eventix.Application.Interfaces.Repositories;
+﻿using Eventix.Api.Helpers;
+using Eventix.Application.DTOs.Venues;
+using Eventix.Application.Interfaces.Common;
 using Eventix.Application.Interfaces.Services;
-using Eventix.Application.Services;
-using Eventix.Domain.Entities;
-using Eventix.Infrastructure.MultiTenancy;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Distributed;
 
-namespace Eventix.API.Controllers;
+namespace Eventix.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
 public class VenuesController : ControllerBase
 {
     private readonly IVenueService _service;
+    private readonly IDistributedCache _cache;
+    private readonly ITenantContext _tenantContext;
 
-    public VenuesController(IVenueService service)
+    public VenuesController(
+     IVenueService service,
+     IDistributedCache cache,
+     ITenantContext tenantContext)
     {
         _service = service;
+        _cache = cache;
+        _tenantContext = tenantContext;
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll()
-        => Ok(await _service.GetAllAsync());
+    [Authorize(Policy = "Permission:ViewVenues")]
+    public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+    {
+        var cacheKey = $"tenant:{_tenantContext.TenantId}:venues:all";
+
+        var result = await CacheHelper.GetOrSetAsync(
+            _cache,
+            cacheKey,
+            () => _service.GetAllAsync(),
+            TimeSpan.FromMinutes(10),
+            cancellationToken);
+
+        return Ok(result);
+    }
 
     [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetById(Guid id)
+    [Authorize(Policy = "Permission:ViewVenues")]
+    public async Task<IActionResult> GetById(
+        Guid id,
+        CancellationToken cancellationToken)
     {
-        var venue = await _service.GetByIdAsync(id);
+        var cacheKey = $"tenant:{_tenantContext.TenantId}:venue:{id}";
+
+        var venue = await CacheHelper.GetOrSetAsync(
+            _cache,
+            cacheKey,
+            () => _service.GetByIdAsync(id),
+            TimeSpan.FromMinutes(10),
+            cancellationToken);
+
         return venue == null ? NotFound() : Ok(venue);
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create(CreateVenueDTO dto)
-        => Ok(await _service.CreateAsync(dto));
+    [Authorize(Policy = "Permission:CreateVenues")]
+    public async Task<IActionResult> Create(
+       CreateVenueDTO dto,
+       CancellationToken cancellationToken)
+    {
+        var result = await _service.CreateAsync(dto);
+
+        await _cache.RemoveAsync(
+            $"tenant:{_tenantContext.TenantId}:venues:all",
+            cancellationToken);
+
+        return Ok(result);
+    }
 
     [HttpPut("{id:guid}")]
-    public async Task<IActionResult> Update(Guid id, UpdateVenueDTO dto)
-        => await _service.UpdateAsync(id, dto) ? NoContent() : NotFound();
+    [Authorize(Policy = "Permission:UpdateVenues")]
+    public async Task<IActionResult> Update(
+        Guid id,
+        UpdateVenueDTO dto,
+        CancellationToken cancellationToken)
+    {
+        var updated = await _service.UpdateAsync(id, dto);
+
+        if (!updated)
+            return NotFound();
+
+        await _cache.RemoveAsync(
+            $"tenant:{_tenantContext.TenantId}:venues:all",
+            cancellationToken);
+
+        await _cache.RemoveAsync(
+            $"tenant:{_tenantContext.TenantId}:venue:{id}",
+            cancellationToken);
+
+        return NoContent();
+    }
 
     [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Delete(Guid id)
-        => await _service.DeleteAsync(id) ? NoContent() : NotFound();
+    [Authorize(Policy = "Permission:DeleteVenues")]
+    public async Task<IActionResult> Delete(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var deleted = await _service.DeleteAsync(id);
+
+        if (!deleted)
+            return NotFound();
+
+        await _cache.RemoveAsync(
+            $"tenant:{_tenantContext.TenantId}:venues:all",
+            cancellationToken);
+
+        await _cache.RemoveAsync(
+            $"tenant:{_tenantContext.TenantId}:venue:{id}",
+            cancellationToken);
+
+        return NoContent();
+    }
 }

@@ -6,6 +6,8 @@ obj/
 # User-specific files
 *.user
 *.suo
+.env
+.yml
 
 # Test results
 TestResults/
@@ -22,3 +24,4 @@ Thumbs.db
 
 desktop.ini
 $RECYCLE.BIN/
+

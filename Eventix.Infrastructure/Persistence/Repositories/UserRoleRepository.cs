@@ -1,6 +1,5 @@
 using Eventix.Application.Interfaces.Repositories;
 using Eventix.Domain.Entities;
-using Eventix.Infrastructure.MultiTenancy;
 using Eventix.Application.Interfaces.Common;
 using Eventix.Infrastructure.Persistence.Database;
 using Microsoft.EntityFrameworkCore;
@@ -43,5 +42,18 @@ public class UserRoleRepository : IUserRoleRepository
 
     public Task SaveChangesAsync(CancellationToken cancellationToken = default)
         => _context.SaveChangesAsync(cancellationToken);
+    
+    public Task<List<string>> GetRoleNamesByUserIdAsync(Guid userId,CancellationToken cancellationToken = default)
+        => _context.UserRoles
+            .AsNoTracking()
+            .Where(x =>
+                x.UserId == userId &&
+                !x.IsDeleted)
+            .Join(_context.Roles,
+                ur => ur.RoleId,
+                r => r.Id,
+                (ur, r) => r.Name)
+            .Distinct()
+            .ToListAsync(cancellationToken);
 }
 

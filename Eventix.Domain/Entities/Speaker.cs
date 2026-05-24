@@ -1,13 +1,8 @@
-﻿using System;
-using Eventix.Domain.Common;
+﻿using Eventix.Domain.Common;
 namespace Eventix.Domain.Entities;
 
 public class Speaker : TenantBaseEntity
 {
-    public Guid Id { get; set; }
-
-    public Guid TenantId { get; set; }
-
     public string FullName { get; set; } = string.Empty;
 
     public string? Bio { get; set; }
@@ -18,6 +13,5 @@ public class Speaker : TenantBaseEntity
 
     public string? ProfileImageUrl { get; set; }
 
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public ICollection<EventSession> Sessions { get; set; } = new List<EventSession>();
 }

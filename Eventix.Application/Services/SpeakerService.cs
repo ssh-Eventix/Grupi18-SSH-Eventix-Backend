@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Eventix.Application.DTOs.Speaker;
+﻿using Eventix.Application.DTOs.Speaker;
 using Eventix.Application.Interfaces.Common;
 using Eventix.Application.Interfaces.Repositories;
 using Eventix.Application.Interfaces.Services;
@@ -44,8 +39,7 @@ public class SpeakerService : ISpeakerService
             Bio = dto.Bio,
             Email = dto.Email,
             Phone = dto.Phone,
-            ProfileImageUrl = dto.ProfileImageUrl,
-            CreatedAt = DateTime.UtcNow
+            ProfileImageUrl = dto.ProfileImageUrl
         };
 
         await _speakerRepository.AddAsync(speaker, cancellationToken);
@@ -95,8 +89,7 @@ public class SpeakerService : ISpeakerService
             Bio = speaker.Bio,
             Email = speaker.Email,
             Phone = speaker.Phone,
-            ProfileImageUrl = speaker.ProfileImageUrl,
-            CreatedAt = speaker.CreatedAt
+            ProfileImageUrl = speaker.ProfileImageUrl
         };
     }
 }

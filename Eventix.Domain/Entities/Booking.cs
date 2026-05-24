@@ -1,10 +1,4 @@
 ﻿using Eventix.Domain.Common;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Eventix.Domain.Entities;
 using Eventix.Domain.Enums;
 
 namespace Eventix.Domain.Entities
@@ -21,6 +15,7 @@ namespace Eventix.Domain.Entities
         public User User { get; set; } = default!;
         public Event Event { get; set; } = default!;
         public ICollection<BookingItem> BookingItems { get; set; } = new List<BookingItem>();
+        public ICollection<Payment> Payments { get; set; } = new List<Payment>();
     }
 
 }

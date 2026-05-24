@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using Eventix.Application.DTOs.Tenants;
+﻿using Eventix.Application.DTOs.Tenants;
 
 namespace Eventix.Application.Interfaces.Services;
 

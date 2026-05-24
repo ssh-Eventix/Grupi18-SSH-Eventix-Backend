@@ -1,53 +1,44 @@
+using Eventix.Application.Interfaces.Common;
 using Eventix.Application.Interfaces.Repositories;
 using Eventix.Domain.Entities;
-using Eventix.Infrastructure.MultiTenancy;
-using Eventix.Application.Interfaces.Common;
 using Eventix.Infrastructure.Persistence.Database;
 using Microsoft.EntityFrameworkCore;
 
 namespace Eventix.Infrastructure.Persistence.Repositories;
 
-public class UserRepository : IUserRepository
+public class UserRepository : TenantBaseRepository<User>, IUserRepository
 {
-    private readonly TenantDbContext _context;
-    private readonly ITenantContext _tenantContext;
-
-    public UserRepository(TenantDbContext context, ITenantContext tenantContext)
+    public UserRepository(
+        TenantDbContext context,
+        ITenantContext tenantContext)
+        : base(context, tenantContext)
     {
-        _context = context;
-        _tenantContext = tenantContext;
     }
 
-    public Task<List<User>> GetAllAsync(CancellationToken cancellationToken = default)
-        => _context.Users
-            .AsNoTracking()
-            .Where(x => x.TenantId == _tenantContext.TenantId && !x.IsDeleted)
-            .ToListAsync(cancellationToken);
-
-    public Task<User?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
-        => _context.Users
-            .FirstOrDefaultAsync(x => x.Id == id && x.TenantId == _tenantContext.TenantId && !x.IsDeleted, cancellationToken);
-
-    public Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
-        => _context.Users
-            .FirstOrDefaultAsync(x => x.Email.ToLower() == email.ToLower() && x.TenantId == _tenantContext.TenantId && !x.IsDeleted, cancellationToken);
-
-    public async Task AddAsync(User entity, CancellationToken cancellationToken = default)
-        => await _context.Users.AddAsync(entity, cancellationToken);
-
-    public Task UpdateAsync(User entity)
+    public Task<User?> GetByPublicUserIdAsync(Guid publicUserId, CancellationToken ct)
     {
-        _context.Users.Update(entity);
-        return Task.CompletedTask;
+        return Query()
+            .Include(x => x.UserRoles)
+            .ThenInclude(x => x.Role)
+            .FirstOrDefaultAsync(x => x.PublicUserId == publicUserId, ct);
     }
 
-    public Task DeleteAsync(User entity)
+    public Task<User?> GetByEmailAsync(string email, CancellationToken ct = default)
     {
-        _context.Users.Remove(entity);
-        return Task.CompletedTask;
+        var normalizedEmail = email.ToLower();
+
+        return Query()
+            .FirstOrDefaultAsync(x => x.Email.ToLower() == normalizedEmail, ct);
     }
 
-    public Task SaveChangesAsync(CancellationToken cancellationToken = default)
-        => _context.SaveChangesAsync(cancellationToken);
+    public Task<User?> GetByEmailAndTenantAsync(string email, Guid tenantId, CancellationToken ct)
+    {
+        var normalizedEmail = email.ToLower();
+
+        return DbSet.FirstOrDefaultAsync(x =>
+            x.Email.ToLower() == normalizedEmail &&
+            x.TenantId == tenantId &&
+            !x.IsDeleted,
+            ct);
+    }
 }
-

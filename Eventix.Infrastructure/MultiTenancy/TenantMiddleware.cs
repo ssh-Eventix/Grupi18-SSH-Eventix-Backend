@@ -17,32 +17,40 @@ public class TenantMiddleware
         ITenantResolver tenantResolver,
         ITenantContext tenantContext)
     {
-        var path = httpContext.Request.Path.Value?.ToLower();
+        var path = httpContext.Request.Path;
 
-        if (path != null &&
-            (path.StartsWith("/swagger") ||
-             path.StartsWith("/api/tenants") ||
-             path.StartsWith("/api/auth")))
+        if (
+            path.StartsWithSegments("/swagger") ||
+            path.StartsWithSegments("/hangfire") ||
+            path.StartsWithSegments("/api/health") ||
+            path.StartsWithSegments("/api/tenants") ||
+            path.StartsWithSegments("/api/auth/register") ||
+            path.StartsWithSegments("/api/auth/refresh") ||
+            path.StartsWithSegments("/api/auth/logout") ||
+            path.StartsWithSegments("/api/auth/revoke-refresh-token") ||
+            path.StartsWithSegments("/api/auth/refresh-tokens") ||
+            path.StartsWithSegments("/api/auth/revoke-all")
+        )
         {
             await _next(httpContext);
             return;
         }
 
-        var slug = httpContext.Request.Headers["X-Tenant-Slug"].FirstOrDefault();
+        var slug = httpContext.Request.Headers["X-Tenant-Slug"]
+            .FirstOrDefault();
 
         if (string.IsNullOrWhiteSpace(slug))
         {
-            httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
-            await httpContext.Response.WriteAsync("Missing X-Tenant-Slug header.");
+            await _next(httpContext);
             return;
         }
 
-        var tenant = await tenantResolver.ResolveAsync(slug);
+        var tenant = await tenantResolver.ResolveAsync(slug.Trim());
 
         if (tenant is null)
         {
-            httpContext.Response.StatusCode = StatusCodes.Status404NotFound;
-            await httpContext.Response.WriteAsync("Tenant not found.");
+            httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
+            await httpContext.Response.WriteAsync("Invalid tenant slug.");
             return;
         }
 

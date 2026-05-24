@@ -2,7 +2,6 @@
 using Eventix.Application.Interfaces.Repositories;
 using Eventix.Application.Interfaces.Services;
 using Eventix.Domain.Entities;
-using Eventix.Domain.Enums;
 
 namespace Eventix.Infrastructure.Services;
 
@@ -10,13 +9,16 @@ public class TenantService : ITenantService
 {
     private readonly ITenantRepository _repository;
     private readonly ITenantSchemaProvisioner _schemaProvisioner;
+    private readonly ITenantRoleSeeder _tenantRoleSeeder;
 
     public TenantService(
         ITenantRepository repository,
-        ITenantSchemaProvisioner schemaProvisioner)
+        ITenantSchemaProvisioner schemaProvisioner,
+        ITenantRoleSeeder tenantRoleSeeder)
     {
         _repository = repository;
         _schemaProvisioner = schemaProvisioner;
+        _tenantRoleSeeder = tenantRoleSeeder;
     }
 
     public async Task<IReadOnlyList<TenantResponseDTO>> GetAllAsync(CancellationToken ct)
@@ -66,6 +68,7 @@ public class TenantService : ITenantService
         await _repository.SaveChangesAsync(ct);
 
         await _schemaProvisioner.ProvisionTenantSchemaAsync(schemaName, ct);
+        await _tenantRoleSeeder.SeedDefaultRolesAsync(entity.Id, schemaName, ct);
 
         return Map(entity);
     }

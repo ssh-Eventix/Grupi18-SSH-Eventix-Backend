@@ -23,6 +23,9 @@ namespace Eventix.Infrastructure.Persistence.Repositories
         {
             return await _context.Bookings
                 .AsNoTracking()
+                .Where(b => !b.IsDeleted)
+                .Include(b => b.Event)
+                .Include(b => b.User)
                 .Include(b => b.BookingItems)
                 .ThenInclude(bi => bi.Tickets)
                 .ToListAsync();
@@ -31,6 +34,9 @@ namespace Eventix.Infrastructure.Persistence.Repositories
         public async Task<Booking?> GetByIdAsync(Guid id)
         {
             return await _context.Bookings
+                .Where(b => !b.IsDeleted)
+                .Include(b => b.Event)
+                .Include(b => b.User)
                 .Include(b => b.BookingItems)
                 .ThenInclude(bi => bi.Tickets)
                 .FirstOrDefaultAsync(b => b.Id == id);
@@ -40,7 +46,9 @@ namespace Eventix.Infrastructure.Persistence.Repositories
         {
             return await _context.Bookings
                 .AsNoTracking()
-                .Where(b => b.UserId == userId)
+                .Where(b => b.UserId == userId && !b.IsDeleted)
+                .Include(b => b.Event)
+                .Include(b => b.User)
                 .Include(b => b.BookingItems)
                 .ThenInclude(bi => bi.Tickets)
                 .ToListAsync();
@@ -50,6 +58,9 @@ namespace Eventix.Infrastructure.Persistence.Repositories
         {
             return await _context.Bookings
                 .AsNoTracking()
+                .Where(b => !b.IsDeleted)
+                .Include(b => b.Event)
+                .Include(b => b.User)
                 .Include(b => b.BookingItems)
                 .ThenInclude(bi => bi.Tickets)
                 .FirstOrDefaultAsync(b => b.Id == id);
@@ -58,6 +69,12 @@ namespace Eventix.Infrastructure.Persistence.Repositories
         public async Task AddAsync(Booking booking)
         {
             await _context.Bookings.AddAsync(booking);
+        }
+
+        public Task UpdateAsync(Booking booking)
+        {
+            _context.Bookings.Update(booking);
+            return Task.CompletedTask;
         }
 
         public async Task SaveChangesAsync()
