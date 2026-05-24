@@ -13,17 +13,24 @@ public class TenantMiddleware
     }
 
     public async Task InvokeAsync(
-    HttpContext httpContext,
-    ITenantResolver tenantResolver,
-    ITenantContext tenantContext)
+        HttpContext httpContext,
+        ITenantResolver tenantResolver,
+        ITenantContext tenantContext)
     {
+        var path = httpContext.Request.Path;
+
         if (
-            httpContext.Request.Path.StartsWithSegments("/swagger") ||
-            //httpContext.Request.Path.StartsWithSegments("/api/auth") ||
-            httpContext.Request.Path.StartsWithSegments("/api/tenants") ||
-            httpContext.Request.Path.StartsWithSegments("/api/health") ||
-            httpContext.Request.Path.StartsWithSegments("/hangfire")
-           )
+            path.StartsWithSegments("/swagger") ||
+            path.StartsWithSegments("/hangfire") ||
+            path.StartsWithSegments("/api/health") ||
+            path.StartsWithSegments("/api/tenants") ||
+            path.StartsWithSegments("/api/auth/register") ||
+            path.StartsWithSegments("/api/auth/refresh") ||
+            path.StartsWithSegments("/api/auth/logout") ||
+            path.StartsWithSegments("/api/auth/revoke-refresh-token") ||
+            path.StartsWithSegments("/api/auth/refresh-tokens") ||
+            path.StartsWithSegments("/api/auth/revoke-all")
+        )
         {
             await _next(httpContext);
             return;
@@ -38,12 +45,12 @@ public class TenantMiddleware
             return;
         }
 
-        var tenant = await tenantResolver.ResolveAsync(slug);
+        var tenant = await tenantResolver.ResolveAsync(slug.Trim());
 
         if (tenant is null)
         {
             httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
-            await _next(httpContext);
+            await httpContext.Response.WriteAsync("Invalid tenant slug.");
             return;
         }
 

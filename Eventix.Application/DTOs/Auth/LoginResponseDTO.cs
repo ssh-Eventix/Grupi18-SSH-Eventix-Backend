@@ -10,4 +10,10 @@ public class LoginResponseDTO
 
     public bool IsImpersonation { get; set; }
     public Guid? ImpersonationSessionId { get; set; }
+
+    public bool TenantSlugRequired { get; set; }
+    public string? Message { get; set; }
+
+    public string? Role { get; set; }
+    public string? TenantSlug { get; set; }
 }

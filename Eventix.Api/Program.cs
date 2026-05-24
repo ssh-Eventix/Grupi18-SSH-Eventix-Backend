@@ -253,6 +253,7 @@ builder.Services.AddScoped<ReviewReminderJob>();
 builder.Services.AddScoped<PaymentRetryJob>();
 builder.Services.AddScoped<EventStatusUpdateJob>();
 builder.Services.AddScoped<CheckInAnalyticsJob>();
+builder.Services.AddScoped<PublicRoleSeeder>();
 builder.Services.AddScoped<IAIRequestLogRepository, AIRequestLogRepository>();
 builder.Services.AddScoped<IAiService, AiService>();
 builder.Services.AddHttpClient<IOllamaClient, OllamaClient>(client =>
@@ -560,8 +561,13 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    var seeder = scope.ServiceProvider.GetRequiredService<PublicSuperAdminSeeder>();
-    await seeder.SeedAsync();
+    var services = scope.ServiceProvider;
+
+    var publicRoleSeeder = services.GetRequiredService<PublicRoleSeeder>();
+    await publicRoleSeeder.SeedAsync();
+
+    var publicSuperAdminSeeder = services.GetRequiredService<PublicSuperAdminSeeder>();
+    await publicSuperAdminSeeder.SeedAsync();
 }
 
 app.UseHangfireDashboard("/hangfire");
