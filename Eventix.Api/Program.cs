@@ -245,6 +245,8 @@ builder.Services.AddScoped<IAuthorizationHandler, ImpersonationHandler>();
 builder.Services.AddScoped<ITenantEmailDomainRepository, TenantEmailDomainRepository>();
 builder.Services.AddScoped<ITenantEmailDomainService, TenantEmailDomainService>();
 builder.Services.AddScoped<ITenantAdminService, TenantAdminService>();
+builder.Services.AddScoped<IArchiveRecordService, ArchiveRecordService>();
+builder.Services.AddScoped<IArchiveRecordRepository, ArchiveRecordRepository>();
 builder.Services.AddScoped<TenantJobRunner>();
 builder.Services.AddScoped<BookingCleanupJob>();
 builder.Services.AddScoped<NotificationReminderJob>();
@@ -266,7 +268,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactClient", policy =>
     {
-        policy.WithOrigins("http://localhost:5173", "http://localhost:3000")
+        policy.WithOrigins("http://localhost:5173", "http://localhost:3000", "http://localhost:5174")
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
