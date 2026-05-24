@@ -60,7 +60,8 @@ public class TenantJobRunner
             await sp.GetRequiredService<CheckInAnalyticsJob>().GenerateStats());
     }
 
-    private async Task RunForAllTenants(Func<IServiceProvider, Task> job)
+    private async Task RunForAllTenants(
+    Func<IServiceProvider, Task> job)
     {
         var tenants = await _publicDbContext.Tenants
             .Where(x => x.IsActive)
@@ -68,15 +69,27 @@ public class TenantJobRunner
 
         foreach (var tenant in tenants)
         {
-            using var scope = _scopeFactory.CreateScope();
+            try
+            {
+                using var scope =
+                    _scopeFactory.CreateScope();
 
-            var tenantContext =
-                scope.ServiceProvider.GetRequiredService<ITenantContext>();
+                var tenantContext =
+                    scope.ServiceProvider
+                        .GetRequiredService<ITenantContext>();
 
-            tenantContext.TenantId = tenant.Id;
-            tenantContext.SchemaName = tenant.SchemaName;
+                tenantContext.TenantId = tenant.Id;
+                tenantContext.SchemaName = tenant.SchemaName;
 
-            await job(scope.ServiceProvider);
+                await job(scope.ServiceProvider);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(
+                    $"Tenant failed: {tenant.SchemaName}");
+
+                Console.WriteLine(ex.Message);
+            }
         }
     }
 }

@@ -1,8 +1,8 @@
-public class AIRequestLogDto
+namespace Eventix.Application.DTOs.Ai;
+
+public class AiRequestLogDTO
 {
     public Guid Id { get; set; }
-
-    public Guid UserId { get; set; }
 
     public string Prompt { get; set; } = string.Empty;
 
