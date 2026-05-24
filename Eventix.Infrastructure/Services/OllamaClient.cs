@@ -27,10 +27,10 @@ public class OllamaClient : IOllamaClient
 
         var response = await _httpClient.PostAsJsonAsync("/api/generate", request, ct);
 
-        if (!response.IsSuccessStatusCode)
-            throw new InvalidOperationException("Ollama request failed.");
-
         var json = await response.Content.ReadAsStringAsync(ct);
+
+        if (!response.IsSuccessStatusCode)
+            throw new InvalidOperationException($"Ollama request failed: {json}");
 
         using var document = JsonDocument.Parse(json);
 
