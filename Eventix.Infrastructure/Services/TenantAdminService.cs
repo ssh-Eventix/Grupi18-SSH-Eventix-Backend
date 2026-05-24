@@ -60,8 +60,12 @@ namespace Eventix.Infrastructure.Services
             if (tenantDomain is null)
                 throw new InvalidOperationException("Email domain is not allowed for this tenant.");
 
-            if (!string.Equals(tenantDomain.DefaultRoleName, "Admin", StringComparison.OrdinalIgnoreCase))
-                throw new InvalidOperationException("Email domain does not create Admin users.");
+            var allowedRoles = new[] { "Admin", "TenantAdmin" };
+
+            if (!allowedRoles.Contains(tenantDomain.DefaultRoleName, StringComparer.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("Email domain does not create tenant admin users.");
+            }
 
             var existingPublicUser = await _publicUserRepository.GetByEmailAsync(email, ct);
 
@@ -109,7 +113,7 @@ namespace Eventix.Infrastructure.Services
             var adminRole = await tenantDb.Roles
                 .FirstOrDefaultAsync(x =>
                     x.TenantId == tenant.Id &&
-                    x.Name == "Admin" &&
+                    (x.Name == "Admin" || x.Name == "TenantAdmin") &&
                     !x.IsDeleted,
                     ct);
 

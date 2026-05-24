@@ -16,11 +16,12 @@ namespace Eventix.Infrastructure.Services
         private readonly ITenantRepository _tenantRepository;
 
         private static readonly HashSet<string> AllowedRoles = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "Buyer",
-        "Staff",
-        "Admin"
-    };
+{
+    "Buyer",
+    "Staff",
+    "Admin",
+    "TenantAdmin"
+};
 
         public TenantEmailDomainService(
             ITenantEmailDomainRepository repository,
