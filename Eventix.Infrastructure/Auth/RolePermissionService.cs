@@ -19,6 +19,7 @@ public class RolePermissionService : IRolePermissionService
                 Permission.DeleteUsers,
                 Permission.ManageRoles,
                 Permission.AssignRoles,
+              
 
                 Permission.SearchEvents,
                 Permission.ViewEvents,
@@ -49,6 +50,7 @@ public class RolePermissionService : IRolePermissionService
                 Permission.ManagePayments,
                 Permission.ViewPayments,
                 Permission.RefundPayments,
+                Permission.CreatePayments,
 
                 Permission.ViewReports,
                 Permission.ViewDashboard,

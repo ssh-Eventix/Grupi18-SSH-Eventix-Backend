@@ -61,6 +61,7 @@ public enum Permission
     ManagePayments,
     ViewPayments,
     RefundPayments,
+    CreatePayments,
 
     // Reviews
     ViewReviews,
