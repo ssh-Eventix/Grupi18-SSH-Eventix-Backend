@@ -2,7 +2,6 @@ using Eventix.Application.DTOs.Auth;
 using Eventix.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 
 namespace Eventix.Api.Controllers;
@@ -18,27 +17,6 @@ public class ImpersonationController : ControllerBase
         _impersonationService = impersonationService;
     }
 
-    public class StartImpersonationRequest
-    {
-        [Required]
-        public Guid TargetTenantId { get; set; }
-
-        [Required]
-        public Guid TargetPublicUserId { get; set; }
-
-        [Range(1, 120)]
-        public int Minutes { get; set; } = 10;
-
-        [StringLength(500)]
-        public string? Reason { get; set; }
-    }
-
-    public class StopImpersonationRequest
-    {
-        [Required]
-        public Guid SessionId { get; set; }
-    }
-
     [HttpPost("start")]
     [Authorize(Policy = "Permission:ImpersonateTenant")]
     [ProducesResponseType(typeof(ImpersonationStartResult), StatusCodes.Status200OK)]
@@ -47,7 +25,7 @@ public class ImpersonationController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<ImpersonationStartResult>> Start(
-        [FromBody] StartImpersonationRequest dto,
+        [FromBody] StartImpersonationRequestDTO dto,
         CancellationToken ct)
     {
         var subject = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -64,6 +42,9 @@ public class ImpersonationController : ControllerBase
         if (dto.TargetPublicUserId == Guid.Empty)
             return BadRequest("TargetPublicUserId is required.");
 
+        if (dto.Minutes <= 0 || dto.Minutes > 120)
+            return BadRequest("Minutes must be between 1 and 120.");
+
         try
         {
             var result = await _impersonationService.StartImpersonationAsync(
@@ -78,7 +59,7 @@ public class ImpersonationController : ControllerBase
         }
         catch (UnauthorizedAccessException ex)
         {
-            return Forbid(ex.Message);
+            return Forbid();
         }
         catch (ArgumentOutOfRangeException ex)
         {
@@ -107,7 +88,7 @@ public class ImpersonationController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Stop(
-        [FromBody] StopImpersonationRequest dto,
+        [FromBody] StopImpersonationRequestDTO dto,
         CancellationToken ct)
     {
         if (dto.SessionId == Guid.Empty)
