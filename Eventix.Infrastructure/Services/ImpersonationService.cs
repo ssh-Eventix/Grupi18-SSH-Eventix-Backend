@@ -208,3 +208,4 @@ public class ImpersonationService : IImpersonationService
             : role.Trim().ToLowerInvariant().Replace(" ", "").Replace("_", "");
     }
 }
+//
