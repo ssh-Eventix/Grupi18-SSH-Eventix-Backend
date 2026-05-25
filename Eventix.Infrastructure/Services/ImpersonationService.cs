@@ -1,12 +1,10 @@
 using Eventix.Application.DTOs.Auth;
+using Eventix.Application.Interfaces.Common;
 using Eventix.Application.Interfaces.Repositories;
 using Eventix.Application.Interfaces.Services;
-using Eventix.Application.Interfaces.Common;
 using Eventix.Domain.Entities;
 using Eventix.Domain.Enums;
-using Eventix.Infrastructure.MultiTenancy;
 using Eventix.Infrastructure.Persistence.Database;
-using Eventix.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -19,27 +17,21 @@ public class ImpersonationService : IImpersonationService
 
     private readonly PublicDbContext _publicDb;
     private readonly IPublicUserRepository _publicUserRepository;
-    private readonly IUserRoleRepository _userRoleRepository;
     private readonly IJwtTokenService _jwtTokenService;
     private readonly ITenantRepository _tenantRepository;
-    private readonly ITenantContext _tenantContext;
     private readonly IServiceScopeFactory _scopeFactory;
 
     public ImpersonationService(
         PublicDbContext publicDb,
         IPublicUserRepository publicUserRepository,
-        IUserRoleRepository userRoleRepository,
         IJwtTokenService jwtTokenService,
         ITenantRepository tenantRepository,
-        ITenantContext tenantContext,
         IServiceScopeFactory scopeFactory)
     {
         _publicDb = publicDb;
         _publicUserRepository = publicUserRepository;
-        _userRoleRepository = userRoleRepository;
         _jwtTokenService = jwtTokenService;
         _tenantRepository = tenantRepository;
-        _tenantContext = tenantContext;
         _scopeFactory = scopeFactory;
     }
 
@@ -88,7 +80,9 @@ public class ImpersonationService : IImpersonationService
         if (superAdminPublicUserId == targetPublicUserId)
             throw new InvalidOperationException("SuperAdmin cannot impersonate himself.");
 
-        var targetTenant = await _tenantRepository.GetByIdAsync(targetTenantId, cancellationToken);
+        var targetTenant = await _tenantRepository.GetByIdAsync(
+            targetTenantId,
+            cancellationToken);
 
         if (targetTenant is null || !targetTenant.IsActive || targetTenant.IsDeleted)
             throw new InvalidOperationException("Target tenant does not exist or is inactive.");
@@ -112,6 +106,31 @@ public class ImpersonationService : IImpersonationService
 
         if (targetTenantUser is null || !targetTenantUser.IsActive)
             throw new InvalidOperationException("Target tenant user does not exist or is inactive.");
+
+        var scopedUserRoleRepository =
+            scope.ServiceProvider.GetRequiredService<IUserRoleRepository>();
+
+        var roles = await scopedUserRoleRepository.GetRoleNamesByUserIdAsync(
+            targetTenantUser.Id,
+            cancellationToken);
+
+        var allowedTenantRoles = new[] { "admin", "tenantadmin", "staff" };
+
+        var tenantRoles = roles
+            .Where(r => allowedTenantRoles.Contains(NormalizeRole(r)))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (!tenantRoles.Any())
+        {
+            throw new InvalidOperationException(
+                $"Target user must have Admin, TenantAdmin, or Staff role to be impersonated. Current roles: {string.Join(", ", roles)}");
+        }
+
+        if (roles.Any(r => NormalizeRole(r) == "buyer"))
+        {
+            throw new InvalidOperationException("Buyer users cannot be impersonated.");
+        }
 
         var now = DateTime.UtcNow;
 
@@ -142,15 +161,11 @@ public class ImpersonationService : IImpersonationService
         await _publicDb.TenantImpersonationLogs.AddAsync(session, cancellationToken);
         await _publicDb.SaveChangesAsync(cancellationToken);
 
-        var roles = await _userRoleRepository.GetRoleNamesByUserIdAsync(
-            targetTenantUser.Id,
-            cancellationToken);
-
         var tokenResult = await _jwtTokenService.GenerateTokenAsync(
             subjectId: targetTenantUser.Id,
             email: targetTenantUser.Email,
             tenantId: targetTenantId,
-            roles: roles,
+            roles: tenantRoles,
             isImpersonation: true,
             impersonationSessionId: session.Id,
             impersonatorPublicUserId: superAdminPublicUserId,
@@ -185,4 +200,12 @@ public class ImpersonationService : IImpersonationService
 
         await _publicDb.SaveChangesAsync(cancellationToken);
     }
+
+    private static string NormalizeRole(string role)
+    {
+        return string.IsNullOrWhiteSpace(role)
+            ? string.Empty
+            : role.Trim().ToLowerInvariant().Replace(" ", "").Replace("_", "");
+    }
 }
+//
