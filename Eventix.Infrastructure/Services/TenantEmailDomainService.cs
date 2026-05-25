@@ -2,147 +2,177 @@
 using Eventix.Application.Interfaces.Repositories;
 using Eventix.Application.Interfaces.Services;
 using Eventix.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Eventix.Infrastructure.Services
+namespace Eventix.Infrastructure.Services;
+
+public class TenantEmailDomainService : ITenantEmailDomainService
 {
-    public class TenantEmailDomainService : ITenantEmailDomainService
+    private readonly ITenantEmailDomainRepository _repository;
+    private readonly ITenantRepository _tenantRepository;
+
+    private static readonly HashSet<string> AllowedRoles = new(StringComparer.OrdinalIgnoreCase)
     {
-        private readonly ITenantEmailDomainRepository _repository;
-        private readonly ITenantRepository _tenantRepository;
+        "Staff",
+        "Admin"
+    };
 
-        private static readonly HashSet<string> AllowedRoles = new(StringComparer.OrdinalIgnoreCase)
-{
-    "Buyer",
-    "Staff",
-    "Admin",
-    "TenantAdmin"
-};
+    public TenantEmailDomainService(
+        ITenantEmailDomainRepository repository,
+        ITenantRepository tenantRepository)
+    {
+        _repository = repository;
+        _tenantRepository = tenantRepository;
+    }
 
-        public TenantEmailDomainService(
-            ITenantEmailDomainRepository repository,
-            ITenantRepository tenantRepository)
+    public async Task<List<TenantEmailDomainResponseDTO>> GetAllAsync(CancellationToken ct)
+    {
+        var domains = await _repository.GetAllAsync(ct);
+        return domains.Select(Map).ToList();
+    }
+
+    public async Task<List<TenantEmailDomainResponseDTO>> GetByTenantIdAsync(Guid tenantId, CancellationToken ct)
+    {
+        var domains = await _repository.GetByTenantIdAsync(tenantId, ct);
+        return domains.Select(Map).ToList();
+    }
+
+    public async Task<TenantEmailDomainResponseDTO?> GetByIdAsync(Guid id, CancellationToken ct)
+    {
+        var domain = await _repository.GetByIdAsync(id, ct);
+        return domain is null ? null : Map(domain);
+    }
+
+    public async Task<TenantEmailDomainResponseDTO> CreateAsync(CreateTenantEmailDomainDTO dto, CancellationToken ct)
+    {
+        var tenant = await _tenantRepository.GetByIdAsync(dto.TenantId, ct);
+        if (tenant is null)
+            throw new InvalidOperationException("Tenant not found.");
+
+        var domain = NormalizeDomain(dto.Domain);
+        var role = NormalizeRole(dto.DefaultRoleName);
+
+        var existingForTenant = await _repository.GetAnyByTenantIdAndDomainAsync(dto.TenantId, domain, ct);
+
+        if (existingForTenant is not null)
         {
-            _repository = repository;
-            _tenantRepository = tenantRepository;
-        }
+            existingForTenant.Domain = domain;
+            existingForTenant.DefaultRoleName = role;
+            existingForTenant.AutoApprove = dto.AutoApprove;
+            existingForTenant.IsDeleted = false;
+            existingForTenant.UpdatedAtUtc = DateTime.UtcNow;
 
-        public async Task<List<TenantEmailDomainResponseDTO>> GetAllAsync(CancellationToken ct)
-        {
-            var domains = await _repository.GetAllAsync(ct);
-            return domains.Select(Map).ToList();
-        }
-
-        public async Task<List<TenantEmailDomainResponseDTO>> GetByTenantIdAsync(Guid tenantId, CancellationToken ct)
-        {
-            var domains = await _repository.GetByTenantIdAsync(tenantId, ct);
-            return domains.Select(Map).ToList();
-        }
-
-        public async Task<TenantEmailDomainResponseDTO?> GetByIdAsync(Guid id, CancellationToken ct)
-        {
-            var domain = await _repository.GetByIdAsync(id, ct);
-            return domain is null ? null : Map(domain);
-        }
-
-        public async Task<TenantEmailDomainResponseDTO> CreateAsync(CreateTenantEmailDomainDTO dto, CancellationToken ct)
-        {
-            var tenant = await _tenantRepository.GetByIdAsync(dto.TenantId, ct);
-
-            if (tenant is null)
-                throw new InvalidOperationException("Tenant not found.");
-
-            var domain = NormalizeDomain(dto.Domain);
-
-            ValidateRole(dto.DefaultRoleName);
-
-            var existing = await _repository.GetByDomainAsync(domain, ct);
-
-            if (existing is not null)
-                throw new InvalidOperationException("This email domain is already registered.");
-
-            var entity = new TenantEmailDomain
-            {
-                Id = Guid.NewGuid(),
-                TenantId = dto.TenantId,
-                Domain = domain,
-                DefaultRoleName = dto.DefaultRoleName.Trim(),
-                AutoApprove = dto.AutoApprove,
-                CreatedAtUtc = DateTime.UtcNow
-            };
-
-            await _repository.AddAsync(entity, ct);
+            await _repository.UpdateAsync(existingForTenant, ct);
             await _repository.SaveChangesAsync(ct);
-
-            return Map(entity);
+            return Map(existingForTenant);
         }
 
-        public async Task<TenantEmailDomainResponseDTO?> UpdateAsync(
-            Guid id,
-            UpdateTenantEmailDomainDTO dto,
-            CancellationToken ct)
+        var existingActiveDomain = await _repository.GetByDomainAsync(domain, ct);
+        if (existingActiveDomain is not null && existingActiveDomain.TenantId != dto.TenantId)
+            throw new InvalidOperationException("This email domain is already used by another tenant.");
+
+        var entity = new TenantEmailDomain
         {
-            var entity = await _repository.GetByIdAsync(id, ct);
+            Id = Guid.NewGuid(),
+            TenantId = dto.TenantId,
+            Domain = domain,
+            DefaultRoleName = role,
+            AutoApprove = dto.AutoApprove,
+            CreatedAtUtc = DateTime.UtcNow,
+            IsDeleted = false
+        };
 
-            if (entity is null)
-                return null;
+        await _repository.AddAsync(entity, ct);
+        await _repository.SaveChangesAsync(ct);
 
-            var domain = NormalizeDomain(dto.Domain);
+        return Map(entity);
+    }
 
-            ValidateRole(dto.DefaultRoleName);
+    public async Task<TenantEmailDomainResponseDTO?> UpdateAsync(Guid id, UpdateTenantEmailDomainDTO dto, CancellationToken ct)
+    {
+        var entity = await _repository.GetByIdAsync(id, ct);
+        if (entity is null)
+            return null;
 
-            entity.Domain = domain;
-            entity.DefaultRoleName = dto.DefaultRoleName.Trim();
-            entity.AutoApprove = dto.AutoApprove;
-            entity.UpdatedAtUtc = DateTime.UtcNow;
+        var domain = NormalizeDomain(dto.Domain);
+        var role = NormalizeRole(dto.DefaultRoleName);
 
-            await _repository.UpdateAsync(entity, ct);
-            await _repository.SaveChangesAsync(ct);
+        var duplicate = await _repository.GetByDomainAsync(domain, ct);
+        if (duplicate is not null && duplicate.Id != entity.Id)
+            throw new InvalidOperationException("This email domain is already used by another tenant.");
 
-            return Map(entity);
-        }
+        entity.Domain = domain;
+        entity.DefaultRoleName = role;
+        entity.AutoApprove = dto.AutoApprove;
+        entity.IsDeleted = false;
+        entity.UpdatedAtUtc = DateTime.UtcNow;
 
-        public async Task<bool> DeleteAsync(Guid id, CancellationToken ct)
+        await _repository.UpdateAsync(entity, ct);
+        await _repository.SaveChangesAsync(ct);
+
+        return Map(entity);
+    }
+
+    public async Task<bool> DeleteAsync(Guid id, CancellationToken ct)
+    {
+        var entity = await _repository.GetByIdAsync(id, ct);
+        if (entity is null)
+            return false;
+
+        await _repository.DeleteAsync(entity, ct);
+        await _repository.SaveChangesAsync(ct);
+
+        return true;
+    }
+
+    private static string NormalizeDomain(string domain)
+    {
+        if (string.IsNullOrWhiteSpace(domain))
+            throw new InvalidOperationException("Domain is required.");
+
+        var normalized = domain.Trim().ToLower();
+
+        if (normalized.Contains("@"))
+            normalized = normalized.Split('@').Last();
+
+        normalized = normalized
+            .Replace("https://", "")
+            .Replace("http://", "")
+            .Replace("www.", "")
+            .Split('/')[0]
+            .Trim();
+
+        if (string.IsNullOrWhiteSpace(normalized) ||
+            !normalized.Contains('.') ||
+            normalized.Contains(' '))
         {
-            var entity = await _repository.GetByIdAsync(id, ct);
-
-            if (entity is null)
-                return false;
-
-            await _repository.DeleteAsync(entity, ct);
-            await _repository.SaveChangesAsync(ct);
-
-            return true;
+            throw new InvalidOperationException("Enter a valid domain, for example alphaevents.test.");
         }
 
-        private static string NormalizeDomain(string domain)
+        return normalized;
+    }
+
+    private static string NormalizeRole(string role)
+    {
+        if (string.IsNullOrWhiteSpace(role))
+            throw new InvalidOperationException("Default role is required.");
+
+        var normalized = role.Trim();
+        if (!AllowedRoles.Contains(normalized))
+            throw new InvalidOperationException("Default role must be Staff, Admin, or TenantAdmin.");
+
+        return normalized;
+    }
+
+    private static TenantEmailDomainResponseDTO Map(TenantEmailDomain entity)
+    {
+        return new TenantEmailDomainResponseDTO
         {
-            if (string.IsNullOrWhiteSpace(domain))
-                throw new InvalidOperationException("Domain is required.");
-
-            return domain.Trim().ToLower();
-        }
-
-        private static void ValidateRole(string role)
-        {
-            if (string.IsNullOrWhiteSpace(role) || !AllowedRoles.Contains(role.Trim()))
-                throw new InvalidOperationException("Default role must be Buyer, Staff, or Admin.");
-        }
-
-        private static TenantEmailDomainResponseDTO Map(TenantEmailDomain entity)
-        {
-            return new TenantEmailDomainResponseDTO
-            {
-                Id = entity.Id,
-                TenantId = entity.TenantId,
-                Domain = entity.Domain,
-                DefaultRoleName = entity.DefaultRoleName,
-                AutoApprove = entity.AutoApprove
-            };
-        }
+            Id = entity.Id,
+            TenantId = entity.TenantId,
+            Domain = entity.Domain,
+            DefaultRoleName = entity.DefaultRoleName,
+            AutoApprove = entity.AutoApprove,
+            IsDeleted = entity.IsDeleted
+        };
     }
 }

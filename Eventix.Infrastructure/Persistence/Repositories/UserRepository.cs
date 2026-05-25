@@ -41,4 +41,19 @@ public class UserRepository : TenantBaseRepository<User>, IUserRepository
             !x.IsDeleted,
             ct);
     }
+
+    public Task<User?> GetByPublicUserIdAndTenantIdAsync(
+        Guid publicUserId,
+        Guid tenantId,
+        CancellationToken ct)
+    {
+        return Query()
+            .Include(x => x.UserRoles)
+            .ThenInclude(x => x.Role)
+            .FirstOrDefaultAsync(x =>
+                x.PublicUserId == publicUserId &&
+                x.TenantId == tenantId &&
+                !x.IsDeleted,
+                ct);
+    }
 }

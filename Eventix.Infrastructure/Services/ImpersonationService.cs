@@ -1,10 +1,14 @@
+using Eventix.Application.DTOs.Auth;
 using Eventix.Application.Interfaces.Repositories;
 using Eventix.Application.Interfaces.Services;
+using Eventix.Application.Interfaces.Common;
 using Eventix.Domain.Entities;
 using Eventix.Domain.Enums;
+using Eventix.Infrastructure.MultiTenancy;
 using Eventix.Infrastructure.Persistence.Database;
+using Eventix.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
-using Eventix.Application.DTOs.Auth;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Eventix.Infrastructure.Services;
 
@@ -15,22 +19,28 @@ public class ImpersonationService : IImpersonationService
 
     private readonly PublicDbContext _publicDb;
     private readonly IPublicUserRepository _publicUserRepository;
-    private readonly IUserRepository _userRepository;
     private readonly IUserRoleRepository _userRoleRepository;
     private readonly IJwtTokenService _jwtTokenService;
+    private readonly ITenantRepository _tenantRepository;
+    private readonly ITenantContext _tenantContext;
+    private readonly IServiceScopeFactory _scopeFactory;
 
     public ImpersonationService(
         PublicDbContext publicDb,
         IPublicUserRepository publicUserRepository,
-        IUserRepository userRepository,
         IUserRoleRepository userRoleRepository,
-        IJwtTokenService jwtTokenService)
+        IJwtTokenService jwtTokenService,
+        ITenantRepository tenantRepository,
+        ITenantContext tenantContext,
+        IServiceScopeFactory scopeFactory)
     {
         _publicDb = publicDb;
         _publicUserRepository = publicUserRepository;
-        _userRepository = userRepository;
         _userRoleRepository = userRoleRepository;
         _jwtTokenService = jwtTokenService;
+        _tenantRepository = tenantRepository;
+        _tenantContext = tenantContext;
+        _scopeFactory = scopeFactory;
     }
 
     public async Task<ImpersonationStartResult> StartImpersonationAsync(
@@ -78,11 +88,29 @@ public class ImpersonationService : IImpersonationService
         if (superAdminPublicUserId == targetPublicUserId)
             throw new InvalidOperationException("SuperAdmin cannot impersonate himself.");
 
-        var targetTenantUser = await _userRepository.GetByPublicUserIdAsync(
-            targetPublicUserId,
-            cancellationToken);
+        var targetTenant = await _tenantRepository.GetByIdAsync(targetTenantId, cancellationToken);
 
-        if (targetTenantUser is null || targetTenantUser.IsDeleted || !targetTenantUser.IsActive)
+        if (targetTenant is null || !targetTenant.IsActive || targetTenant.IsDeleted)
+            throw new InvalidOperationException("Target tenant does not exist or is inactive.");
+
+        using var scope = _scopeFactory.CreateScope();
+
+        var scopedTenantContext =
+            scope.ServiceProvider.GetRequiredService<ITenantContext>();
+
+        scopedTenantContext.TenantId = targetTenant.Id;
+        scopedTenantContext.SchemaName = targetTenant.SchemaName;
+
+        var scopedUserRepository =
+            scope.ServiceProvider.GetRequiredService<IUserRepository>();
+
+        var targetTenantUser =
+            await scopedUserRepository.GetByPublicUserIdAndTenantIdAsync(
+                targetPublicUserId,
+                targetTenantId,
+                cancellationToken);
+
+        if (targetTenantUser is null || !targetTenantUser.IsActive)
             throw new InvalidOperationException("Target tenant user does not exist or is inactive.");
 
         var now = DateTime.UtcNow;
