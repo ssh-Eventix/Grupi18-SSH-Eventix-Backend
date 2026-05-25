@@ -116,6 +116,8 @@ public class AiService : IAiService
         - short summary
         - what attendees liked
         - what should be improved
+        - keep the full answer under 1000 words
+        - use clear short sections and avoid unnecessary repetition
         """;
 
         return await ExecuteAiRequestAsync(
