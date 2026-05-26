@@ -5,8 +5,10 @@ using Eventix.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
+using Eventix.Infrastructure.Services;
 
 namespace Eventix.Api.Controllers;
+
 
 [ApiController]
 [Route("api/[controller]")]
@@ -15,13 +17,16 @@ public class EventsController : ControllerBase
     private readonly IEventService _eventService;
     private readonly IDistributedCache _cache;
     private readonly ITenantContext _tenantContext;
+    private readonly IPublicEventService _publicEventService;
 
     public EventsController(
-        IEventService eventService,
-        IDistributedCache cache,
-        ITenantContext tenantContext)
+     IEventService eventService,
+     IPublicEventService publicEventService,
+     IDistributedCache cache,
+     ITenantContext tenantContext)
     {
         _eventService = eventService;
+        _publicEventService = publicEventService;
         _cache = cache;
         _tenantContext = tenantContext;
     }
@@ -67,16 +72,15 @@ public class EventsController : ControllerBase
     [HttpGet("public")]
     [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<EventResponseDTO>>> PublicSearch(
-    [FromQuery] string? search,
-    CancellationToken cancellationToken)
+     [FromQuery] string? search,
+     CancellationToken cancellationToken)
     {
-        var cacheKey =
-            $"tenant:{_tenantContext.TenantId}:events:public:search:{search ?? "all"}";
+        var cacheKey = $"events:public:search:{search ?? "all"}";
 
         var result = await CacheHelper.GetOrSetAsync(
             _cache,
             cacheKey,
-            () => _eventService.GetAllAsync(search, cancellationToken),
+            () => _publicEventService.GetAllPublicAsync(search, cancellationToken),
             TimeSpan.FromMinutes(5),
             cancellationToken);
 
@@ -89,12 +93,12 @@ public class EventsController : ControllerBase
         Guid id,
         CancellationToken cancellationToken)
     {
-        var cacheKey = $"tenant:{_tenantContext.TenantId}:event:public:{id}";
+        var cacheKey = $"events:public:{id}";
 
         var result = await CacheHelper.GetOrSetAsync(
             _cache,
             cacheKey,
-            () => _eventService.GetByIdAsync(id, cancellationToken),
+            () => _publicEventService.GetPublicByIdAsync(id, cancellationToken),
             TimeSpan.FromMinutes(5),
             cancellationToken);
 
