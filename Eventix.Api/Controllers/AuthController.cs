@@ -7,6 +7,8 @@ using Eventix.Infrastructure.Persistence.Database;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Eventix.Api.Controllers;
 
@@ -22,6 +24,7 @@ public class AuthController : ControllerBase
     private readonly IRefreshTokenService _refreshTokenService;
     private readonly IRefreshTokenRepository _refreshTokenRepository;
     private readonly ITenantContext _tenantContext;
+    private readonly IEmailSender _emailSender;
     private readonly PublicDbContext _publicDb;
     private readonly TenantDbContext _tenantDb;
 
@@ -36,6 +39,7 @@ public class AuthController : ControllerBase
         IRefreshTokenRepository refreshTokenRepository,
         ITenantContext tenantContext,
         ITenantEmailDomainRepository tenantEmailDomainRepository,
+        IEmailSender emailSender,
         PublicDbContext publicDb,
         TenantDbContext tenantDb)
     {
@@ -46,8 +50,122 @@ public class AuthController : ControllerBase
         _refreshTokenService = refreshTokenService;
         _refreshTokenRepository = refreshTokenRepository;
         _tenantContext = tenantContext;
+        _emailSender = emailSender;
         _publicDb = publicDb;
         _tenantDb = tenantDb;
+    }
+
+    private static string GenerateResetToken()
+    {
+        return Convert.ToBase64String(RandomNumberGenerator.GetBytes(48));
+    }
+
+    private static string HashResetToken(string token)
+    {
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(token));
+        return Convert.ToBase64String(bytes);
+    }
+
+    [HttpPost("forgot-password")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequestDTO dto, CancellationToken cancellationToken)
+    {
+        const string message = "If this buyer account exists, a password reset link has been sent.";
+
+        if (string.IsNullOrWhiteSpace(dto.Email))
+            return Ok(new { message });
+
+        var email = dto.Email.Trim().ToLower();
+
+        var publicUser = await _publicUserRepository.GetByEmailAsync(email, cancellationToken);
+
+        if (publicUser is null || publicUser.IsDeleted || !publicUser.IsActive)
+            return Ok(new { message });
+
+        var isBuyer = publicUser.PublicUserRoles.Any(x =>
+            !x.PublicRole.IsDeleted &&
+            string.Equals(x.PublicRole.Name, "Buyer", StringComparison.OrdinalIgnoreCase));
+
+        if (!isBuyer)
+            return Ok(new { message });
+
+        var token = GenerateResetToken();
+
+        var resetToken = new PasswordResetToken
+        {
+            PublicUserId = publicUser.Id,
+            TenantId = null,
+            Email = email,
+            TokenHash = HashResetToken(token),
+            ExpiresAtUtc = DateTime.UtcNow.AddMinutes(30),
+            CreatedAtUtc = DateTime.UtcNow
+        };
+
+        _publicDb.PasswordResetTokens.Add(resetToken);
+        await _publicDb.SaveChangesAsync(cancellationToken);
+
+        var resetUrl =
+            $"http://localhost:5173/reset-password?email={Uri.EscapeDataString(email)}&token={Uri.EscapeDataString(token)}";
+
+        await _emailSender.SendPasswordResetEmailAsync(email, resetUrl, cancellationToken);
+
+        return Ok(new { message });
+    }
+
+    [HttpPost("reset-password")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequestDTO dto, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Email) ||
+            string.IsNullOrWhiteSpace(dto.Token) ||
+            string.IsNullOrWhiteSpace(dto.NewPassword))
+        {
+            return BadRequest("Email, token and new password are required.");
+        }
+
+        if (dto.NewPassword.Length < 6)
+            return BadRequest("Password must be at least 6 characters.");
+
+        var email = dto.Email.Trim().ToLower();
+        var tokenHash = HashResetToken(dto.Token);
+
+        var resetToken = await _publicDb.PasswordResetTokens
+            .Include(x => x.PublicUser)
+            .ThenInclude(x => x.PublicUserRoles)
+            .ThenInclude(x => x.PublicRole)
+            .FirstOrDefaultAsync(x =>
+                x.Email == email &&
+                x.TokenHash == tokenHash &&
+                !x.IsDeleted,
+                cancellationToken);
+
+        if (resetToken is null || resetToken.IsUsed || resetToken.IsExpired)
+            return BadRequest("Invalid or expired reset token.");
+
+        if (resetToken.TenantId.HasValue)
+            return BadRequest("Invalid reset token.");
+
+        var publicUser = resetToken.PublicUser;
+
+        if (publicUser.IsDeleted || !publicUser.IsActive)
+            return BadRequest("Invalid account.");
+
+        var isBuyer = publicUser.PublicUserRoles.Any(x =>
+            !x.PublicRole.IsDeleted &&
+            string.Equals(x.PublicRole.Name, "Buyer", StringComparison.OrdinalIgnoreCase));
+
+        if (!isBuyer)
+            return BadRequest("Invalid account.");
+
+        publicUser.PasswordHash = _passwordHasher.Hash(dto.NewPassword);
+        publicUser.UpdatedAtUtc = DateTime.UtcNow;
+
+        resetToken.UsedAtUtc = DateTime.UtcNow;
+        resetToken.UpdatedAtUtc = DateTime.UtcNow;
+
+        await _publicDb.SaveChangesAsync(cancellationToken);
+
+        return Ok("Password reset successfully.");
     }
 
     [HttpPost("register")]

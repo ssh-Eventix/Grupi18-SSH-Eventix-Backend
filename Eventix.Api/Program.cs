@@ -250,6 +250,7 @@ builder.Services.AddScoped<ITenantAdminService, TenantAdminService>();
 builder.Services.AddScoped<IArchiveRecordService, ArchiveRecordService>();
 builder.Services.AddScoped<IArchiveRecordRepository, ArchiveRecordRepository>();
 builder.Services.AddScoped<IStaffService, StaffService>();
+builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 builder.Services.AddScoped<TenantJobRunner>();
 builder.Services.AddScoped<BookingCleanupJob>();
 builder.Services.AddScoped<NotificationReminderJob>();
