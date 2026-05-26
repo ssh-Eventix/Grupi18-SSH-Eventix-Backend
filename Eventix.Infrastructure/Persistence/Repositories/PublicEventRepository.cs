@@ -1,17 +1,19 @@
 ﻿using Eventix.Application.DTOs.Events;
-using Eventix.Application.Interfaces.Services;
+using Eventix.Application.Interfaces.Repositories;
 using Eventix.Domain.Enums;
 using Eventix.Infrastructure.Persistence.Database;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using NpgsqlTypes;
-namespace Eventix.Infrastructure.Services;
 
-public class PublicEventService : IPublicEventService
+namespace Eventix.Infrastructure.Persistence.Repositories;
+
+public class PublicEventRepository : IPublicEventRepository
 {
     private readonly PublicDbContext _publicDbContext;
 
-    public PublicEventService(PublicDbContext publicDbContext)
+    public PublicEventRepository(
+        PublicDbContext publicDbContext)
     {
         _publicDbContext = publicDbContext;
     }
@@ -20,19 +22,21 @@ public class PublicEventService : IPublicEventService
         string? search,
         CancellationToken cancellationToken = default)
     {
-        var tenants = await _publicDbContext.Tenants
-            .AsNoTracking()
-            .Where(t => t.IsActive && t.SchemaName != null && t.SchemaName != "")
-            .Select(t => t.SchemaName)
-            .ToListAsync(cancellationToken);
+        var schemas = await GetActiveTenantSchemasAsync(cancellationToken);
 
         var result = new List<EventResponseDTO>();
 
-        foreach (var schema in tenants)
+        foreach (var schema in schemas)
         {
             try
             {
-                result.AddRange(await GetEventsFromTenantAsync(schema, search, null, cancellationToken));
+                var events = await GetEventsFromSchemaAsync(
+                    schema,
+                    search,
+                    null,
+                    cancellationToken);
+
+                result.AddRange(events);
             }
             catch (PostgresException ex) when (ex.SqlState == "42P01" || ex.SqlState == "3F000")
             {
@@ -41,7 +45,7 @@ public class PublicEventService : IPublicEventService
         }
 
         return result
-            .OrderBy(e => e.StartUtc)
+            .OrderBy(x => x.StartUtc)
             .ToList();
     }
 
@@ -49,20 +53,22 @@ public class PublicEventService : IPublicEventService
         Guid id,
         CancellationToken cancellationToken = default)
     {
-        var tenants = await _publicDbContext.Tenants
-            .AsNoTracking()
-            .Where(t => t.IsActive && t.SchemaName != null && t.SchemaName != "")
-            .Select(t => t.SchemaName)
-            .ToListAsync(cancellationToken);
+        var schemas = await GetActiveTenantSchemasAsync(cancellationToken);
 
-        foreach (var schema in tenants)
+        foreach (var schema in schemas)
         {
             try
             {
-                var result = await GetEventsFromTenantAsync(schema, null, id, cancellationToken);
+                var events = await GetEventsFromSchemaAsync(
+                    schema,
+                    null,
+                    id,
+                    cancellationToken);
 
-                if (result.Count > 0)
-                    return result[0];
+                var item = events.FirstOrDefault();
+
+                if (item is not null)
+                    return item;
             }
             catch (PostgresException ex) when (ex.SqlState == "42P01" || ex.SqlState == "3F000")
             {
@@ -73,16 +79,29 @@ public class PublicEventService : IPublicEventService
         return null;
     }
 
-    private async Task<List<EventResponseDTO>> GetEventsFromTenantAsync(
+    private async Task<List<string>> GetActiveTenantSchemasAsync(CancellationToken cancellationToken)
+    {
+        return await _publicDbContext.Tenants
+            .AsNoTracking()
+            .Where(x => x.IsActive && x.SchemaName != null && x.SchemaName != "")
+            .Select(x => x.SchemaName!)
+            .ToListAsync(cancellationToken);
+    }
+
+    private async Task<List<EventResponseDTO>> GetEventsFromSchemaAsync(
         string schema,
         string? search,
         Guid? id,
         CancellationToken cancellationToken)
     {
-        var connectionString = BuildConnectionStringFromEnvironment();
+        var connection =
+            (NpgsqlConnection)_publicDbContext.Database.GetDbConnection();
 
-        await using var connection = new NpgsqlConnection(connectionString);
-        await connection.OpenAsync(cancellationToken);
+        if (connection.State != System.Data.ConnectionState.Open)
+        {
+            await connection.OpenAsync(cancellationToken);
+        }
+       
 
         var quotedSchema = QuoteIdentifier(schema);
 
@@ -113,33 +132,42 @@ FROM {quotedSchema}.""Event"" e
 LEFT JOIN {quotedSchema}.""Venue"" v ON v.""Id"" = e.""VenueId""
 LEFT JOIN {quotedSchema}.""EventCategory"" c ON c.""Id"" = e.""EventCategoryId""
 WHERE e.""IsDeleted"" = false
+  AND e.""IsPublished"" = true
+    AND (
+        e.""Visibility""::text = @publicVisibilityText
+        OR e.""Visibility""::text = @publicVisibilityNumber
+    )
   AND e.""EndUtc"" > NOW()
   AND (@id IS NULL OR e.""Id"" = @id)
   AND (
-      @search IS NULL
-      OR e.""Title"" ILIKE '%' || @search || '%'
-      OR e.""Description"" ILIKE '%' || @search || '%'
-      OR c.""Name"" ILIKE '%' || @search || '%'
-      OR v.""Name"" ILIKE '%' || @search || '%'
-  )
+        @search IS NULL
+        OR e.""Title"" ILIKE '%' || @search || '%'
+        OR e.""Description"" ILIKE '%' || @search || '%'
+        OR c.""Name"" ILIKE '%' || @search || '%'
+        OR v.""Name"" ILIKE '%' || @search || '%'
+      )
 ORDER BY e.""StartUtc"";
 ";
 
         await using var command = new NpgsqlCommand(sql, connection);
 
-        command.Parameters.Add("id", NpgsqlTypes.NpgsqlDbType.Uuid).Value =
-    id.HasValue ? id.Value : DBNull.Value;
+        command.Parameters.Add("id", NpgsqlDbType.Uuid).Value =
+            id.HasValue ? id.Value : DBNull.Value;
 
-        command.Parameters.Add("search", NpgsqlTypes.NpgsqlDbType.Text).Value =
-            string.IsNullOrWhiteSpace(search) ? DBNull.Value : search;
+        command.Parameters.Add("search", NpgsqlDbType.Text).Value =
+            string.IsNullOrWhiteSpace(search) ? DBNull.Value : search.Trim();
 
-        var events = new List<EventResponseDTO>();
+        command.Parameters.Add("publicVisibilityText", NpgsqlDbType.Text).Value = "Public";
+        command.Parameters.Add("publicVisibilityNumber", NpgsqlDbType.Text).Value =
+            ((int)EventVisibility.Public).ToString();
+
+        var result = new List<EventResponseDTO>();
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
 
         while (await reader.ReadAsync(cancellationToken))
         {
-            events.Add(new EventResponseDTO
+            result.Add(new EventResponseDTO
             {
                 Id = reader.GetGuid(0),
                 VenueId = reader.GetGuid(1),
@@ -165,32 +193,7 @@ ORDER BY e.""StartUtc"";
             });
         }
 
-        return events;
-    }
-
-    private static string BuildConnectionStringFromEnvironment()
-    {
-        var dbHost = Environment.GetEnvironmentVariable("POSTGRES_HOST");
-        var dbPort = Environment.GetEnvironmentVariable("POSTGRES_PORT");
-        var dbName = Environment.GetEnvironmentVariable("POSTGRES_DB");
-        var dbUser = Environment.GetEnvironmentVariable("POSTGRES_USER");
-        var dbPassword = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD");
-
-        if (string.IsNullOrWhiteSpace(dbHost) ||
-            string.IsNullOrWhiteSpace(dbPort) ||
-            string.IsNullOrWhiteSpace(dbName) ||
-            string.IsNullOrWhiteSpace(dbUser) ||
-            string.IsNullOrWhiteSpace(dbPassword))
-        {
-            throw new InvalidOperationException("Database environment variables are missing.");
-        }
-
-        return
-            $"Host={dbHost};" +
-            $"Port={dbPort};" +
-            $"Database={dbName};" +
-            $"Username={dbUser};" +
-            $"Password={dbPassword}";
+        return result;
     }
 
     private static string QuoteIdentifier(string value)
