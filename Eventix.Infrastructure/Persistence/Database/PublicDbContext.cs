@@ -14,7 +14,7 @@ public class PublicDbContext : DbContext
     public DbSet<PublicUser> PublicUsers => Set<PublicUser>();
     public DbSet<PublicRole> PublicRoles => Set<PublicRole>();
     public DbSet<PublicUserRole> PublicUserRoles => Set<PublicUserRole>();
-
+    public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<TenantImpersonationLog> TenantImpersonationLogs => Set<TenantImpersonationLog>();
     public DbSet<ArchiveRecord> ArchiveRecords => Set<ArchiveRecord>();
@@ -32,8 +32,48 @@ public class PublicDbContext : DbContext
         ConfigureArchiveRecord(modelBuilder);
         ConfigureRefreshToken(modelBuilder);
         ConfigureTenantEmailDomain(modelBuilder);
+        ConfigurePasswordResetToken(modelBuilder);
 
         base.OnModelCreating(modelBuilder);
+    }
+
+    private static void ConfigurePasswordResetToken(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<PasswordResetToken>(entity =>
+        {
+            entity.ToTable("PasswordResetTokens");
+
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Email)
+                .HasMaxLength(200)
+                .IsRequired();
+
+            entity.Property(x => x.TokenHash)
+                .HasMaxLength(500)
+                .IsRequired();
+
+            entity.Property(x => x.ExpiresAtUtc)
+                .HasColumnType("timestamp with time zone")
+                .IsRequired();
+
+            entity.Property(x => x.UsedAtUtc)
+                .HasColumnType("timestamp with time zone");
+
+            entity.Property(x => x.CreatedAtUtc)
+                .HasColumnType("timestamp with time zone");
+
+            entity.Property(x => x.UpdatedAtUtc)
+                .HasColumnType("timestamp with time zone");
+
+            entity.HasIndex(x => x.TokenHash).IsUnique();
+            entity.HasIndex(x => new { x.PublicUserId, x.TenantId, x.IsDeleted });
+
+            entity.HasOne(x => x.PublicUser)
+                .WithMany(x => x.PasswordResetTokens)
+                .HasForeignKey(x => x.PublicUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
     }
 
     private static void ConfigurePublicRole(ModelBuilder modelBuilder)

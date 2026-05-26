@@ -12,6 +12,7 @@ namespace Eventix.Domain.Entities
         public DateTime? LastLoginAtUtc { get; set; }
         public ICollection<PublicUserRole> PublicUserRoles { get; set; } = new List<PublicUserRole>();
         public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+        public ICollection<PasswordResetToken> PasswordResetTokens { get; set; } = new List<PasswordResetToken>();
     }
 }
 
