@@ -119,6 +119,7 @@ public class EventsControllerApiTests
 
         services.AddScoped<IEventRepository, EventRepository>();
         services.AddScoped<IEventService, EventService>();
+        services.AddScoped<IPublicEventService, FakePublicEventService>();
 
         services.AddDistributedMemoryCache();
 
@@ -131,10 +132,28 @@ public class EventsControllerApiTests
         return services.BuildServiceProvider();
     }
 
+    private class FakePublicEventService : IPublicEventService
+    {
+        public Task<List<EventResponseDTO>> GetAllPublicAsync(
+            string? search,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(new List<EventResponseDTO>());
+        }
+
+        public Task<EventResponseDTO?> GetPublicByIdAsync(
+            Guid id,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult<EventResponseDTO?>(null);
+        }
+    }
+
     private static EventsController CreateController(IServiceScope scope)
     {
         return new EventsController(
             scope.ServiceProvider.GetRequiredService<IEventService>(),
+            scope.ServiceProvider.GetRequiredService<IPublicEventService>(),
             scope.ServiceProvider.GetRequiredService<IDistributedCache>(),
             scope.ServiceProvider.GetRequiredService<ITenantContext>());
     }

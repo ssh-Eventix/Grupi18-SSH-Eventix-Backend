@@ -262,6 +262,7 @@ builder.Services.AddScoped<PublicRoleSeeder>();
 builder.Services.AddScoped<IAIRequestLogRepository, AIRequestLogRepository>();
 builder.Services.AddScoped<IAiService, AiService>();
 builder.Services.AddScoped<IPublicEventService, PublicEventService>();
+builder.Services.AddScoped<IPublicEventRepository, PublicEventRepository>();
 builder.Services.AddHttpClient<IOllamaClient, OllamaClient>(client =>
 {
     client.BaseAddress = new Uri(
