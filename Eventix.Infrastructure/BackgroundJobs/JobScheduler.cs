@@ -40,5 +40,10 @@ public static class JobScheduler
             "checkin-analytics",
             runner => runner.RunCheckInAnalytics(),
             Cron.Hourly);
+
+        RecurringJob.AddOrUpdate<TenantJobRunner>(
+            "archive-finished-events",
+            runner => runner.RunArchiveEvents(),
+            Cron.Daily);
     }
 }

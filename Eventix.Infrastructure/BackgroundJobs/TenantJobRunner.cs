@@ -60,6 +60,12 @@ public class TenantJobRunner
             await sp.GetRequiredService<CheckInAnalyticsJob>().GenerateStats());
     }
 
+    public async Task RunArchiveEvents()
+    {
+        await RunForAllTenants(async sp =>
+            await sp.GetRequiredService<ArchiveEventsJob>().ArchiveFinishedEvents());
+    }
+
     private async Task RunForAllTenants(
     Func<IServiceProvider, Task> job)
     {

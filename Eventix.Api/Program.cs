@@ -260,6 +260,7 @@ builder.Services.AddScoped<PaymentRetryJob>();
 builder.Services.AddScoped<EventStatusUpdateJob>();
 builder.Services.AddScoped<CheckInAnalyticsJob>();
 builder.Services.AddScoped<PublicRoleSeeder>();
+builder.Services.AddScoped<ArchiveEventsJob>();
 builder.Services.AddScoped<IAIRequestLogRepository, AIRequestLogRepository>();
 builder.Services.AddScoped<IAiService, AiService>();
 builder.Services.AddScoped<IPublicEventService, PublicEventService>();
