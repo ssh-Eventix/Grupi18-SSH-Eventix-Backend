@@ -14,11 +14,13 @@ public class PublicDbContext : DbContext
     public DbSet<PublicUser> PublicUsers => Set<PublicUser>();
     public DbSet<PublicRole> PublicRoles => Set<PublicRole>();
     public DbSet<PublicUserRole> PublicUserRoles => Set<PublicUserRole>();
-
+    public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<TenantImpersonationLog> TenantImpersonationLogs => Set<TenantImpersonationLog>();
     public DbSet<ArchiveRecord> ArchiveRecords => Set<ArchiveRecord>();
     public DbSet<TenantEmailDomain> TenantEmailDomains => Set<TenantEmailDomain>();
+    public DbSet<Venue> Venues => Set<Venue>();
+    public DbSet<VenueSection> VenueSections => Set<VenueSection>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -32,8 +34,50 @@ public class PublicDbContext : DbContext
         ConfigureArchiveRecord(modelBuilder);
         ConfigureRefreshToken(modelBuilder);
         ConfigureTenantEmailDomain(modelBuilder);
+        ConfigurePasswordResetToken(modelBuilder);
+        ConfigureVenue(modelBuilder);
+        ConfigureVenueSection(modelBuilder);
 
         base.OnModelCreating(modelBuilder);
+    }
+
+    private static void ConfigurePasswordResetToken(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<PasswordResetToken>(entity =>
+        {
+            entity.ToTable("PasswordResetTokens");
+
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Email)
+                .HasMaxLength(200)
+                .IsRequired();
+
+            entity.Property(x => x.TokenHash)
+                .HasMaxLength(500)
+                .IsRequired();
+
+            entity.Property(x => x.ExpiresAtUtc)
+                .HasColumnType("timestamp with time zone")
+                .IsRequired();
+
+            entity.Property(x => x.UsedAtUtc)
+                .HasColumnType("timestamp with time zone");
+
+            entity.Property(x => x.CreatedAtUtc)
+                .HasColumnType("timestamp with time zone");
+
+            entity.Property(x => x.UpdatedAtUtc)
+                .HasColumnType("timestamp with time zone");
+
+            entity.HasIndex(x => x.TokenHash).IsUnique();
+            entity.HasIndex(x => new { x.PublicUserId, x.TenantId, x.IsDeleted });
+
+            entity.HasOne(x => x.PublicUser)
+                .WithMany(x => x.PasswordResetTokens)
+                .HasForeignKey(x => x.PublicUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
     }
 
     private static void ConfigurePublicRole(ModelBuilder modelBuilder)
@@ -324,6 +368,31 @@ public class PublicDbContext : DbContext
 
             entity.HasIndex(x => new { x.TenantId, x.Domain })
                 .IsUnique();
+        });
+    }
+
+    private static void ConfigureVenue(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Venue>(entity =>
+        {
+            entity.ToTable("Venue", "public");
+
+            entity.HasKey(x => x.Id);
+        });
+    }
+
+    private static void ConfigureVenueSection(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<VenueSection>(entity =>
+        {
+            entity.ToTable("VenueSection", "public");
+
+            entity.HasKey(x => x.Id);
+
+            entity.HasOne(x => x.Venue)
+                .WithMany(x => x.Sections)
+                .HasForeignKey(x => x.VenueId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

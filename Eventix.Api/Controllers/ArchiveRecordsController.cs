@@ -53,23 +53,28 @@ public class ArchiveRecordsController : ControllerBase
         return Ok(records);
     }
 
-    [HttpPost]
-    [Authorize(Policy = "Permission:ManageArchiveRecords")]
-    public async Task<IActionResult> Create(CreateArchiveRecordDTO dto)
+    [HttpGet("stats")]
+    [Authorize(Policy = "Permission:ViewArchiveRecords")]
+    public async Task<IActionResult> GetStats()
     {
-        var record = await _service.CreateAsync(dto);
-        return CreatedAtAction(nameof(GetById), new { id = record.Id }, record);
-    }
+        var records = await _service.GetAllAsync();
 
-    [HttpDelete("{id:guid}")]
-    [Authorize(Policy = "Permission:ManageArchiveRecords")]
-    public async Task<IActionResult> Delete(Guid id)
-    {
-        var deleted = await _service.DeleteAsync(id);
+        var stats = new
+        {
+            totalArchived = records.Count,
+            archivedEvents = records.Count(x => x.EntityName == "Event"),
+            archivedThisYear = records.Count(x => x.ArchiveYear == DateTime.UtcNow.Year),
+            byEntity = records
+                .GroupBy(x => x.EntityName)
+                .Select(g => new { entityName = g.Key, count = g.Count() })
+                .OrderByDescending(x => x.count),
+            eventsByYear = records
+                .Where(x => x.EntityName == "Event")
+                .GroupBy(x => x.ArchiveYear)
+                .Select(g => new { year = g.Key, count = g.Count() })
+                .OrderBy(x => x.year)
+        };
 
-        if (!deleted)
-            return NotFound();
-
-        return NoContent();
+        return Ok(stats);
     }
 }

@@ -250,6 +250,7 @@ builder.Services.AddScoped<ITenantAdminService, TenantAdminService>();
 builder.Services.AddScoped<IArchiveRecordService, ArchiveRecordService>();
 builder.Services.AddScoped<IArchiveRecordRepository, ArchiveRecordRepository>();
 builder.Services.AddScoped<IStaffService, StaffService>();
+builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 builder.Services.AddScoped<TenantJobRunner>();
 builder.Services.AddScoped<BookingCleanupJob>();
 builder.Services.AddScoped<NotificationReminderJob>();
@@ -259,6 +260,7 @@ builder.Services.AddScoped<PaymentRetryJob>();
 builder.Services.AddScoped<EventStatusUpdateJob>();
 builder.Services.AddScoped<CheckInAnalyticsJob>();
 builder.Services.AddScoped<PublicRoleSeeder>();
+builder.Services.AddScoped<ArchiveEventsJob>();
 builder.Services.AddScoped<IAIRequestLogRepository, AIRequestLogRepository>();
 builder.Services.AddScoped<IAiService, AiService>();
 builder.Services.AddScoped<IPublicEventService, PublicEventService>();
@@ -273,7 +275,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactClient", policy =>
     {
-        policy.WithOrigins("http://localhost:5173", "http://localhost:3000", "http://localhost:5174")
+        policy.WithOrigins("http://localhost:5173", "http://localhost:3000", "http://localhost:5174", "http://localhost:8081")
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
@@ -590,7 +592,10 @@ if (app.Environment.IsDevelopment())
 
 JobScheduler.RegisterJobs();
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseCors("ReactClient");
 

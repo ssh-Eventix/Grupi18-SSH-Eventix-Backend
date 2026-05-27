@@ -6,28 +6,33 @@ using Eventix.Application.Interfaces.Services;
 using Eventix.Domain.Entities;
 using Eventix.Domain.Enums;
 using Eventix.Infrastructure.MultiTenancy;
+using Eventix.Infrastructure.Persistence.Database;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 
 namespace Eventix.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class VenueSectionsController : ControllerBase
+public class VenueSectionController : ControllerBase
 {
     private readonly IVenueSectionService _service;
     private readonly IDistributedCache _cache;
     private readonly ITenantContext _tenantContext;
+    private readonly PublicDbContext _publicContext;
 
-    public VenueSectionsController(
+    public VenueSectionController(
         IVenueSectionService service,
         IDistributedCache cache,
-        ITenantContext tenantContext)
+        ITenantContext tenantContext,
+        PublicDbContext publicContext)
     {
         _service = service;
         _cache = cache;
         _tenantContext = tenantContext;
+        _publicContext = publicContext;
     }
 
     [HttpGet]
@@ -93,6 +98,8 @@ public class VenueSectionsController : ControllerBase
         await _cache.RemoveAsync(
             $"tenant:{_tenantContext.TenantId}:venuesections:all",
             cancellationToken);
+        await _cache.RemoveAsync("public:venuesections:all", cancellationToken);
+        await _cache.RemoveAsync($"public:venuesections:venue:{dto.VenueId}", cancellationToken);
 
         return Ok(result);
     }
@@ -116,6 +123,8 @@ public class VenueSectionsController : ControllerBase
         await _cache.RemoveAsync(
             $"tenant:{_tenantContext.TenantId}:venuesection:{id}",
             cancellationToken);
+        await _cache.RemoveAsync("public:venuesections:all", cancellationToken);
+        await _cache.RemoveAsync($"public:venuesections:venue:{dto.VenueId}", cancellationToken);
 
         return Ok();
     }
@@ -139,6 +148,35 @@ public class VenueSectionsController : ControllerBase
             $"tenant:{_tenantContext.TenantId}:venuesection:{id}",
             cancellationToken);
 
+        await _cache.RemoveAsync("public:venuesections:all", cancellationToken);
+
         return NoContent();
+    }
+
+    [HttpGet("public")]
+    [Authorize]
+    public async Task<IActionResult> GetAllPublic(CancellationToken cancellationToken)
+    {
+        var result = await _publicContext.VenueSections
+            .OrderBy(x => x.DisplayOrder)
+            .ThenBy(x => x.Name)
+            .ToListAsync(cancellationToken);
+
+        return Ok(result);
+    }
+
+    [HttpGet("public/venue/{venueId:guid}")]
+    [Authorize]
+    public async Task<IActionResult> GetPublicByVenue(
+        Guid venueId,
+        CancellationToken cancellationToken)
+    {
+        var result = await _publicContext.VenueSections
+            .Where(x => x.VenueId == venueId)
+            .OrderBy(x => x.DisplayOrder)
+            .ThenBy(x => x.Name)
+            .ToListAsync(cancellationToken);
+
+        return Ok(result);
     }
 }
