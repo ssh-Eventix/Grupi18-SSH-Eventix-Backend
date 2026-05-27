@@ -11,11 +11,16 @@ namespace Eventix.Application.Services
     {
         public readonly IBookingRepository _bookingRepository;
         public readonly ITicketTypeRepository _ticketTypeRepository;
+        public readonly IEventRepository _eventRepository;
 
-        public BookingService(IBookingRepository bookingRepository, ITicketTypeRepository ticketTypeRepository)
+        public BookingService(
+            IBookingRepository bookingRepository,
+            ITicketTypeRepository ticketTypeRepository,
+            IEventRepository eventRepository)
         {
             _bookingRepository = bookingRepository;
             _ticketTypeRepository = ticketTypeRepository;
+            _eventRepository = eventRepository;
         }
 
         public async Task<List<BookingDto>> GetAllAsync()
@@ -43,6 +48,19 @@ namespace Eventix.Application.Services
         {
             if (request.BookingItems == null || !request.BookingItems.Any())
                 throw new Exception("Booking must have at least one item");
+
+            var eventEntity = await _eventRepository.GetByIdAsync(request.EventId);
+
+            if (eventEntity == null)
+                throw new Exception("Event not found");
+
+            var totalRequestedQuantity = request.BookingItems.Sum(x => x.Quantity);
+
+            if (totalRequestedQuantity < eventEntity.MinTicketsPerOrder)
+                throw new Exception($"Minimum tickets per order is {eventEntity.MinTicketsPerOrder}.");
+
+            if (totalRequestedQuantity > eventEntity.MaxTicketsPerOrder)
+                throw new Exception($"Maximum tickets per order is {eventEntity.MaxTicketsPerOrder}.");
 
             var booking = new Booking
             {

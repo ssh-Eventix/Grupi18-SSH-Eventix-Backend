@@ -21,7 +21,6 @@ public class EventSectionRepository
         return await Query()
             .AsNoTracking()
             .Include(x => x.Event)
-            .Include(x => x.VenueSection)
             .OrderBy(x => x.Name)
             .ToListAsync(ct);
     }
@@ -30,20 +29,19 @@ public class EventSectionRepository
     {
         return Query()
             .Include(x => x.Event)
-            .Include(x => x.VenueSection)
             .FirstOrDefaultAsync(x => x.Id == id, ct);
     }
 
-    public async Task<IReadOnlyList<EventSection>> GetByEventIdAsync(
-        Guid eventId,
-        CancellationToken ct = default)
+    public async Task<List<EventSection>> GetByEventIdAsync(
+    Guid eventId,
+    CancellationToken cancellationToken = default)
     {
         return await Query()
             .AsNoTracking()
-            .Include(x => x.VenueSection)
             .Where(x => x.EventId == eventId)
+            .Include(x => x.Event)
             .OrderBy(x => x.Name)
-            .ToListAsync(ct);
+            .ToListAsync(cancellationToken);
     }
 
     public Task<bool> ExistsByEventAndVenueSectionAsync(
