@@ -35,6 +35,16 @@ public class EventSectionController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("event/{eventId:guid}")]
+    [Authorize(Policy = "Permission:ViewEventSections")]
+    public async Task<ActionResult<IEnumerable<EventSectionResponseDTO>>> GetByEventId(
+         Guid eventId,
+         CancellationToken cancellationToken)
+    {
+        var result = await _service.GetByEventIdAsync(eventId);
+        return Ok(result);
+    }
+
     [HttpGet("{id:guid}")]
     [Authorize(Policy = "Permission:ViewEventSections")]
     public async Task<ActionResult<EventSectionResponseDTO>> GetById(
@@ -112,4 +122,5 @@ public class EventSectionController : ControllerBase
 
         return NoContent();
     }
+
 }

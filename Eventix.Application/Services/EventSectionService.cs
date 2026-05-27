@@ -9,13 +9,19 @@ namespace Eventix.Application.Services;
 public class EventSectionService : IEventSectionService
 {
     private readonly IEventSectionRepository _repository;
+    private readonly IEventRepository _eventRepository;
+    private readonly IVenueSectionRepository _venueSectionRepository;
     private readonly ITenantContext _tenantContext;
 
     public EventSectionService(
-        IEventSectionRepository repository,
-        ITenantContext tenantContext)
+       IEventSectionRepository repository,
+       IEventRepository eventRepository,
+       IVenueSectionRepository venueSectionRepository,
+       ITenantContext tenantContext)
     {
         _repository = repository;
+        _eventRepository = eventRepository;
+        _venueSectionRepository = venueSectionRepository;
         _tenantContext = tenantContext;
     }
 
@@ -39,6 +45,26 @@ public class EventSectionService : IEventSectionService
 
     public async Task<EventSectionResponseDTO> CreateAsync(CreateEventSectionDTO dto)
     {
+        if (dto.Capacity <= 0)
+            throw new InvalidOperationException("Event section capacity must be greater than zero.");
+
+        var eventEntity = await _eventRepository.GetByIdAsync(dto.EventId);
+
+        if (eventEntity == null)
+            throw new InvalidOperationException("Event not found.");
+
+        var venueSection = await _venueSectionRepository.GetByIdAsync(dto.VenueSectionId);
+
+        if (venueSection == null)
+            throw new InvalidOperationException("Venue section not found.");
+
+        if (venueSection.VenueId != eventEntity.VenueId)
+            throw new InvalidOperationException("Selected venue section does not belong to the event venue.");
+
+        if (dto.Capacity > venueSection.Capacity)
+            throw new InvalidOperationException(
+                $"Event section capacity cannot exceed venue section capacity of {venueSection.Capacity}.");
+
         var exists = await _repository.ExistsByEventAndVenueSectionAsync(
             dto.EventId,
             dto.VenueSectionId);
@@ -76,6 +102,18 @@ public class EventSectionService : IEventSectionService
     {
         var entity = await _repository.GetByIdAsync(id);
         if (entity is null) return null;
+
+        if (dto.Capacity <= 0)
+            throw new InvalidOperationException("Event section capacity must be greater than zero.");
+
+        var venueSection = await _venueSectionRepository.GetByIdAsync(entity.VenueSectionId);
+
+        if (venueSection == null)
+            throw new InvalidOperationException("Venue section not found.");
+
+        if (dto.Capacity > venueSection.Capacity)
+            throw new InvalidOperationException(
+                $"Event section capacity cannot exceed venue section capacity of {venueSection.Capacity}.");
 
         entity.Name = dto.Name;
         entity.Code = dto.Code;

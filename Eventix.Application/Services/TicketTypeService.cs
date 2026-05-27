@@ -7,6 +7,16 @@ namespace Eventix.Application.Services
 {
     public class TicketTypeService : ITicketTypeService
     {
+        private readonly ITicketTypeRepository _ticketTypeRepository;
+        private readonly IEventSectionRepository _eventSectionRepository;
+
+        public TicketTypeService(
+            ITicketTypeRepository ticketTypeRepository,
+            IEventSectionRepository eventSectionRepository)
+        {
+            _ticketTypeRepository = ticketTypeRepository;
+            _eventSectionRepository = eventSectionRepository;
+        }
         public async Task<TicketType> CreateAsync(CreateTicketTypeDto dto, Guid tenantId)
         {
             var saleStartUtc = NormalizeUtc(dto.SaleStartDate);
@@ -16,12 +26,39 @@ namespace Eventix.Application.Services
             if (string.IsNullOrWhiteSpace(name))
                 throw new InvalidOperationException("Ticket type name is required.");
 
+            if (dto.Price < 0)
+                throw new InvalidOperationException("Ticket price cannot be negative.");
+
+            if (dto.QuantityAvailable <= 0)
+                throw new InvalidOperationException("Ticket quantity must be greater than zero.");
+
+            if (saleEndUtc <= saleStartUtc)
+                throw new InvalidOperationException("Sale end date must be after sale start date.");
+
+            var eventSection = await _eventSectionRepository.GetByIdAsync(dto.EventSectionId);
+
+            if (eventSection == null)
+                throw new InvalidOperationException("Event section not found.");
+
+            if (eventSection.EventId != dto.EventId)
+                throw new InvalidOperationException("Event section does not belong to the selected event.");
+
             var existingTicketTypes = await _ticketTypeRepository.GetByEventIdAsync(dto.EventId);
             var duplicateName = existingTicketTypes.Any(x =>
                 string.Equals(x.Name.Trim(), name, StringComparison.OrdinalIgnoreCase));
 
             if (duplicateName)
                 throw new InvalidOperationException("A ticket type with this name already exists for this event.");
+
+            var existingQuantityForSection = existingTicketTypes
+                .Where(x => x.EventSectionId == dto.EventSectionId)
+                .Sum(x => x.QuantityAvailable + x.SoldQuantity);
+
+            if (existingQuantityForSection + dto.QuantityAvailable > eventSection.Capacity)
+            {
+                throw new InvalidOperationException(
+                    $"Ticket quantity exceeds event section capacity. Section capacity is {eventSection.Capacity}, already allocated {existingQuantityForSection}.");
+            }
 
             var ticketType = new TicketType
             {
@@ -51,13 +88,6 @@ namespace Eventix.Application.Services
                 DateTimeKind.Local => value.ToUniversalTime(),
                 _ => DateTime.SpecifyKind(value, DateTimeKind.Utc)
             };
-        }
-
-        private readonly ITicketTypeRepository _ticketTypeRepository;
-
-        public TicketTypeService(ITicketTypeRepository ticketTypeRepository)
-        {
-            _ticketTypeRepository = ticketTypeRepository;
         }
 
         public async Task<TicketType?> GetByIdAsync(Guid id)
@@ -107,5 +137,6 @@ namespace Eventix.Application.Services
             _ticketTypeRepository.Update(ticketType);
             await _ticketTypeRepository.SaveChangesAsync();
         }
+
     }
 }

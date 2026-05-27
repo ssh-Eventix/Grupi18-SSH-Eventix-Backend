@@ -9,5 +9,6 @@ namespace Eventix.Application.Interfaces.Services
         Task<EventSectionResponseDTO> CreateAsync(CreateEventSectionDTO dto);
         Task<EventSectionResponseDTO?> UpdateAsync(Guid id, UpdateEventSectionDTO dto);
         Task<bool> DeleteAsync(Guid id);
+        Task<IEnumerable<EventSectionResponseDTO>> GetByEventIdAsync(Guid eventId);
     }
 }
