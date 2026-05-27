@@ -10,13 +10,13 @@ namespace Eventix.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class EventSectionsController : ControllerBase
+public class EventSectionController : ControllerBase
 {
     private readonly IEventSectionService _service;
     private readonly IDistributedCache _cache;
     private readonly ITenantContext _tenantContext;
 
-    public EventSectionsController(
+    public EventSectionController(
          IEventSectionService service,
          IDistributedCache cache,
          ITenantContext tenantContext)
@@ -31,15 +31,7 @@ public class EventSectionsController : ControllerBase
     public async Task<ActionResult<IEnumerable<EventSectionResponseDTO>>> GetAll(
         CancellationToken cancellationToken)
     {
-        var cacheKey = $"tenant:{_tenantContext.TenantId}:eventsections:all";
-
-        var result = await CacheHelper.GetOrSetAsync(
-            _cache,
-            cacheKey,
-            () => _service.GetAllAsync(),
-            TimeSpan.FromMinutes(10),
-            cancellationToken);
-
+        var result = await _service.GetAllAsync();
         return Ok(result);
     }
 

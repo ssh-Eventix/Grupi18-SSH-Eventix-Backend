@@ -19,6 +19,8 @@ public class PublicDbContext : DbContext
     public DbSet<TenantImpersonationLog> TenantImpersonationLogs => Set<TenantImpersonationLog>();
     public DbSet<ArchiveRecord> ArchiveRecords => Set<ArchiveRecord>();
     public DbSet<TenantEmailDomain> TenantEmailDomains => Set<TenantEmailDomain>();
+    public DbSet<Venue> Venues => Set<Venue>();
+    public DbSet<VenueSection> VenueSections => Set<VenueSection>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -33,6 +35,8 @@ public class PublicDbContext : DbContext
         ConfigureRefreshToken(modelBuilder);
         ConfigureTenantEmailDomain(modelBuilder);
         ConfigurePasswordResetToken(modelBuilder);
+        ConfigureVenue(modelBuilder);
+        ConfigureVenueSection(modelBuilder);
 
         base.OnModelCreating(modelBuilder);
     }
@@ -364,6 +368,31 @@ public class PublicDbContext : DbContext
 
             entity.HasIndex(x => new { x.TenantId, x.Domain })
                 .IsUnique();
+        });
+    }
+
+    private static void ConfigureVenue(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Venue>(entity =>
+        {
+            entity.ToTable("Venue", "public");
+
+            entity.HasKey(x => x.Id);
+        });
+    }
+
+    private static void ConfigureVenueSection(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<VenueSection>(entity =>
+        {
+            entity.ToTable("VenueSection", "public");
+
+            entity.HasKey(x => x.Id);
+
+            entity.HasOne(x => x.Venue)
+                .WithMany(x => x.Sections)
+                .HasForeignKey(x => x.VenueId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }
