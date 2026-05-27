@@ -2,35 +2,64 @@
 using Eventix.Application.DTOs.Venues;
 using Eventix.Application.Interfaces.Common;
 using Eventix.Application.Interfaces.Services;
+using Eventix.Infrastructure.Persistence.Database;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 
 namespace Eventix.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class VenuesController : ControllerBase
+public class VenueController : ControllerBase
 {
     private readonly IVenueService _service;
     private readonly IDistributedCache _cache;
     private readonly ITenantContext _tenantContext;
+    private readonly PublicDbContext _publicContext;
 
-    public VenuesController(
-     IVenueService service,
-     IDistributedCache cache,
-     ITenantContext tenantContext)
+    public VenueController(
+    IVenueService service,
+    IDistributedCache cache,
+    ITenantContext tenantContext,
+    PublicDbContext publicContext)
     {
         _service = service;
         _cache = cache;
         _tenantContext = tenantContext;
+        _publicContext = publicContext;
+    }
+
+    [HttpGet("public")]
+    [Authorize]
+    public async Task<IActionResult> GetAllPublic(
+        CancellationToken cancellationToken)
+    {
+        var result = await _publicContext.Venues
+            .OrderBy(x => x.Name)
+            .ToListAsync(cancellationToken);
+
+        return Ok(result);
+    }
+
+    [HttpGet("public/{id:guid}")]
+    [Authorize]
+    public async Task<IActionResult> GetPublicById(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var venue = await _publicContext.Venues
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        return venue == null ? NotFound() : Ok(venue);
     }
 
     [HttpGet]
     [Authorize(Policy = "Permission:ViewVenues")]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
-        var cacheKey = $"tenant:{_tenantContext.TenantId}:venues:all";
+        const string cacheKey = "public:venues:all";
 
         var result = await CacheHelper.GetOrSetAsync(
             _cache,
@@ -48,7 +77,7 @@ public class VenuesController : ControllerBase
         Guid id,
         CancellationToken cancellationToken)
     {
-        var cacheKey = $"tenant:{_tenantContext.TenantId}:venue:{id}";
+        var cacheKey = $"public:venue:{id}";
 
         var venue = await CacheHelper.GetOrSetAsync(
             _cache,
@@ -63,14 +92,12 @@ public class VenuesController : ControllerBase
     [HttpPost]
     [Authorize(Policy = "Permission:CreateVenues")]
     public async Task<IActionResult> Create(
-       CreateVenueDTO dto,
-       CancellationToken cancellationToken)
+        CreateVenueDTO dto,
+        CancellationToken cancellationToken)
     {
         var result = await _service.CreateAsync(dto);
 
-        await _cache.RemoveAsync(
-            $"tenant:{_tenantContext.TenantId}:venues:all",
-            cancellationToken);
+        await _cache.RemoveAsync("public:venues:all", cancellationToken);
 
         return Ok(result);
     }
@@ -87,13 +114,8 @@ public class VenuesController : ControllerBase
         if (!updated)
             return NotFound();
 
-        await _cache.RemoveAsync(
-            $"tenant:{_tenantContext.TenantId}:venues:all",
-            cancellationToken);
-
-        await _cache.RemoveAsync(
-            $"tenant:{_tenantContext.TenantId}:venue:{id}",
-            cancellationToken);
+        await _cache.RemoveAsync("public:venues:all", cancellationToken);
+        await _cache.RemoveAsync($"public:venue:{id}", cancellationToken);
 
         return NoContent();
     }
@@ -109,13 +131,8 @@ public class VenuesController : ControllerBase
         if (!deleted)
             return NotFound();
 
-        await _cache.RemoveAsync(
-            $"tenant:{_tenantContext.TenantId}:venues:all",
-            cancellationToken);
-
-        await _cache.RemoveAsync(
-            $"tenant:{_tenantContext.TenantId}:venue:{id}",
-            cancellationToken);
+        await _cache.RemoveAsync("public:venues:all", cancellationToken);
+        await _cache.RemoveAsync($"public:venue:{id}", cancellationToken);
 
         return NoContent();
     }
