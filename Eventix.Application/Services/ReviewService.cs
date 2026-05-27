@@ -59,4 +59,16 @@ public class ReviewService : IReviewService
         Rating = x.Rating,
         Comment = x.Comment
     };
+
+    public async Task<List<ReviewDto>> GetByEventIdAsync(Guid eventId, CancellationToken ct = default)
+    {
+        var reviews = await _repo.GetByEventIdAsync(eventId, ct);
+        return reviews.Select(Map).ToList();
+    }
+
+    public async Task<List<ReviewDto>> GetByUserIdAsync(Guid userId, CancellationToken ct = default)
+    {
+        var reviews = await _repo.GetByUserIdAsync(userId, ct);
+        return reviews.Select(Map).ToList();
+    }
 }

@@ -12,26 +12,28 @@ public class PublicEventRepository : IPublicEventRepository
 {
     private readonly PublicDbContext _publicDbContext;
 
-    public PublicEventRepository(
-        PublicDbContext publicDbContext)
+    public PublicEventRepository(PublicDbContext publicDbContext)
     {
         _publicDbContext = publicDbContext;
     }
+
+    private sealed record TenantSchemaInfo(string SchemaName, string Slug);
 
     public async Task<List<EventResponseDTO>> GetAllPublicAsync(
         string? search,
         CancellationToken cancellationToken = default)
     {
-        var schemas = await GetActiveTenantSchemasAsync(cancellationToken);
+        var tenants = await GetActiveTenantSchemasAsync(cancellationToken);
 
         var result = new List<EventResponseDTO>();
 
-        foreach (var schema in schemas)
+        foreach (var tenant in tenants)
         {
             try
             {
                 var events = await GetEventsFromSchemaAsync(
-                    schema,
+                    tenant.SchemaName,
+                    tenant.Slug,
                     search,
                     null,
                     cancellationToken);
@@ -53,14 +55,15 @@ public class PublicEventRepository : IPublicEventRepository
         Guid id,
         CancellationToken cancellationToken = default)
     {
-        var schemas = await GetActiveTenantSchemasAsync(cancellationToken);
+        var tenants = await GetActiveTenantSchemasAsync(cancellationToken);
 
-        foreach (var schema in schemas)
+        foreach (var tenant in tenants)
         {
             try
             {
                 var events = await GetEventsFromSchemaAsync(
-                    schema,
+                    tenant.SchemaName,
+                    tenant.Slug,
                     null,
                     id,
                     cancellationToken);
@@ -79,29 +82,33 @@ public class PublicEventRepository : IPublicEventRepository
         return null;
     }
 
-    private async Task<List<string>> GetActiveTenantSchemasAsync(CancellationToken cancellationToken)
+    private async Task<List<TenantSchemaInfo>> GetActiveTenantSchemasAsync(CancellationToken cancellationToken)
     {
         return await _publicDbContext.Tenants
             .AsNoTracking()
-            .Where(x => x.IsActive && x.SchemaName != null && x.SchemaName != "")
-            .Select(x => x.SchemaName!)
+            .Where(x =>
+                x.IsActive &&
+                x.SchemaName != null &&
+                x.SchemaName != "" &&
+                x.Slug != null &&
+                x.Slug != "")
+            .Select(x => new TenantSchemaInfo(x.SchemaName!, x.Slug!))
             .ToListAsync(cancellationToken);
     }
 
     private async Task<List<EventResponseDTO>> GetEventsFromSchemaAsync(
         string schema,
+        string tenantSlug,
         string? search,
         Guid? id,
         CancellationToken cancellationToken)
     {
-        var connection =
-            (NpgsqlConnection)_publicDbContext.Database.GetDbConnection();
+        var connection = (NpgsqlConnection)_publicDbContext.Database.GetDbConnection();
 
         if (connection.State != System.Data.ConnectionState.Open)
         {
             await connection.OpenAsync(cancellationToken);
         }
-       
 
         var quotedSchema = QuoteIdentifier(schema);
 
@@ -133,10 +140,10 @@ LEFT JOIN {quotedSchema}.""Venue"" v ON v.""Id"" = e.""VenueId""
 LEFT JOIN {quotedSchema}.""EventCategory"" c ON c.""Id"" = e.""EventCategoryId""
 WHERE e.""IsDeleted"" = false
   AND e.""IsPublished"" = true
-    AND (
+  AND (
         e.""Visibility""::text = @publicVisibilityText
         OR e.""Visibility""::text = @publicVisibilityNumber
-    )
+      )
   AND e.""EndUtc"" > NOW()
   AND (@id IS NULL OR e.""Id"" = @id)
   AND (
@@ -189,7 +196,9 @@ ORDER BY e.""StartUtc"";
                 IsPublished = reader.GetBoolean(17),
                 Currency = reader.GetString(18),
                 CreatedAtUtc = reader.GetDateTime(19),
-                UpdatedAtUtc = reader.IsDBNull(20) ? null : reader.GetDateTime(20)
+                UpdatedAtUtc = reader.IsDBNull(20) ? null : reader.GetDateTime(20),
+                TenantSlug = tenantSlug,
+                SchemaName = schema
             });
         }
 
