@@ -22,7 +22,7 @@ public class TenantEmailDomainRepositoryIntegrationTests
         await using var scope = _fixture.Services.CreateAsyncScope();
 
         var db = scope.ServiceProvider.GetRequiredService<PublicDbContext>();
-        await db.Database.MigrateAsync();
+        await EnsurePublicDatabaseReadyAsync(db);
 
         var tenant = await CreateTenantAsync(db);
         var repository = new TenantEmailDomainRepository(db);
@@ -54,7 +54,7 @@ public class TenantEmailDomainRepositoryIntegrationTests
         await using var scope = _fixture.Services.CreateAsyncScope();
 
         var db = scope.ServiceProvider.GetRequiredService<PublicDbContext>();
-        await db.Database.MigrateAsync();
+        await EnsurePublicDatabaseReadyAsync(db);
 
         var tenant1 = await CreateTenantAsync(db);
         var tenant2 = await CreateTenantAsync(db);
@@ -97,7 +97,7 @@ public class TenantEmailDomainRepositoryIntegrationTests
         await using var scope = _fixture.Services.CreateAsyncScope();
 
         var db = scope.ServiceProvider.GetRequiredService<PublicDbContext>();
-        await db.Database.MigrateAsync();
+        await EnsurePublicDatabaseReadyAsync(db);
 
         var tenant = await CreateTenantAsync(db);
 
@@ -146,5 +146,27 @@ public class TenantEmailDomainRepositoryIntegrationTests
         await db.SaveChangesAsync();
 
         return tenant;
+    }
+
+    private static async Task EnsurePublicDatabaseReadyAsync(PublicDbContext db)
+    {
+        await db.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS public."AuditLog" (
+            "Id" uuid NOT NULL,
+            "TenantId" uuid NULL,
+            "TenantName" text NULL,
+            "UserId" uuid NULL,
+            "UserEmail" text NULL,
+            "EntityName" text NOT NULL,
+            "EntityId" uuid NULL,
+            "Action" integer NOT NULL,
+            "OldValues" text NULL,
+            "NewValues" text NULL,
+            "CreatedAtUtc" timestamp with time zone NOT NULL,
+            CONSTRAINT "PK_AuditLog" PRIMARY KEY ("Id")
+        );
+    """);
+
+        await db.Database.MigrateAsync();
     }
 }
