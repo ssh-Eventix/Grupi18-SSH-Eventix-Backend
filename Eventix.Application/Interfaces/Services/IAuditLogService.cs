@@ -12,4 +12,8 @@ public interface IAuditLogService
     Task<AuditLogDTO?> GetByIdAsync(
         Guid id,
         CancellationToken cancellationToken = default);
+
+    Task CreateAsync(
+        CreateAuditLogDTO dto,
+        CancellationToken cancellationToken = default);
 }

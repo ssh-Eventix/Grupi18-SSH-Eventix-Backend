@@ -29,7 +29,8 @@ public class TenantMiddleware
             path.StartsWithSegments("/api/auth/logout") ||
             path.StartsWithSegments("/api/auth/revoke-refresh-token") ||
             path.StartsWithSegments("/api/auth/refresh-tokens") ||
-            path.StartsWithSegments("/api/auth/revoke-all")
+            path.StartsWithSegments("/api/auth/revoke-all")||
+            path.StartsWithSegments("/api/auditlog")
         )
         {
             await _next(httpContext);

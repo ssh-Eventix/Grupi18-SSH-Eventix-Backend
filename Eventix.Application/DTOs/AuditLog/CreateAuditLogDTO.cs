@@ -1,9 +1,9 @@
+﻿using Eventix.Domain.Enums;
+
 namespace Eventix.Application.DTOs.AuditLog;
 
-public class AuditLogDTO
+public class CreateAuditLogDTO
 {
-    public Guid Id { get; set; }
-
     public Guid? TenantId { get; set; }
 
     public string? TenantName { get; set; }
@@ -16,11 +16,9 @@ public class AuditLogDTO
 
     public Guid EntityId { get; set; }
 
-    public string Action { get; set; } = string.Empty;
+    public AuditAction Action { get; set; }
 
     public string? OldValues { get; set; }
 
     public string? NewValues { get; set; }
-
-    public DateTime CreatedAtUtc { get; set; }
 }

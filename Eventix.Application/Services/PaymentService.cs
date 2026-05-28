@@ -1,13 +1,17 @@
-﻿using Eventix.Application.DTOs.Booking;
-using Eventix.Application.DTOs.Payment;
-using Eventix.Application.Interfaces.Repositories;
-using Eventix.Application.Interfaces.Services;
-using Eventix.Domain.Entities;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
+using Eventix.Application.DTOs.AuditLog;
+using Eventix.Application.DTOs.Booking;
+using Eventix.Application.DTOs.Payment;
+using Eventix.Application.Interfaces.Common;
+using Eventix.Application.Interfaces.Repositories;
+using Eventix.Application.Interfaces.Services;
+using Eventix.Domain.Entities;
+using Eventix.Domain.Enums;
 
 namespace Eventix.Application.Services
 {
@@ -15,11 +19,22 @@ namespace Eventix.Application.Services
     {
         public readonly IPaymentRepository _paymentRepository;
         public readonly IBookingRepository _bookingRepository;
+        private readonly ITenantContext _tenantContext;
+        private readonly ICurrentUserService _currentUserService;
+        private readonly IAuditLogService _auditLogService;
 
-        public PaymentService(IPaymentRepository paymentRepository, IBookingRepository bookingRepository)
+        public PaymentService(
+            IPaymentRepository paymentRepository,
+            IBookingRepository bookingRepository,
+            ITenantContext tenantContext,
+            ICurrentUserService currentUserService,
+            IAuditLogService auditLogService)
         {
             _paymentRepository = paymentRepository;
             _bookingRepository = bookingRepository;
+            _tenantContext = tenantContext;
+            _currentUserService = currentUserService;
+            _auditLogService = auditLogService;
         }
 
         //We use repositories only on services, and use services only for frontend communication
@@ -67,6 +82,27 @@ namespace Eventix.Application.Services
 
             await _paymentRepository.AddAsync(payment);
             await _paymentRepository.SaveChangesAsync();
+
+            await _auditLogService.CreateAsync(new CreateAuditLogDTO
+            {
+                TenantId = _tenantContext.TenantId,
+                TenantName = _tenantContext.SchemaName,
+                UserId = _currentUserService.UserId ?? booking.UserId,
+                UserEmail = _currentUserService.Email,
+                EntityName = nameof(Payment),
+                EntityId = payment.Id,
+                Action = AuditAction.Payment,
+                NewValues = JsonSerializer.Serialize(new
+                {
+                    payment.Id,
+                    payment.BookingId,
+                    payment.Amount,
+                    payment.PaymentMethodId,
+                    payment.Status,
+                    payment.PaidAt,
+                    BookingUserId = booking.UserId
+                })
+            });
 
             return MapPayment(payment);
         }

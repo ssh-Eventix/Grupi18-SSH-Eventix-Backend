@@ -39,13 +39,38 @@ public class AuditLogService : IAuditLogService
         return log is null ? null : MapToDto(log);
     }
 
+    public async Task CreateAsync(
+        CreateAuditLogDTO dto,
+        CancellationToken cancellationToken = default)
+    {
+        var auditLog = new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            TenantId = dto.TenantId,
+            TenantName = dto.TenantName,
+            UserId = dto.UserId,
+            UserEmail = dto.UserEmail,
+            EntityName = dto.EntityName,
+            EntityId = dto.EntityId,
+            Action = dto.Action,
+            OldValues = dto.OldValues,
+            NewValues = dto.NewValues,
+            CreatedAtUtc = DateTime.UtcNow
+        };
+
+        await _repository.AddAsync(auditLog, cancellationToken);
+        await _repository.SaveChangesAsync(cancellationToken);
+    }
+
     private static AuditLogDTO MapToDto(AuditLog log)
     {
         return new AuditLogDTO
         {
             Id = log.Id,
+            TenantId = log.TenantId,
+            TenantName = log.TenantName,
             UserId = log.UserId,
-            UserEmail = log.User?.Email,
+            UserEmail = log.UserEmail,
             EntityName = log.EntityName,
             EntityId = log.EntityId,
             Action = log.Action.ToString(),

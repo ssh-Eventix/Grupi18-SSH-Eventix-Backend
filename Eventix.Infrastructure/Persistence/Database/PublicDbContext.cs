@@ -21,6 +21,7 @@ public class PublicDbContext : DbContext
     public DbSet<TenantEmailDomain> TenantEmailDomains => Set<TenantEmailDomain>();
     public DbSet<Venue> Venues => Set<Venue>();
     public DbSet<VenueSection> VenueSections => Set<VenueSection>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -37,6 +38,7 @@ public class PublicDbContext : DbContext
         ConfigurePasswordResetToken(modelBuilder);
         ConfigureVenue(modelBuilder);
         ConfigureVenueSection(modelBuilder);
+        ConfigureAuditLog(modelBuilder);
 
         base.OnModelCreating(modelBuilder);
     }
@@ -393,6 +395,31 @@ public class PublicDbContext : DbContext
                 .WithMany(x => x.Sections)
                 .HasForeignKey(x => x.VenueId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+    }
+
+    private static void ConfigureAuditLog(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<AuditLog>(entity =>
+        {
+            entity.ToTable("AuditLog", "public");
+
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.TenantName).HasMaxLength(200);
+            entity.Property(x => x.UserEmail).HasMaxLength(250);
+
+            entity.Property(x => x.EntityName)
+                .IsRequired()
+                .HasMaxLength(200);
+
+            entity.Property(x => x.OldValues).HasColumnType("jsonb");
+            entity.Property(x => x.NewValues).HasColumnType("jsonb");
+
+            entity.HasIndex(x => x.TenantId);
+            entity.HasIndex(x => x.UserId);
+            entity.HasIndex(x => new { x.EntityName, x.EntityId });
+            entity.HasIndex(x => x.CreatedAtUtc);
         });
     }
 }

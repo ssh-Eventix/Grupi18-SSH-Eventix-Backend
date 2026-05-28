@@ -9,9 +9,9 @@ namespace Eventix.Infrastructure.Persistence.Repositories;
 
 public class AuditLogRepository : IAuditLogRepository
 {
-    private readonly TenantDbContext _context;
+    private readonly PublicDbContext _context;
 
-    public AuditLogRepository(TenantDbContext context)
+    public AuditLogRepository(PublicDbContext context)
     {
         _context = context;
     }
@@ -21,28 +21,27 @@ public class AuditLogRepository : IAuditLogRepository
         CancellationToken cancellationToken = default)
     {
         var page = query.Page <= 0 ? 1 : query.Page;
-        var pageSize = query.PageSize <= 0 ? 20 : query.PageSize;
-        pageSize = Math.Min(pageSize, 100);
+        var pageSize = query.PageSize <= 0 ? 20 : Math.Min(query.PageSize, 100);
 
-        var logsQuery = _context.AuditLogs
-            .AsNoTracking()
-            .Include(x => x.User)
-            .AsQueryable();
+        var logsQuery = _context.AuditLogs.AsNoTracking().AsQueryable();
 
         if (query.UserId.HasValue)
             logsQuery = logsQuery.Where(x => x.UserId == query.UserId.Value);
 
-        if (!string.IsNullOrWhiteSpace(query.EntityName))
-        {
-            var entityName = query.EntityName.Trim().ToLower();
-            logsQuery = logsQuery.Where(x => x.EntityName.ToLower().Contains(entityName));
-        }
+        if (query.TenantId.HasValue)
+            logsQuery = logsQuery.Where(x => x.TenantId == query.TenantId.Value);
 
         if (query.EntityId.HasValue)
             logsQuery = logsQuery.Where(x => x.EntityId == query.EntityId.Value);
 
         if (query.Action.HasValue)
             logsQuery = logsQuery.Where(x => x.Action == query.Action.Value);
+
+        if (!string.IsNullOrWhiteSpace(query.EntityName))
+        {
+            var entityName = query.EntityName.Trim().ToLower();
+            logsQuery = logsQuery.Where(x => x.EntityName.ToLower().Contains(entityName));
+        }
 
         if (query.FromDateUtc.HasValue)
             logsQuery = logsQuery.Where(x => x.CreatedAtUtc >= query.FromDateUtc.Value);
@@ -56,10 +55,10 @@ public class AuditLogRepository : IAuditLogRepository
 
             logsQuery = logsQuery.Where(x =>
                 x.EntityName.ToLower().Contains(search) ||
-                x.Action.ToString().ToLower().Contains(search) ||
+                (x.UserEmail != null && x.UserEmail.ToLower().Contains(search)) ||
+                (x.TenantName != null && x.TenantName.ToLower().Contains(search)) ||
                 (x.OldValues != null && x.OldValues.ToLower().Contains(search)) ||
-                (x.NewValues != null && x.NewValues.ToLower().Contains(search)) ||
-                (x.User.Email != null && x.User.Email.ToLower().Contains(search)));
+                (x.NewValues != null && x.NewValues.ToLower().Contains(search)));
         }
 
         var totalCount = await logsQuery.CountAsync(cancellationToken);
@@ -79,19 +78,14 @@ public class AuditLogRepository : IAuditLogRepository
         };
     }
 
-    public async Task<AuditLog?> GetByIdAsync(
-        Guid id,
-        CancellationToken cancellationToken = default)
+    public async Task<AuditLog?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await _context.AuditLogs
             .AsNoTracking()
-            .Include(x => x.User)
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
-    public async Task AddAsync(
-        AuditLog auditLog,
-        CancellationToken cancellationToken = default)
+    public async Task AddAsync(AuditLog auditLog, CancellationToken cancellationToken = default)
     {
         await _context.AuditLogs.AddAsync(auditLog, cancellationToken);
     }
