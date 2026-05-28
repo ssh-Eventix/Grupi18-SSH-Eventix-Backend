@@ -1,8 +1,13 @@
+using System.Text;
+using DotNetEnv;
+using Eventix.Api.Authorization;
+using Eventix.Api.Helpers;
 using Eventix.Api.Middleware;
 using Eventix.Application.Interfaces.Common;
 using Eventix.Application.Interfaces.Repositories;
 using Eventix.Application.Interfaces.Services;
 using Eventix.Application.Services;
+using Eventix.Domain.Enums;
 using Eventix.Infrastructure.Auth;
 using Eventix.Infrastructure.BackgroundJobs;
 using Eventix.Infrastructure.MultiTenancy;
@@ -17,10 +22,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Text;
-using Eventix.Api.Authorization;
-using Eventix.Domain.Enums;
-using DotNetEnv;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -267,6 +268,8 @@ builder.Services.AddScoped<IPublicEventService, PublicEventService>();
 builder.Services.AddScoped<IPublicEventRepository, PublicEventRepository>();
 builder.Services.AddScoped<IAuditLogRepository, AuditLogRepository>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddHttpClient<IOllamaClient, OllamaClient>(client =>
 {
     client.BaseAddress = new Uri(

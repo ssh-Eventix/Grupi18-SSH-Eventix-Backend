@@ -1,9 +1,11 @@
-﻿using Eventix.Application.DTOs.Events;
+﻿using System.Text.Json;
+using Eventix.Application.DTOs.AuditLog;
+using Eventix.Application.DTOs.Events;
+using Eventix.Application.Interfaces.Common;
 using Eventix.Application.Interfaces.Repositories;
 using Eventix.Application.Interfaces.Services;
 using Eventix.Domain.Entities;
 using Eventix.Domain.Enums;
-using Eventix.Application.Interfaces.Common;
 
 namespace Eventix.Application.Services;
 
@@ -11,11 +13,19 @@ public class EventService : IEventService
 {
     private readonly IEventRepository _repository;
     private readonly ITenantContext _tenantContext;
+    private readonly ICurrentUserService _currentUserService;
+    private readonly IAuditLogService _auditLogService;
 
-    public EventService(IEventRepository repository, ITenantContext tenantContext)
+    public EventService(
+    IEventRepository repository,
+    ITenantContext tenantContext,
+    ICurrentUserService currentUserService,
+    IAuditLogService auditLogService)
     {
         _repository = repository;
         _tenantContext = tenantContext;
+        _currentUserService = currentUserService;
+        _auditLogService = auditLogService;
     }
 
     public async Task<List<EventResponseDTO>> GetAllAsync(string? search, CancellationToken cancellationToken = default)
@@ -68,6 +78,30 @@ public class EventService : IEventService
         await _repository.AddAsync(entity, cancellationToken);
         await _repository.SaveChangesAsync(cancellationToken);
 
+        await _auditLogService.CreateAsync(new CreateAuditLogDTO
+        {
+            TenantId = _tenantContext.TenantId,
+            TenantName = _tenantContext.SchemaName,
+            UserId = _currentUserService.UserId,
+            UserEmail = _currentUserService.Email,
+            EntityName = nameof(Event),
+            EntityId = entity.Id,
+            Action = AuditAction.Create,
+            NewValues = JsonSerializer.Serialize(new
+            {
+                entity.Id,
+                entity.Title,
+                entity.Slug,
+                entity.StartUtc,
+                entity.EndUtc,
+                entity.Status,
+                entity.Visibility,
+                entity.IsFree,
+                entity.IsPublished,
+                entity.Currency
+            })
+        }, cancellationToken);
+
         return MapToResponseDto(entity);
     }
 
@@ -77,6 +111,20 @@ public class EventService : IEventService
 
         if (entity is null)
             return false;
+
+        var oldValues = JsonSerializer.Serialize(new
+        {
+            entity.Id,
+            entity.Title,
+            entity.Slug,
+            entity.StartUtc,
+            entity.EndUtc,
+            entity.Status,
+            entity.Visibility,
+            entity.IsFree,
+            entity.IsPublished,
+            entity.Currency
+        });
 
         entity.VenueId = dto.VenueId;
         entity.EventCategoryId = dto.EventCategoryId;
@@ -108,6 +156,31 @@ public class EventService : IEventService
         await _repository.UpdateAsync(entity);
         await _repository.SaveChangesAsync(cancellationToken);
 
+        await _auditLogService.CreateAsync(new CreateAuditLogDTO
+        {
+            TenantId = _tenantContext.TenantId,
+            TenantName = _tenantContext.SchemaName,
+            UserId = _currentUserService.UserId,
+            UserEmail = _currentUserService.Email,
+            EntityName = nameof(Event),
+            EntityId = entity.Id,
+            Action = AuditAction.Update,
+            OldValues = oldValues,
+            NewValues = JsonSerializer.Serialize(new
+            {
+                entity.Id,
+                entity.Title,
+                entity.Slug,
+                entity.StartUtc,
+                entity.EndUtc,
+                entity.Status,
+                entity.Visibility,
+                entity.IsFree,
+                entity.IsPublished,
+                entity.Currency
+            })
+        }, cancellationToken);
+
         return true;
     }
 
@@ -118,11 +191,32 @@ public class EventService : IEventService
         if (entity is null)
             return false;
 
+        var oldValues = JsonSerializer.Serialize(new
+        {
+            entity.Id,
+            entity.Title,
+            entity.Slug,
+            entity.Status,
+            entity.IsPublished
+        });
+
         entity.IsDeleted = true;
         entity.UpdatedAtUtc = DateTime.UtcNow;
 
         await _repository.UpdateAsync(entity);
         await _repository.SaveChangesAsync(cancellationToken);
+
+        await _auditLogService.CreateAsync(new CreateAuditLogDTO
+        {
+            TenantId = _tenantContext.TenantId,
+            TenantName = _tenantContext.SchemaName,
+            UserId = _currentUserService.UserId,
+            UserEmail = _currentUserService.Email,
+            EntityName = nameof(Event),
+            EntityId = entity.Id,
+            Action = AuditAction.Delete,
+            OldValues = oldValues
+        }, cancellationToken);
 
         return true;
     }

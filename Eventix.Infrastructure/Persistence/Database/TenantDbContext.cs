@@ -44,7 +44,6 @@ public class TenantDbContext : DbContext
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<PaymentMethod> PaymentMethods => Set<PaymentMethod>();
     public DbSet<AIRequestLog> AIRequestLogs => Set<AIRequestLog>();
-    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -77,7 +76,6 @@ public class TenantDbContext : DbContext
         ConfigureReview(modelBuilder);
         ConfigureDiscountCoupon(modelBuilder);
         ConfigureAIRequestLog(modelBuilder);
-        ConfigureAuditLog(modelBuilder);
 
         base.OnModelCreating(modelBuilder);
     }
@@ -619,28 +617,6 @@ public class TenantDbContext : DbContext
                 .HasForeignKey(x => x.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-        });
-    }
-
-    // ================= AUDIT =================
-    private static void ConfigureAuditLog(ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<AuditLog>(entity =>
-        {
-            entity.ToTable("AuditLog");
-
-            entity.HasKey(x => x.Id);
-
-            entity.Property(x => x.EntityName).IsRequired().HasMaxLength(200);
-            entity.Property(x => x.OldValues).HasColumnType("jsonb");
-            entity.Property(x => x.NewValues).HasColumnType("jsonb");
-
-            entity.HasIndex(x => new { x.TenantId, x.EntityName, x.EntityId });
-
-            entity.HasOne(x => x.User)
-                .WithMany(x => x.AuditLogs)
-                .HasForeignKey(x => x.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
         });
     }
 

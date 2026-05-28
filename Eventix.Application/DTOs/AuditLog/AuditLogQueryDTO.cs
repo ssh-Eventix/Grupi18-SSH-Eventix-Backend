@@ -6,6 +6,8 @@ public class AuditLogQueryDTO
 {
     public Guid? UserId { get; set; }
 
+    public Guid? TenantId { get; set; }
+
     public string? EntityName { get; set; }
 
     public Guid? EntityId { get; set; }

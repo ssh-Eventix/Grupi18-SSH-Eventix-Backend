@@ -8,6 +8,7 @@ namespace Eventix.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class AuditLogController : ControllerBase
 {
     private readonly IAuditLogService _service;
@@ -18,7 +19,6 @@ public class AuditLogController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Policy = "Permission:ViewAuditLogs")]
     public async Task<ActionResult<PagedResult<AuditLogDTO>>> GetAll(
         [FromQuery] AuditLogQueryDTO query,
         CancellationToken cancellationToken)
@@ -29,7 +29,6 @@ public class AuditLogController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
-    [Authorize(Policy = "Permission:ViewAuditLogs")]
     public async Task<ActionResult<AuditLogDTO>> GetById(
         Guid id,
         CancellationToken cancellationToken)
