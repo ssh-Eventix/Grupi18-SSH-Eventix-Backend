@@ -59,7 +59,7 @@ public class EventService : IEventService
             StartUtc = dto.StartUtc,
             EndUtc = dto.EndUtc,
 
-            Status = EventStatus.Draft,
+            Status = dto.Status,
             Visibility = (EventVisibility)dto.Visibility,
 
             BannerImageUrl = dto.BannerImageUrl,
@@ -68,7 +68,7 @@ public class EventService : IEventService
             MinTicketsPerOrder = dto.MinTicketsPerOrder,
 
             IsFree = dto.IsFree,
-            IsPublished = false,
+            IsPublished = dto.Status == EventStatus.Published || dto.IsPublished,
 
             Currency = dto.Currency,
 
