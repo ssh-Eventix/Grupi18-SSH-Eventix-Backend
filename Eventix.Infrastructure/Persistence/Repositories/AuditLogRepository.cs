@@ -1,73 +1,103 @@
+using Eventix.Application.DTOs.AuditLog;
+using Eventix.Application.DTOs.Common;
 using Eventix.Application.Interfaces.Repositories;
 using Eventix.Domain.Entities;
 using Eventix.Infrastructure.Persistence.Database;
 using Microsoft.EntityFrameworkCore;
 
-namespace Eventix.Infrastructure.Persistence.Repositories
+namespace Eventix.Infrastructure.Persistence.Repositories;
+
+public class AuditLogRepository : IAuditLogRepository
 {
-    public class AuditLogRepository : IAuditLogRepository
+    private readonly TenantDbContext _context;
+
+    public AuditLogRepository(TenantDbContext context)
     {
-        private readonly TenantDbContext _context;
+        _context = context;
+    }
 
-        public AuditLogRepository(TenantDbContext context)
+    public async Task<PagedResult<AuditLog>> GetPagedAsync(
+        AuditLogQueryDTO query,
+        CancellationToken cancellationToken = default)
+    {
+        var page = query.Page <= 0 ? 1 : query.Page;
+        var pageSize = query.PageSize <= 0 ? 20 : query.PageSize;
+        pageSize = Math.Min(pageSize, 100);
+
+        var logsQuery = _context.AuditLogs
+            .AsNoTracking()
+            .Include(x => x.User)
+            .AsQueryable();
+
+        if (query.UserId.HasValue)
+            logsQuery = logsQuery.Where(x => x.UserId == query.UserId.Value);
+
+        if (!string.IsNullOrWhiteSpace(query.EntityName))
         {
-            _context = context;
+            var entityName = query.EntityName.Trim().ToLower();
+            logsQuery = logsQuery.Where(x => x.EntityName.ToLower().Contains(entityName));
         }
 
-        public async Task<List<AuditLog>> GetAllAsync()
+        if (query.EntityId.HasValue)
+            logsQuery = logsQuery.Where(x => x.EntityId == query.EntityId.Value);
+
+        if (query.Action.HasValue)
+            logsQuery = logsQuery.Where(x => x.Action == query.Action.Value);
+
+        if (query.FromDateUtc.HasValue)
+            logsQuery = logsQuery.Where(x => x.CreatedAtUtc >= query.FromDateUtc.Value);
+
+        if (query.ToDateUtc.HasValue)
+            logsQuery = logsQuery.Where(x => x.CreatedAtUtc <= query.ToDateUtc.Value);
+
+        if (!string.IsNullOrWhiteSpace(query.Search))
         {
-            return await _context.AuditLogs
-                .AsNoTracking()
-                .Include(a => a.User)
-                .OrderByDescending(a => a.CreatedAtUtc)
-                .ToListAsync();
+            var search = query.Search.Trim().ToLower();
+
+            logsQuery = logsQuery.Where(x =>
+                x.EntityName.ToLower().Contains(search) ||
+                x.Action.ToString().ToLower().Contains(search) ||
+                (x.OldValues != null && x.OldValues.ToLower().Contains(search)) ||
+                (x.NewValues != null && x.NewValues.ToLower().Contains(search)) ||
+                (x.User.Email != null && x.User.Email.ToLower().Contains(search)));
         }
 
-        public async Task<AuditLog?> GetByIdAsync(Guid id)
-        {
-            return await _context.AuditLogs
-                .Include(a => a.User)
-                .FirstOrDefaultAsync(a => a.Id == id);
-        }
+        var totalCount = await logsQuery.CountAsync(cancellationToken);
 
-        public async Task<List<AuditLog>> GetByUserIdAsync(Guid userId)
-        {
-            return await _context.AuditLogs
-                .AsNoTracking()
-                .Where(a => a.UserId == userId)
-                .Include(a => a.User)
-                .OrderByDescending(a => a.CreatedAtUtc)
-                .ToListAsync();
-        }
+        var items = await logsQuery
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
 
-        public async Task<List<AuditLog>> GetByEntityAsync(string entityName, Guid entityId)
+        return new PagedResult<AuditLog>
         {
-            return await _context.AuditLogs
-                .AsNoTracking()
-                .Where(a => a.EntityName == entityName && a.EntityId == entityId)
-                .Include(a => a.User)
-                .OrderByDescending(a => a.CreatedAtUtc)
-                .ToListAsync();
-        }
+            Items = items,
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = totalCount
+        };
+    }
 
-        public async Task AddAsync(AuditLog auditLog)
-        {
-            await _context.AuditLogs.AddAsync(auditLog);
-        }
+    public async Task<AuditLog?> GetByIdAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.AuditLogs
+            .AsNoTracking()
+            .Include(x => x.User)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+    }
 
-        public void Update(AuditLog auditLog)
-        {
-            _context.AuditLogs.Update(auditLog);
-        }
+    public async Task AddAsync(
+        AuditLog auditLog,
+        CancellationToken cancellationToken = default)
+    {
+        await _context.AuditLogs.AddAsync(auditLog, cancellationToken);
+    }
 
-        public void Delete(AuditLog auditLog)
-        {
-            _context.AuditLogs.Remove(auditLog);
-        }
-
-        public async Task SaveChangesAsync()
-        {
-            await _context.SaveChangesAsync();
-        }
+    public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        await _context.SaveChangesAsync(cancellationToken);
     }
 }
