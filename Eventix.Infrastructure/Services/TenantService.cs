@@ -2,6 +2,7 @@
 using Eventix.Application.Interfaces.Repositories;
 using Eventix.Application.Interfaces.Services;
 using Eventix.Domain.Entities;
+using Eventix.Domain.Enums;
 
 namespace Eventix.Infrastructure.Services;
 
@@ -106,7 +107,11 @@ public class TenantService : ITenantService
         if (tenant is null)
             return false;
 
-        await _repository.DeleteAsync(tenant);
+        tenant.IsActive = false;
+        tenant.Status = TenantStatus.Suspended;
+        tenant.UpdatedAtUtc = DateTime.UtcNow;
+
+        await _repository.UpdateAsync(tenant);
         await _repository.SaveChangesAsync(ct);
 
         return true;

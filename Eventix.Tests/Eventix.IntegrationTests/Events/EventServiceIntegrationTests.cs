@@ -1,4 +1,6 @@
-﻿using Eventix.Application.DTOs.Events;
+﻿using Eventix.Application.DTOs.AuditLog;
+using Eventix.Application.DTOs.Common;
+using Eventix.Application.DTOs.Events;
 using Eventix.Application.Interfaces.Common;
 using Eventix.Application.Interfaces.Services;
 using Eventix.Domain.Entities;
@@ -191,6 +193,43 @@ public class EventServiceIntegrationTests : IClassFixture<TestDatabaseFixture>
         public async ValueTask DisposeAsync()
         {
             await _fixture.DropSchemaAsync(_schemaName);
+        }
+    }
+
+    public class FakeCurrentUserService : ICurrentUserService
+    {
+        public Guid? UserId => Guid.NewGuid();
+
+        public string? Email => "test@eventix.com";
+    }
+
+    public class FakeAuditLogService : IAuditLogService
+    {
+        public Task<PagedResult<AuditLogDTO>> GetPagedAsync(
+            AuditLogQueryDTO query,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(new PagedResult<AuditLogDTO>
+            {
+                Items = new List<AuditLogDTO>(),
+                TotalCount = 0,
+                Page = 1,
+                PageSize = 10
+            });
+        }
+
+        public Task<AuditLogDTO?> GetByIdAsync(
+            Guid id,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult<AuditLogDTO?>(null);
+        }
+
+        public Task CreateAsync(
+            CreateAuditLogDTO dto,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
         }
     }
 }
