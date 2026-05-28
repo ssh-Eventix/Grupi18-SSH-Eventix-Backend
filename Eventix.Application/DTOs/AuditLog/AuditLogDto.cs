@@ -2,11 +2,13 @@ using System;
 
 namespace Eventix.Application.DTOs.AuditLog
 {
-    public class AuditLogDto
+    public class AuditLogDTO
     {
         public Guid Id { get; set; }
 
         public Guid UserId { get; set; }
+
+        public string? UserEmail { get; set; }
 
         public string EntityName { get; set; } = string.Empty;
 

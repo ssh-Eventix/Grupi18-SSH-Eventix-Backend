@@ -1,23 +1,23 @@
+using Eventix.Application.DTOs.AuditLog;
+using Eventix.Application.DTOs.Common;
 using Eventix.Domain.Entities;
 
 namespace Eventix.Application.Interfaces.Repositories
 {
     public interface IAuditLogRepository
     {
-        Task<List<AuditLog>> GetAllAsync();
+        Task<PagedResult<AuditLog>> GetPagedAsync(
+            AuditLogQueryDTO query,
+            CancellationToken cancellationToken = default);
 
-        Task<AuditLog?> GetByIdAsync(Guid id);
+        Task<AuditLog?> GetByIdAsync(
+            Guid id,
+            CancellationToken cancellationToken = default);
 
-        Task<List<AuditLog>> GetByUserIdAsync(Guid userId);
+        Task AddAsync(
+            AuditLog auditLog,
+            CancellationToken cancellationToken = default);
 
-        Task<List<AuditLog>> GetByEntityAsync(string entityName, Guid entityId);
-
-        Task AddAsync(AuditLog auditLog);
-
-        void Update(AuditLog auditLog);
-
-        void Delete(AuditLog auditLog);
-
-        Task SaveChangesAsync();
+        Task SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }

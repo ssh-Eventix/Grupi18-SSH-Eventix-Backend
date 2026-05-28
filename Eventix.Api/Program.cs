@@ -265,6 +265,8 @@ builder.Services.AddScoped<IAIRequestLogRepository, AIRequestLogRepository>();
 builder.Services.AddScoped<IAiService, AiService>();
 builder.Services.AddScoped<IPublicEventService, PublicEventService>();
 builder.Services.AddScoped<IPublicEventRepository, PublicEventRepository>();
+builder.Services.AddScoped<IAuditLogRepository, AuditLogRepository>();
+builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddHttpClient<IOllamaClient, OllamaClient>(client =>
 {
     client.BaseAddress = new Uri(
