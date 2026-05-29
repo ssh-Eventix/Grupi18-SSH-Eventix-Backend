@@ -1,4 +1,7 @@
 ﻿using Eventix.Api.Controllers;
+using Eventix.Application.DTOs.AuditLog;
+using Eventix.Application.DTOs.AuditLog;
+using Eventix.Application.DTOs.Common;
 using Eventix.Application.DTOs.Events;
 using Eventix.Application.Interfaces.Common;
 using Eventix.Application.Interfaces.Repositories;
@@ -109,8 +112,7 @@ public class EventsControllerApiTests
 
     private static ServiceProvider CreateServices()
     {
-        var connectionString =
-       TestConfiguration.ConnectionString;
+        var connectionString = TestConfiguration.ConnectionString;
 
         var services = new ServiceCollection();
 
@@ -119,6 +121,10 @@ public class EventsControllerApiTests
 
         services.AddScoped<IEventRepository, EventRepository>();
         services.AddScoped<IEventService, EventService>();
+
+        services.AddScoped<ICurrentUserService, FakeCurrentUserService>();
+        services.AddScoped<IAuditLogService, FakeAuditLogService>();
+
         services.AddScoped<IPublicEventService, FakePublicEventService>();
 
         services.AddDistributedMemoryCache();
@@ -146,6 +152,43 @@ public class EventsControllerApiTests
             CancellationToken cancellationToken = default)
         {
             return Task.FromResult<EventResponseDTO?>(null);
+        }
+    }
+
+        public class FakeCurrentUserService : ICurrentUserService
+        {
+            public Guid? UserId => Guid.NewGuid();
+
+            public string? Email => "test@eventix.com";
+        }
+
+    public class FakeAuditLogService : IAuditLogService
+    {
+        public Task<PagedResult<AuditLogDTO>> GetPagedAsync(
+            AuditLogQueryDTO query,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(new PagedResult<AuditLogDTO>
+            {
+                Items = new List<AuditLogDTO>(),
+                TotalCount = 0,
+                Page = 1,
+                PageSize = 10
+            });
+        }
+
+        public Task<AuditLogDTO?> GetByIdAsync(
+            Guid id,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult<AuditLogDTO?>(null);
+        }
+
+        public Task CreateAsync(
+            CreateAuditLogDTO dto,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
         }
     }
 

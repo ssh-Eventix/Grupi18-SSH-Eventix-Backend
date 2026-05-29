@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
+using static Eventix.IntegrationTests.Events.EventServiceIntegrationTests;
 
 namespace Eventix.IntegrationTests;
 
@@ -28,6 +29,8 @@ public class TestDatabaseFixture : IAsyncLifetime
 
         services.AddScoped<IEventRepository, EventRepository>();
         services.AddScoped<IEventService, EventService>();
+        services.AddScoped<ICurrentUserService, FakeCurrentUserService>();
+        services.AddScoped<IAuditLogService, FakeAuditLogService>();
         services.AddDbContext<PublicDbContext>(options =>
         {
             options.UseNpgsql(ConnectionString);
