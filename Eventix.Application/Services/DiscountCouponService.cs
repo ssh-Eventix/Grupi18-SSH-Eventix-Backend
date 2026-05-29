@@ -175,5 +175,35 @@ public class DiscountCouponService : IDiscountCouponService
             Total = Math.Max(0, dto.Subtotal - discountAmount)
         };
     }
+
+    public async Task<bool> RedeemAsync(
+        RedeemDiscountCouponDTO dto,
+        CancellationToken cancellationToken = default)
+    {
+        var coupons = await _repository.GetByEventIdAsync(dto.EventId, cancellationToken);
+
+        var coupon = coupons.FirstOrDefault(x =>
+            !x.IsDeleted &&
+            x.Code.Equals(dto.Code.Trim(), StringComparison.OrdinalIgnoreCase));
+
+        if (coupon is null)
+            return false;
+
+        var now = DateTime.UtcNow;
+
+        if (coupon.ValidFrom > now || coupon.ValidTo < now)
+            return false;
+
+        if (coupon.UsageLimit.HasValue && coupon.UsageCount >= coupon.UsageLimit.Value)
+            return false;
+
+        coupon.UsageCount += 1;
+        coupon.UpdatedAtUtc = DateTime.UtcNow;
+
+        await _repository.UpdateAsync(coupon);
+        await _repository.SaveChangesAsync(cancellationToken);
+
+        return true;
+    }
 }
 

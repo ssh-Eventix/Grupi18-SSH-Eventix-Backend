@@ -83,6 +83,15 @@ namespace Eventix.Application.Services
             await _paymentRepository.AddAsync(payment);
             await _paymentRepository.SaveChangesAsync();
 
+            if (payment.Status == PaymentStatus.Completed)
+            {
+                booking.Status = BookingStatus.Confirmed;
+                booking.UpdatedAtUtc = DateTime.UtcNow;
+
+                await _bookingRepository.UpdateAsync(booking);
+                await _bookingRepository.SaveChangesAsync();
+            }
+
             await _auditLogService.CreateAsync(new CreateAuditLogDTO
             {
                 TenantId = _tenantContext.TenantId,
