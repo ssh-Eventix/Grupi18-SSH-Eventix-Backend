@@ -36,6 +36,4 @@ public class EventResponseDTO
     public DateTime? UpdatedAtUtc { get; set; }
     public string? TenantSlug { get; set; }
     public string? SchemaName { get; set; }
-
-    public string? SpeakerName { get; set; }
 }

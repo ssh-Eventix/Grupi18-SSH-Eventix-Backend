@@ -22,9 +22,7 @@ public class EventRepository : TenantBaseRepository<Event>, IEventRepository
         IQueryable<Event> query = Query()
             .AsNoTracking()
             .Include(x => x.Venue)
-            .Include(x => x.EventCategory)
-            .Include(x => x.Sessions)
-            .ThenInclude(x => x.Speaker);
+            .Include(x => x.EventCategory);
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -43,14 +41,13 @@ public class EventRepository : TenantBaseRepository<Event>, IEventRepository
             .ToListAsync(ct);
     }
 
-    public override Task<Event?> GetByIdAsync(Guid id, CancellationToken ct = default)
+    public override Task<Event?> GetByIdAsync(Guid id,
+CancellationToken ct = default)
     {
         return Query()
             .Include(x => x.Venue)
             .Include(x => x.EventCategory)
             .Include(x => x.EventSections)
-            .Include(x => x.Sessions)
-            .ThenInclude(x => x.Speaker)
             .FirstOrDefaultAsync(x => x.Id == id, ct);
     }
 }
