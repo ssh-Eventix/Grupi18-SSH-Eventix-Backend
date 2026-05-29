@@ -144,7 +144,7 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<Venue>(entity =>
         {
-            entity.ToTable("Venue", t =>
+            entity.ToTable("Venue", "public", t =>
             {
                 t.HasCheckConstraint("CK_Venue_TotalCapacity", "\"TotalCapacity\" >= 0");
             });
@@ -157,7 +157,7 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<VenueSection>(entity =>
         {
-            entity.ToTable("VenueSection", t =>
+            entity.ToTable("VenueSection", "public", t =>
             {
                 t.HasCheckConstraint("CK_VenueSection_Capacity", "\"Capacity\" >= 0");
                 t.HasCheckConstraint("CK_VenueSection_DefaultBasePrice", "\"DefaultBasePrice\" IS NULL OR \"DefaultBasePrice\" >= 0");
