@@ -145,5 +145,28 @@ namespace Eventix.Api.Controllers
             return result == null ? NotFound() : Ok(result);
         }
 
+        [HttpGet("public/event/{eventId:guid}/available")]
+        [AllowAnonymous]
+        public async Task<IActionResult> PublicGetAvailableByEventId(Guid eventId)
+        {
+            var ticketTypes = await _ticketTypeService.GetAvailableByEventIdAsync(eventId);
+
+            var result = ticketTypes.Select(t => new TicketTypeDto
+            {
+                Id = t.Id,
+                EventId = t.EventId,
+                EventSectionId = t.EventSectionId,
+                Name = t.Name,
+                Price = t.Price,
+                QuantityAvailable = t.QuantityAvailable,
+                SoldQuantity = t.SoldQuantity,
+                SaleStartDate = t.SaleStartDate,
+                SaleEndDate = t.SaleEndDate
+            }).ToList();
+
+            return Ok(result);
+        }
     }
+
+
 }

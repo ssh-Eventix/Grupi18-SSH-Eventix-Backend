@@ -22,7 +22,9 @@ public class EventRepository : TenantBaseRepository<Event>, IEventRepository
         IQueryable<Event> query = Query()
             .AsNoTracking()
             .Include(x => x.Venue)
-            .Include(x => x.EventCategory);
+            .Include(x => x.EventCategory)
+            .Include(x => x.Sessions)
+            .ThenInclude(x => x.Speaker);
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -47,6 +49,8 @@ public class EventRepository : TenantBaseRepository<Event>, IEventRepository
             .Include(x => x.Venue)
             .Include(x => x.EventCategory)
             .Include(x => x.EventSections)
+            .Include(x => x.Sessions)
+            .ThenInclude(x => x.Speaker)
             .FirstOrDefaultAsync(x => x.Id == id, ct);
     }
 }
