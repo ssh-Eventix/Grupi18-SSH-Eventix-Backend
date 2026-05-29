@@ -173,16 +173,30 @@ public class AiService : IAiService
         CancellationToken ct)
     {
         var prompt = $"""
-        Generate marketing content for this event.
+            You are an experienced event marketing specialist.
 
-        Title: {request.EventTitle}
-        Description: {request.EventDescription}
+            Create a high-quality event description suitable for display on an Eventbrite-style event page.
 
-        Return:
-        - promotional email
-        - Instagram caption
-        - Facebook post
-        """;
+            Event Title:
+            {request.EventTitle}
+
+            Event Information:
+            {request.EventDescription}
+
+            Rules:
+            - Use professional marketing language.
+            - Create excitement and interest.
+            - Write 150-250 words.
+            - Use clear paragraphs.
+            - No markdown formatting.
+            - No bullet points.
+            - No headings.
+            - No placeholders.
+            - No pricing information.
+            - No contact instructions.
+            - Return only the event description.
+
+            """;
 
         return await ExecuteAiRequestAsync(
             userId,

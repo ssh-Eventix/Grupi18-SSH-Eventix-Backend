@@ -139,6 +139,15 @@ namespace Eventix.Api.Controllers
 
             return NoContent();
         }
+
+        [HttpPost("validate")]
+        [AllowAnonymous]
+        public async Task<ActionResult<ValidateDiscountCouponResponseDTO>> Validate(
+    [FromBody] ValidateDiscountCouponDTO dto,
+    CancellationToken cancellationToken)
+        {
+            return Ok(await _service.ValidateAsync(dto, cancellationToken));
+        }
     }
 }
 

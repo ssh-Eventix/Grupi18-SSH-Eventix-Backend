@@ -255,7 +255,13 @@ public class EventService : IEventService
 
             Currency = entity.Currency,
 
-            CreatedAtUtc = entity.CreatedAtUtc
+            CreatedAtUtc = entity.CreatedAtUtc,
+
+            SpeakerName = entity.Sessions
+            .Where(x => x.Speaker != null)
+            .OrderBy(x => x.StartTime)
+            .Select(x => x.Speaker!.FullName)
+            .FirstOrDefault(),
         };
     }
 }
