@@ -61,7 +61,7 @@ namespace Eventix.Application.Services
 
         public async Task<PaymentDto> CreatePayment(CreatePaymentDto request)
         {
-            if (request.BookingId == null)
+            if (request.BookingId == Guid.Empty)
             {
                 throw new Exception("BookingId is required");
             }
@@ -82,6 +82,15 @@ namespace Eventix.Application.Services
 
             await _paymentRepository.AddAsync(payment);
             await _paymentRepository.SaveChangesAsync();
+
+            if (payment.Status == PaymentStatus.Completed)
+            {
+                booking.Status = BookingStatus.Confirmed;
+                booking.UpdatedAtUtc = DateTime.UtcNow;
+
+                await _bookingRepository.UpdateAsync(booking);
+                await _bookingRepository.SaveChangesAsync();
+            }
 
             await _auditLogService.CreateAsync(new CreateAuditLogDTO
             {
