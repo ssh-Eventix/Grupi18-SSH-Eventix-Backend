@@ -38,7 +38,7 @@ namespace Eventix.Application.Services
                 Name = request.Name,
                 Description = request.Description,
                 Provider = request.Provider,
-                IsActive = true
+                IsActive = request.IsActive
             };
 
             await _paymentMethodRepository.AddAsync(method);
@@ -78,6 +78,7 @@ namespace Eventix.Application.Services
             method.Name = request.Name;
             method.Description = request.Description;
             method.Provider = request.Provider;
+            method.IsActive = request.IsActive;
 
             _paymentMethodRepository.Update(method);
             await _paymentMethodRepository.SaveChangesAsync();

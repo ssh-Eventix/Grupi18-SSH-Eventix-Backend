@@ -10,5 +10,6 @@ namespace Eventix.Infrastructure.MultiTenancy
     public interface ITenantResolver
     {
         Task<Tenant?> ResolveAsync(string slug, CancellationToken cancellationToken = default);
+        Task<Tenant?> ResolveByIdAsync(Guid tenantId, CancellationToken cancellationToken = default);
     }
 }

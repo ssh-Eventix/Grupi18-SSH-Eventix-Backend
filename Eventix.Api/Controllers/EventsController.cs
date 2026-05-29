@@ -37,15 +37,7 @@ public class EventsController : ControllerBase
         [FromQuery] string? search,
         CancellationToken cancellationToken)
     {
-        var cacheKey =
-            $"tenant:{_tenantContext.TenantId}:events:search:{search ?? "all"}";
-
-        var result = await CacheHelper.GetOrSetAsync(
-            _cache,
-            cacheKey,
-            () => _eventService.GetAllAsync(search, cancellationToken),
-            TimeSpan.FromMinutes(5),
-            cancellationToken);
+        var result = await _eventService.GetAllAsync(search, cancellationToken);
 
         return Ok(result);
     }
@@ -56,15 +48,7 @@ public class EventsController : ControllerBase
         [FromQuery] string? search,
         CancellationToken cancellationToken)
     {
-        var cacheKey =
-            $"tenant:{_tenantContext.TenantId}:events:search:{search ?? "all"}";
-
-        var result = await CacheHelper.GetOrSetAsync(
-            _cache,
-            cacheKey,
-            () => _eventService.GetAllAsync(search, cancellationToken),
-            TimeSpan.FromMinutes(5),
-            cancellationToken);
+        var result = await _eventService.GetAllAsync(search, cancellationToken);
 
         return Ok(result);
     }
@@ -115,14 +99,7 @@ public class EventsController : ControllerBase
         Guid id,
         CancellationToken cancellationToken)
     {
-        var cacheKey = $"tenant:{_tenantContext.TenantId}:event:{id}";
-
-        var result = await CacheHelper.GetOrSetAsync(
-            _cache,
-            cacheKey,
-            () => _eventService.GetByIdAsync(id, cancellationToken),
-            TimeSpan.FromMinutes(5),
-            cancellationToken);
+        var result = await _eventService.GetByIdAsync(id, cancellationToken);
 
         if (result is null)
             return NotFound();

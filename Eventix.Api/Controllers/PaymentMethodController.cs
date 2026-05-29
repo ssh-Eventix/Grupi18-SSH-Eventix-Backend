@@ -38,7 +38,7 @@ namespace Eventix.Api.Controllers
         }
 
         [HttpPost]
-        [Authorize(Policy = "Permission:CreatePaymentMethods")]
+        [Authorize(Policy = "Permission:ManagePaymentMethods")]
         public async Task<ActionResult<PaymentMethodDto>> Create([FromBody] CreatePaymentMethodDto request)
         {
             if (request == null)
@@ -50,7 +50,7 @@ namespace Eventix.Api.Controllers
         }
 
         [HttpPut("{id:guid}")]
-        [Authorize(Policy = "Permission:UpdatePaymentMethods")]
+        [Authorize(Policy = "Permission:ManagePaymentMethods")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdatePaymentMethodDto request)
         {
             if (request == null)
@@ -65,7 +65,7 @@ namespace Eventix.Api.Controllers
         }
 
         [HttpDelete("{id:guid}")]
-        [Authorize(Policy = "Permission:DeletePaymentMethods")]
+        [Authorize(Policy = "Permission:ManagePaymentMethods")]
         public async Task<IActionResult> Delete(Guid id)
         {
             await _paymentMethodService.DeleteAsync(id);
@@ -73,7 +73,7 @@ namespace Eventix.Api.Controllers
         }
 
         [HttpPost("{id:guid}/activate")]
-        [Authorize(Policy = "Permission:UpdatePaymentMethods")]
+        [Authorize(Policy = "Permission:ManagePaymentMethods")]
         public async Task<IActionResult> Activate(Guid id)
         {
             await _paymentMethodService.ActivateAsync(id);
@@ -81,7 +81,7 @@ namespace Eventix.Api.Controllers
         }
 
         [HttpPost("{id:guid}/deactivate")]
-        [Authorize(Policy = "Permission:UpdatePaymentMethods")]
+        [Authorize(Policy = "Permission:ManagePaymentMethods")]
         public async Task<IActionResult> Deactivate(Guid id)
         {
             await _paymentMethodService.DeactivateAsync(id);

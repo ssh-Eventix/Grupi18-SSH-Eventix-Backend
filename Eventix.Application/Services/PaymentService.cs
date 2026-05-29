@@ -61,7 +61,7 @@ namespace Eventix.Application.Services
 
         public async Task<PaymentDto> CreatePayment(CreatePaymentDto request)
         {
-            if (request.BookingId == null)
+            if (request.BookingId == Guid.Empty)
             {
                 throw new Exception("BookingId is required");
             }

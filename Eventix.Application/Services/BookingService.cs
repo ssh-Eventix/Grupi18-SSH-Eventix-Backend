@@ -1,5 +1,6 @@
 ﻿using Eventix.Application.DTOs.Booking;
 using Eventix.Application.DTOs.Ticket;
+using Eventix.Application.Interfaces.Common;
 using Eventix.Application.Interfaces.Repositories;
 using Eventix.Application.Interfaces.Services;
 using Eventix.Domain.Entities;
@@ -12,15 +13,18 @@ namespace Eventix.Application.Services
         public readonly IBookingRepository _bookingRepository;
         public readonly ITicketTypeRepository _ticketTypeRepository;
         public readonly IEventRepository _eventRepository;
+        private readonly ITenantContext _tenantContext;
 
         public BookingService(
             IBookingRepository bookingRepository,
             ITicketTypeRepository ticketTypeRepository,
-            IEventRepository eventRepository)
+            IEventRepository eventRepository,
+            ITenantContext tenantContext)
         {
             _bookingRepository = bookingRepository;
             _ticketTypeRepository = ticketTypeRepository;
             _eventRepository = eventRepository;
+            _tenantContext = tenantContext;
         }
 
         public async Task<List<BookingDto>> GetAllAsync()
@@ -64,6 +68,7 @@ namespace Eventix.Application.Services
 
             var booking = new Booking
             {
+                TenantId = _tenantContext.TenantId,
                 UserId = request.UserId,
                 EventId = request.EventId,
                 BookingDate = DateTime.UtcNow,
@@ -95,6 +100,7 @@ namespace Eventix.Application.Services
 
                 var bookingItem = new BookingItem
                 {
+                    TenantId = _tenantContext.TenantId,
                     TicketTypeId = item.TicketTypeId,
                     EventSectionId = ticketType.EventSectionId,
                     Quantity = item.Quantity,
@@ -107,6 +113,7 @@ namespace Eventix.Application.Services
 
                     bookingItem.Tickets.Add(new Ticket
                     {
+                        TenantId = _tenantContext.TenantId,
                         TicketCode = ticketCode,
                         QRCode = ticketCode,
                         Status = TicketStatus.Active,

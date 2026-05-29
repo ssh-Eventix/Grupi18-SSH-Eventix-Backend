@@ -1,4 +1,5 @@
 ﻿using Eventix.Application.Interfaces.Common;
+using Eventix.Domain.Entities;
 using Microsoft.AspNetCore.Http;
 
 namespace Eventix.Infrastructure.MultiTenancy;
@@ -40,16 +41,18 @@ public class TenantMiddleware
         var slug = httpContext.Request.Headers["X-Tenant-Slug"]
             .FirstOrDefault();
 
-        if (string.IsNullOrWhiteSpace(slug))
-        {
-            await _next(httpContext);
-            return;
-        }
-
-        var tenant = await tenantResolver.ResolveAsync(slug.Trim());
+        var tenant = string.IsNullOrWhiteSpace(slug)
+            ? await ResolveTenantFromTokenAsync(httpContext, tenantResolver)
+            : await tenantResolver.ResolveAsync(slug.Trim());
 
         if (tenant is null)
         {
+            if (string.IsNullOrWhiteSpace(slug))
+            {
+                await _next(httpContext);
+                return;
+            }
+
             httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
             await httpContext.Response.WriteAsync("Invalid tenant slug.");
             return;
@@ -59,5 +62,19 @@ public class TenantMiddleware
         tenantContext.SchemaName = tenant.SchemaName;
 
         await _next(httpContext);
+    }
+
+    private static async Task<Tenant?> ResolveTenantFromTokenAsync(
+        HttpContext httpContext,
+        ITenantResolver tenantResolver)
+    {
+        var tenantIdValue = httpContext.User.FindFirst("tenantId")?.Value;
+
+        if (!Guid.TryParse(tenantIdValue, out var tenantId) || tenantId == Guid.Empty)
+        {
+            return null;
+        }
+
+        return await tenantResolver.ResolveByIdAsync(tenantId);
     }
 }
