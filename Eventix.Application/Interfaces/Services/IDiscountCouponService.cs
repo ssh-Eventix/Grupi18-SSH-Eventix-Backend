@@ -13,5 +13,8 @@ public interface IDiscountCouponService
     Task<ValidateDiscountCouponResponseDTO> ValidateAsync(
     ValidateDiscountCouponDTO dto,
     CancellationToken cancellationToken = default);
+    Task<bool> RedeemAsync(
+        RedeemDiscountCouponDTO dto,
+        CancellationToken cancellationToken = default);
 }
 
