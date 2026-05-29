@@ -19,5 +19,12 @@ namespace Eventix.Infrastructure.MultiTenancy
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Slug == slug && x.IsActive, cancellationToken);
         }
+
+        public async Task<Tenant?> ResolveByIdAsync(Guid tenantId, CancellationToken cancellationToken = default)
+        {
+            return await _context.Tenants
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == tenantId && x.IsActive, cancellationToken);
+        }
     }
 }

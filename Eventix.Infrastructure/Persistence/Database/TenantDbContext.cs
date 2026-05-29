@@ -499,7 +499,7 @@ public class TenantDbContext : DbContext
     {
         modelBuilder.Entity<PaymentMethod>(entity =>
         {
-            entity.ToTable("PaymentMethod");
+            entity.ToTable("PaymentMethod", "public");
 
             entity.HasKey(x => x.Id);
 
