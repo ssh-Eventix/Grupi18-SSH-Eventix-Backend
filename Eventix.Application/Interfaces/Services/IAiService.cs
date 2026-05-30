@@ -6,6 +6,8 @@ public interface IAiService
 {
     Task<AiResponseDTO> ChatAsync(AiChatRequestDTO request, Guid userId, CancellationToken ct);
 
+    Task<AiResponseDTO> BuyerChatAsync(AiChatRequestDTO request, Guid userId, CancellationToken ct);
+
     Task<AiResponseDTO> GenerateEventDescriptionAsync(
         GenerateEventDescriptionRequestDTO request,
         Guid userId,
@@ -17,6 +19,10 @@ public interface IAiService
         CancellationToken ct);
 
     Task<AiResponseDTO> GenerateRecommendationsAsync(
+        Guid userId,
+        CancellationToken ct);
+
+    Task<AiResponseDTO> GenerateBuyerRecommendationsAsync(
         Guid userId,
         CancellationToken ct);
 
