@@ -34,6 +34,22 @@ public class AiController : ControllerBase
         return Ok(await _aiService.ChatAsync(request, userId, ct));
     }
 
+    [HttpPost("buyer/chat")]
+    [Authorize]
+    public async Task<IActionResult> BuyerChat(
+        [FromBody] AiChatRequestDTO request,
+        CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(request.Prompt))
+            return BadRequest("Prompt is required.");
+
+        var userId = GetCurrentUserId();
+        if (userId == Guid.Empty)
+            return Unauthorized("Invalid user token.");
+
+        return Ok(await _aiService.BuyerChatAsync(request, userId, ct));
+    }
+
     [HttpGet("recommendations")]
     [Authorize(Policy = "Permission:UseAI")]
     public async Task<IActionResult> Recommendations(CancellationToken ct)
@@ -43,6 +59,17 @@ public class AiController : ControllerBase
             return Unauthorized("Invalid user token.");
 
         return Ok(await _aiService.GenerateRecommendationsAsync(userId, ct));
+    }
+
+    [HttpGet("buyer/recommendations")]
+    [Authorize]
+    public async Task<IActionResult> BuyerRecommendations(CancellationToken ct)
+    {
+        var userId = GetCurrentUserId();
+        if (userId == Guid.Empty)
+            return Unauthorized("Invalid user token.");
+
+        return Ok(await _aiService.GenerateBuyerRecommendationsAsync(userId, ct));
     }
 
     [HttpPost("generate-event-description")]
