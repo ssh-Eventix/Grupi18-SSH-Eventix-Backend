@@ -64,7 +64,7 @@ public class TenantBaseRepository<TEntity> : IBaseRepository<TEntity>
         return Task.CompletedTask;
     }
 
-    public Task SaveChangesAsync(CancellationToken ct = default)
+    public virtual Task SaveChangesAsync(CancellationToken ct = default)
     {
         return Context.SaveChangesAsync(ct);
     }

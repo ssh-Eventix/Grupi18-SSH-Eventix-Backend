@@ -7,6 +7,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="ExternalServices\**" />
+    <Compile Remove="Security\**" />
+    <EmbeddedResource Remove="ExternalServices\**" />
+    <EmbeddedResource Remove="Security\**" />
+    <None Remove="ExternalServices\**" />
+    <None Remove="Security\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.2" />
     <PackageReference Include="Hangfire" Version="1.8.23" />
     <PackageReference Include="MailKit" Version="4.16.0" />
@@ -29,9 +38,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="ExternalServices\" />
     <Folder Include="Migrations\Tenant\" />
-    <Folder Include="Security\" />
   </ItemGroup>
 
 </Project>

@@ -7,7 +7,6 @@ obj/
 *.user
 *.suo
 .env
-.yml
 
 # Test results
 TestResults/

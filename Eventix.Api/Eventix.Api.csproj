@@ -7,6 +7,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Filters\**" />
+    <Compile Remove="Swagger\**" />
+    <Content Remove="Filters\**" />
+    <Content Remove="Swagger\**" />
+    <EmbeddedResource Remove="Filters\**" />
+    <EmbeddedResource Remove="Swagger\**" />
+    <None Remove="Filters\**" />
+    <None Remove="Swagger\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="DotNetEnv" Version="3.2.0" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
     <PackageReference Include="Hangfire" Version="1.8.23" />
@@ -27,11 +38,6 @@
     <ProjectReference Include="..\Eventix.Application\Eventix.Application.csproj" />
     <ProjectReference Include="..\Eventix.Domain\Eventix.Domain.csproj" />
     <ProjectReference Include="..\Eventix.Infrastructure\Eventix.Infrastructure.csproj" />
-  </ItemGroup>
-	
-  <ItemGroup>
-    <Folder Include="Filters\" />
-    <Folder Include="Swagger\" />
   </ItemGroup>
 
 </Project>
