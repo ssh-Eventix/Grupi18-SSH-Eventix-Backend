@@ -31,6 +31,4 @@ public class ReviewController : ControllerBase
     [Authorize(Policy = "Permission:CreateReviews")]
     public async Task<IActionResult> Create(CreateReviewDTO dto, CancellationToken ct)
         => Ok(await _service.CreateAsync(dto, ct));
-
-
 }

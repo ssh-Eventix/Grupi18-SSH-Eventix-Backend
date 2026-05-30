@@ -33,12 +33,4 @@ public class NotificationController : ControllerBase
     [Authorize(Policy = "Permission:ManageNotifications")]
     public async Task<IActionResult> Create(CreateNotificationDTO dto, CancellationToken ct)
         => Ok(await _service.CreateAsync(dto, ct));
-
-    [HttpGet("user/{userId:guid}")]
-    [Authorize]
-    public async Task<IActionResult> GetByUserId(Guid userId, CancellationToken ct)
-    {
-        var result = await _service.GetByUserIdAsync(userId, ct);
-        return Ok(result);
-    }
 }

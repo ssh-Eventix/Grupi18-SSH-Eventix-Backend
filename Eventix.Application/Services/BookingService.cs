@@ -1,6 +1,5 @@
 ﻿using Eventix.Application.DTOs.Booking;
 using Eventix.Application.DTOs.Ticket;
-using Eventix.Application.Interfaces.Common;
 using Eventix.Application.Interfaces.Repositories;
 using Eventix.Application.Interfaces.Services;
 using Eventix.Domain.Entities;
@@ -13,30 +12,21 @@ namespace Eventix.Application.Services
         public readonly IBookingRepository _bookingRepository;
         public readonly ITicketTypeRepository _ticketTypeRepository;
         public readonly IEventRepository _eventRepository;
-        private readonly IPublicUserRepository _publicUserRepository;
-        private readonly IUserRepository _userRepository;
-        private readonly ITenantContext _tenantContext;
 
         public BookingService(
             IBookingRepository bookingRepository,
             ITicketTypeRepository ticketTypeRepository,
-            IEventRepository eventRepository,
-            IPublicUserRepository publicUserRepository,
-            IUserRepository userRepository,
-            ITenantContext tenantContext)
+            IEventRepository eventRepository)
         {
             _bookingRepository = bookingRepository;
             _ticketTypeRepository = ticketTypeRepository;
             _eventRepository = eventRepository;
-            _publicUserRepository = publicUserRepository;
-            _userRepository = userRepository;
-            _tenantContext = tenantContext;
         }
 
         public async Task<List<BookingDto>> GetAllAsync()
         {
             var bookings = await _bookingRepository.GetAllAsync();
-            return await MapBookingsAsync(bookings);
+            return MapBookings(bookings);
         }
 
         public async Task<BookingDto> GetByIdAsync(Guid id)
@@ -46,12 +36,12 @@ namespace Eventix.Application.Services
             if (booking == null)
                 throw new Exception("Booking not found");
 
-            return await MapBookingAsync(booking);
+            return MapBooking(booking);
         }
         public async Task<List<BookingDto>> GetUserBookings(Guid userId)
         {
             var bookings = await _bookingRepository.GetByUserIdAsync(userId);
-            return await MapBookingsAsync(bookings);
+            return MapBookings(bookings);
         }
 
         public async Task<BookingDto> CreateBooking(CreateBookingRequest request)
@@ -74,11 +64,10 @@ namespace Eventix.Application.Services
 
             var booking = new Booking
             {
-                TenantId = _tenantContext.TenantId,
                 UserId = request.UserId,
                 EventId = request.EventId,
                 BookingDate = DateTime.UtcNow,
-                Status = BookingStatus.Pending,
+                Status = BookingStatus.Confirmed,
                 ReferenceNumber = $"BK-{DateTime.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid().ToString()[..8].ToUpper()}"
             };
                 
@@ -106,7 +95,6 @@ namespace Eventix.Application.Services
 
                 var bookingItem = new BookingItem
                 {
-                    TenantId = _tenantContext.TenantId,
                     TicketTypeId = item.TicketTypeId,
                     EventSectionId = ticketType.EventSectionId,
                     Quantity = item.Quantity,
@@ -119,7 +107,6 @@ namespace Eventix.Application.Services
 
                     bookingItem.Tickets.Add(new Ticket
                     {
-                        TenantId = _tenantContext.TenantId,
                         TicketCode = ticketCode,
                         QRCode = ticketCode,
                         Status = TicketStatus.Active,
@@ -136,15 +123,11 @@ namespace Eventix.Application.Services
             }
 
             booking.TotalAmount = total;
-            if (booking.TotalAmount == 0)
-            {
-                booking.Status = BookingStatus.Confirmed;
-            }
 
             await _bookingRepository.AddAsync(booking);
             await _bookingRepository.SaveChangesAsync();
 
-            return await MapBookingAsync(booking);
+            return MapBooking(booking);
         }
 
         public async Task<bool> UpdateBookingStatus(Guid id, UpdateBookingStatusRequest request)
@@ -156,32 +139,6 @@ namespace Eventix.Application.Services
 
             if (!Enum.TryParse<BookingStatus>(request.Status, true, out var status))
                 { return false; }
-
-            if (ReleasesStock(status) && !ReleasesStock(booking.Status))
-            {
-                foreach (var item in booking.BookingItems)
-                {
-                    var ticketType = await _ticketTypeRepository.GetByIdAsync(item.TicketTypeId);
-
-                    if (ticketType == null)
-                        continue;
-
-                    ticketType.QuantityAvailable += item.Quantity;
-                    ticketType.SoldQuantity -= item.Quantity;
-
-                    if (ticketType.SoldQuantity < 0)
-                        ticketType.SoldQuantity = 0;
-
-                    _ticketTypeRepository.Update(ticketType);
-
-                    foreach (var ticket in item.Tickets)
-                    {
-                        ticket.Status = status == BookingStatus.Refunded
-                            ? TicketStatus.Refunded
-                            : TicketStatus.Cancelled;
-                    }
-                }
-            }
             
             booking.Status = status;
             booking.UpdatedAtUtc = DateTime.UtcNow;
@@ -208,12 +165,11 @@ namespace Eventix.Application.Services
             return true;
         }
 
-        private async Task<BookingDto> MapBookingAsync(Booking booking)
+        private static BookingDto MapBooking(Booking booking)
         {
             var tickets = booking.BookingItems
                 .SelectMany(bi => bi.Tickets)
                 .ToList();
-            var buyerEmail = await ResolveBuyerEmailAsync(booking);
 
             return new BookingDto
             {
@@ -224,7 +180,7 @@ namespace Eventix.Application.Services
                 TotalAmount = booking.TotalAmount,
                 Status = booking.Status.ToString(),
                 EventTitle = booking.Event?.Title,
-                BuyerEmail = buyerEmail,
+                BuyerEmail = booking.User?.Email,
                 Quantity = booking.BookingItems.Sum(bi => bi.Quantity),
                 TicketCode = tickets.FirstOrDefault()?.TicketCode,
                 BookingDate = booking.BookingDate,
@@ -237,54 +193,14 @@ namespace Eventix.Application.Services
                         QRCode = t.QRCode,
                         Status = (int)t.Status,
                         IssuedAt = t.IssuedAt,
-                        UsedAt = t.UsedAt,
-                        BookingId = booking.Id,
-                        EventId = booking.EventId,
-                        EventTitle = booking.Event?.Title,
-                        BuyerEmail = buyerEmail,
-                        ReferenceNumber = booking.ReferenceNumber,
-                        BookingStatus = booking.Status.ToString()
+                        UsedAt = t.UsedAt
                     }).ToList()
             };
         }
 
-        private async Task<List<BookingDto>> MapBookingsAsync(List<Booking> bookings)
+        private static List<BookingDto> MapBookings(List<Booking> bookings)
         {
-            var result = new List<BookingDto>();
-
-            foreach (var booking in bookings)
-            {
-                result.Add(await MapBookingAsync(booking));
-            }
-
-            return result;
-        }
-
-        private static bool ReleasesStock(BookingStatus status)
-        {
-            return status == BookingStatus.Cancelled || status == BookingStatus.Refunded;
-        }
-
-        private async Task<string?> ResolveBuyerEmailAsync(Booking booking)
-        {
-            if (!string.IsNullOrWhiteSpace(booking.User?.Email))
-                return booking.User.Email;
-
-            var publicUser = await _publicUserRepository.GetByIdAsync(booking.UserId, CancellationToken.None);
-            if (!string.IsNullOrWhiteSpace(publicUser?.Email))
-                return publicUser.Email;
-
-            var tenantUser = await _userRepository.GetByIdAsync(booking.UserId, CancellationToken.None);
-            if (!string.IsNullOrWhiteSpace(tenantUser?.Email))
-                return tenantUser.Email;
-
-            if (tenantUser?.PublicUserId is Guid publicUserId)
-            {
-                publicUser = await _publicUserRepository.GetByIdAsync(publicUserId, CancellationToken.None);
-                return publicUser?.Email;
-            }
-
-            return null;
+            return bookings.Select(MapBooking).ToList();
         }
 
     }

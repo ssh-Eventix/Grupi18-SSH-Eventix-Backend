@@ -42,7 +42,6 @@ public class BookingCleanupJob
                 if (ticketType == null)
                     continue;
 
-                ticketType.QuantityAvailable += item.Quantity;
                 ticketType.SoldQuantity -= item.Quantity;
 
                 if (ticketType.SoldQuantity < 0)

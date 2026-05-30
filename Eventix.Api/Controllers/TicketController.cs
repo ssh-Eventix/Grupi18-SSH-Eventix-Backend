@@ -15,19 +15,11 @@ namespace Eventix.Api.Controllers
             _ticketService = ticketService;
         }
 
-        [HttpGet]
-        [Authorize(Policy = "Permission:CheckInTickets")]
-        public async Task<IActionResult> GetAll()
-        {
-            var tickets = await _ticketService.GetAllAsync();
-            return Ok(tickets);
-        }
-
         [HttpGet("{id:guid}")]
         [Authorize(Policy = "Permission:ViewTickets")]
         public async Task<IActionResult> GetById(Guid id)
         {
-            var ticket = await _ticketService.GetDtoByIdAsync(id);
+            var ticket = await _ticketService.GetByIdAsync(id);
 
             if (ticket == null)
                 return NotFound("Ticket not found");
@@ -36,10 +28,10 @@ namespace Eventix.Api.Controllers
         }
 
         [HttpGet("code/{ticketCode}")]
-        [Authorize(Policy = "Permission:CheckInTickets")]
+        [Authorize(Policy = "Permission:ViewTickets")]
         public async Task<IActionResult> GetByCode(string ticketCode)
         {
-            var ticket = await _ticketService.GetDtoByCodeAsync(ticketCode);
+            var ticket = await _ticketService.GetByCodeAsync(ticketCode);
 
             if (ticket == null)
                 return NotFound("Ticket not found");

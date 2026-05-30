@@ -133,7 +133,6 @@ public class RolePermissionService : IRolePermissionService
                 Permission.CreateBookings,
                 Permission.ViewBookings,
                 Permission.CancelBookings,
-                Permission.CreatePayments,
                 Permission.BuyTickets,
                 Permission.ViewTickets,
                 Permission.ViewNotifications,
@@ -143,7 +142,6 @@ public class RolePermissionService : IRolePermissionService
                 Permission.ViewDiscountCoupons,
                 Permission.ViewSpeakers,
                 Permission.ViewEventSessions,
-                Permission.ViewPaymentMethods,
                 Permission.ViewTicketTypes
             ]
         };

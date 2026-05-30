@@ -60,10 +60,4 @@ public class NotificationService : INotificationService
         IsRead = x.IsRead,
         SentAt = x.SentAt
     };
-
-    public async Task<List<NotificationDto>> GetByUserIdAsync(Guid userId, CancellationToken ct)
-    {
-        var data = await _repo.GetByUserIdAsync(userId, ct);
-        return data.Select(Map).ToList();
-    }
 }

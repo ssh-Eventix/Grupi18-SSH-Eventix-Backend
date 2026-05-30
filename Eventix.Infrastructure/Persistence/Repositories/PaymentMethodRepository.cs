@@ -8,9 +8,9 @@ namespace Eventix.Infrastructure.Persistence.Repositories
 {
     public class PaymentMethodRepository : IPaymentMethodRepository
     {
-        private readonly PublicDbContext _context;
+        private readonly TenantDbContext _context;
 
-        public PaymentMethodRepository(PublicDbContext context)
+        public PaymentMethodRepository(TenantDbContext context)
         {
             _context = context;
         }
@@ -19,21 +19,20 @@ namespace Eventix.Infrastructure.Persistence.Repositories
         {
             return await _context.PaymentMethods
                 .AsNoTracking()
-                .Where(pm => !pm.IsDeleted)
                 .ToListAsync();
         }
 
         public async Task<PaymentMethod?> GetByIdAsync(Guid id)
         {
             return await _context.PaymentMethods
-                .FirstOrDefaultAsync(pm => pm.Id == id && !pm.IsDeleted);
+                .FirstOrDefaultAsync(pm => pm.Id == id);
         }
 
         public async Task<List<PaymentMethod>> GetActiveAsync()
         {
             return await _context.PaymentMethods
                 .AsNoTracking()
-                .Where(pm => pm.IsActive && !pm.IsDeleted)
+                .Where(pm => pm.IsActive)
                 .ToListAsync();
         }
 
@@ -41,7 +40,7 @@ namespace Eventix.Infrastructure.Persistence.Repositories
         {
             return await _context.PaymentMethods
                 .AsNoTracking()
-                .Where(pm => pm.Provider == provider && !pm.IsDeleted)
+                .Where(pm => pm.Provider == provider)
                 .ToListAsync();
         }
 
@@ -49,12 +48,11 @@ namespace Eventix.Infrastructure.Persistence.Repositories
         {
             return await _context.PaymentMethods
                 .Include(pm => pm.Payments)
-                .FirstOrDefaultAsync(pm => pm.Id == id && !pm.IsDeleted);
+                .FirstOrDefaultAsync(pm => pm.Id == id);
         }
 
         public async Task AddAsync(PaymentMethod paymentMethod)
         {
-            paymentMethod.TenantId = Guid.Empty;
             await _context.PaymentMethods.AddAsync(paymentMethod);
         }
 
@@ -65,9 +63,7 @@ namespace Eventix.Infrastructure.Persistence.Repositories
 
         public void Delete(PaymentMethod paymentMethod)
         {
-            paymentMethod.IsDeleted = true;
-            paymentMethod.UpdatedAtUtc = DateTime.UtcNow;
-            _context.PaymentMethods.Update(paymentMethod);
+            _context.PaymentMethods.Remove(paymentMethod);
         }
 
         public async Task SaveChangesAsync()

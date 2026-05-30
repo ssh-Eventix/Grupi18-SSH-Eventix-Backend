@@ -21,7 +21,6 @@ public class PublicDbContext : DbContext
     public DbSet<TenantEmailDomain> TenantEmailDomains => Set<TenantEmailDomain>();
     public DbSet<Venue> Venues => Set<Venue>();
     public DbSet<VenueSection> VenueSections => Set<VenueSection>();
-    public DbSet<PaymentMethod> PaymentMethods => Set<PaymentMethod>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -39,7 +38,6 @@ public class PublicDbContext : DbContext
         ConfigurePasswordResetToken(modelBuilder);
         ConfigureVenue(modelBuilder);
         ConfigureVenueSection(modelBuilder);
-        ConfigurePaymentMethod(modelBuilder);
         ConfigureAuditLog(modelBuilder);
 
         base.OnModelCreating(modelBuilder);
@@ -397,26 +395,6 @@ public class PublicDbContext : DbContext
                 .WithMany(x => x.Sections)
                 .HasForeignKey(x => x.VenueId)
                 .OnDelete(DeleteBehavior.Cascade);
-        });
-    }
-
-    private static void ConfigurePaymentMethod(ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<PaymentMethod>(entity =>
-        {
-            entity.ToTable("PaymentMethod", "public");
-
-            entity.HasKey(x => x.Id);
-
-            entity.Property(x => x.Name)
-                .HasMaxLength(100)
-                .IsRequired();
-
-            entity.Property(x => x.Description)
-                .HasMaxLength(500);
-
-            entity.HasIndex(x => x.Name)
-                .IsUnique();
         });
     }
 

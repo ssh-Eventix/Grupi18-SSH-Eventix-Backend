@@ -23,29 +23,19 @@ namespace Eventix.Infrastructure.Persistence.Repositories
         {
             return await _context.Tickets
                 .AsNoTracking()
-                .Where(t => !t.IsDeleted)
-                .Include(t => t.BookingItem)
-                    .ThenInclude(bi => bi.Booking)
-                        .ThenInclude(b => b.Event)
                 .ToListAsync();
         }
 
         public async Task<Ticket?> GetByIdAsync(Guid id)
         {
             return await _context.Tickets
-                .Include(t => t.BookingItem)
-                    .ThenInclude(bi => bi.Booking)
-                        .ThenInclude(b => b.Event)
-                .FirstOrDefaultAsync(t => t.Id == id && !t.IsDeleted);
+                .FirstOrDefaultAsync(t => t.Id == id);
         }
 
         public async Task<Ticket?> GetByCodeAsync(string ticketCode)
         {
             return await _context.Tickets
-                .Include(t => t.BookingItem)
-                    .ThenInclude(bi => bi.Booking)
-                        .ThenInclude(b => b.Event)
-                .FirstOrDefaultAsync(t => t.TicketCode == ticketCode && !t.IsDeleted);
+                .FirstOrDefaultAsync(t => t.TicketCode == ticketCode);
         }
 
         public async Task<List<Ticket>> GetByBookingItemIdAsync(Guid bookingItemId)

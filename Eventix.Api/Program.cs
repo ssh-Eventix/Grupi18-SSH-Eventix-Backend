@@ -236,8 +236,6 @@ builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<IImpersonationService, ImpersonationService>();
 builder.Services.AddScoped<ICheckInRepository, CheckInRepository>();
 builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
-builder.Services.AddScoped<IPaymentMethodRepository, PaymentMethodRepository>();
-builder.Services.AddScoped<IPaymentMethodService, PaymentMethodService>();
 builder.Services.AddScoped<ICheckInService, CheckInService>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
@@ -608,10 +606,9 @@ app.UseCors("ReactClient");
 
 app.UseMiddleware<RequestLoggingMiddleware>();
 
-app.UseAuthentication();
-
 app.UseMiddleware<TenantMiddleware>();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

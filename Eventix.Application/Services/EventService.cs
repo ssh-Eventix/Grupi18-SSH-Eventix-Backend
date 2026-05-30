@@ -28,22 +28,19 @@ public class EventService : IEventService
         _auditLogService = auditLogService;
     }
 
-    public async Task<List<EventResponseDTO>> GetAllAsync(string?
-search, CancellationToken cancellationToken = default)
+    public async Task<List<EventResponseDTO>> GetAllAsync(string? search, CancellationToken cancellationToken = default)
     {
         var events = await _repository.GetAllAsync(search, cancellationToken);
         return events.Select(MapToResponseDto).ToList();
     }
 
-    public async Task<EventResponseDTO?> GetByIdAsync(Guid id,
-CancellationToken cancellationToken = default)
+    public async Task<EventResponseDTO?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var entity = await _repository.GetByIdAsync(id, cancellationToken);
         return entity is null ? null : MapToResponseDto(entity);
     }
 
-    public async Task<EventResponseDTO> CreateAsync(CreateEventDTO
-dto, CancellationToken cancellationToken = default)
+    public async Task<EventResponseDTO> CreateAsync(CreateEventDTO dto, CancellationToken cancellationToken = default)
     {
         var entity = new Event
         {
@@ -71,8 +68,7 @@ dto, CancellationToken cancellationToken = default)
             MinTicketsPerOrder = dto.MinTicketsPerOrder,
 
             IsFree = dto.IsFree,
-            IsPublished = dto.Status == EventStatus.Published ||
-dto.IsPublished,
+            IsPublished = dto.Status == EventStatus.Published || dto.IsPublished,
 
             Currency = dto.Currency,
 
@@ -109,8 +105,7 @@ dto.IsPublished,
         return MapToResponseDto(entity);
     }
 
-    public async Task<bool> UpdateAsync(Guid id, UpdateEventDTO dto,
-CancellationToken cancellationToken = default)
+    public async Task<bool> UpdateAsync(Guid id, UpdateEventDTO dto, CancellationToken cancellationToken = default)
     {
         var entity = await _repository.GetByIdAsync(id, cancellationToken);
 
@@ -189,8 +184,7 @@ CancellationToken cancellationToken = default)
         return true;
     }
 
-    public async Task<bool> DeleteAsync(Guid id, CancellationToken
-cancellationToken = default)
+    public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var entity = await _repository.GetByIdAsync(id, cancellationToken);
 
@@ -265,4 +259,3 @@ cancellationToken = default)
         };
     }
 }
-

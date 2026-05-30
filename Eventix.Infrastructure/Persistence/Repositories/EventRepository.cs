@@ -41,8 +41,7 @@ public class EventRepository : TenantBaseRepository<Event>, IEventRepository
             .ToListAsync(ct);
     }
 
-    public override Task<Event?> GetByIdAsync(Guid id,
-CancellationToken ct = default)
+    public override Task<Event?> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
         return Query()
             .Include(x => x.Venue)

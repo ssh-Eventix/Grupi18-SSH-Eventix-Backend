@@ -139,37 +139,6 @@ namespace Eventix.Api.Controllers
 
             return NoContent();
         }
-
-        [HttpPost("validate")]
-        [AllowAnonymous]
-        public async Task<ActionResult<ValidateDiscountCouponResponseDTO>> Validate(
-    [FromBody] ValidateDiscountCouponDTO dto,
-    CancellationToken cancellationToken)
-        {
-            return Ok(await _service.ValidateAsync(dto, cancellationToken));
-        }
-
-        [HttpPost("redeem")]
-        [Authorize(Policy = "Permission:BuyTickets")]
-        public async Task<IActionResult> Redeem(
-            [FromBody] RedeemDiscountCouponDTO dto,
-            CancellationToken cancellationToken)
-        {
-            var redeemed = await _service.RedeemAsync(dto, cancellationToken);
-
-            if (!redeemed)
-                return BadRequest("Coupon could not be redeemed.");
-
-            await _cache.RemoveAsync(
-                $"tenant:{_tenantContext.TenantId}:discountcoupons:all",
-                cancellationToken);
-
-            await _cache.RemoveAsync(
-                $"tenant:{_tenantContext.TenantId}:discountcoupons:event:{dto.EventId}",
-                cancellationToken);
-
-            return NoContent();
-        }
     }
 }
 
