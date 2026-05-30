@@ -18,7 +18,7 @@ public class NotificationRepository : TenantBaseRepository<Notification>, INotif
         _context = context;
     }
 
-    public async Task<List<Notification>> GetAllAsync(CancellationToken ct)
+    public override async Task<List<Notification>> GetAllAsync(CancellationToken ct)
     {
         return await _context.Notifications
             .AsNoTracking()
@@ -27,7 +27,7 @@ public class NotificationRepository : TenantBaseRepository<Notification>, INotif
             .ToListAsync(ct);
     }
 
-    public async Task<Notification?> GetByIdAsync(Guid id, CancellationToken ct)
+    public override async Task<Notification?> GetByIdAsync(Guid id, CancellationToken ct)
     {
         return await _context.Notifications
             .AsNoTracking()
@@ -43,12 +43,12 @@ public class NotificationRepository : TenantBaseRepository<Notification>, INotif
             .ToListAsync(ct);
     }
 
-    public async Task AddAsync(Notification entity, CancellationToken ct)
+    public override async Task AddAsync(Notification entity, CancellationToken ct)
     {
         await _context.Notifications.AddAsync(entity, ct);
     }
 
-    public Task SaveChangesAsync(CancellationToken ct)
+    public override Task SaveChangesAsync(CancellationToken ct)
     {
         return _context.SaveChangesAsync(ct);
     }

@@ -163,27 +163,28 @@ public class AiService : IAiService
         CancellationToken ct)
     {
         var prompt = $"""
-        You are a senior event copywriter for Eventix.
-        Write a detailed, polished event description that can be published directly on an event ticketing page.
+                You are writing a concise event description for Eventix.
 
-        Event details:
-        - Title: {request.Title}
-        - Category: {request.Category}
-        - Location/Venue: {request.Location}
-        - Organizer: {request.OrganizerName}
-        - Starts: {request.StartUtc}
-        - Ends: {request.EndUtc}
-        - Pricing: {(request.IsFree ? "Free event" : $"Paid event, currency {request.Currency}")}
+                Use only the information provided. Do not invent artists, speakers, activities, schedules, sponsors, or additional details.
 
-        Requirements:
-        - Write in clear professional English.
-        - Do not invent specific artists, speakers, prices, sponsors, or schedules that were not provided.
-        - Make it engaging and useful for attendees.
-        - Mention the event mood, audience value, venue/location, and what attendees can expect.
-        - Return only the final event description, no bullet labels and no explanation.
-        - Length: 120 to 180 words.
-        """;
+                Event details:
+                - Title: {request.Title}
+                - Category: {request.Category}
+                - Location/Venue: {request.Location}
+                - Organizer: {request.OrganizerName}
+                - Starts: {request.StartUtc}
+                - Ends: {request.EndUtc}
 
+                Requirements:
+                - Write 1 short paragraph.
+                - Length: Maximum 50 words.
+                - Keep it professional and informative.
+                - Mention what the event is, where it takes place, and when it happens.
+                - Do not use marketing language or exaggerated claims.
+                - Do not use labels such as "Title" or "Location".
+                - Do not use - or * or any markdown formatting.
+                - Return only the final description.
+                """;
         return await ExecuteAiRequestAsync(
             userId,
             prompt,

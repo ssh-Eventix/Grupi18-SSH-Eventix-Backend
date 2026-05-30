@@ -27,6 +27,9 @@ public class ArchiveEventsJob
     {
         var now = DateTime.UtcNow;
 
+        var tenantId = _tenantContext.TenantId;
+        var schemaName = _tenantContext.SchemaName ?? string.Empty;
+
         var finishedEvents = await _tenantDbContext.Events
             .AsNoTracking()
             .Where(x => x.EndUtc < now)
@@ -36,7 +39,7 @@ public class ArchiveEventsJob
             await _archiveRecordService.GetByEntityAsync("Event");
 
         var existingIds = existingArchivedEvents
-            .Where(x => x.TenantId == _tenantContext.TenantId)
+            .Where(x => x.TenantId == tenantId)
             .Select(x => x.EntityId)
             .ToHashSet();
 
@@ -48,7 +51,7 @@ public class ArchiveEventsJob
             var dto = new CreateArchiveRecordDTO
             {
                 TenantId = _tenantContext.TenantId,
-                SchemaName = _tenantContext.SchemaName,
+                SchemaName = schemaName,
                 EntityName = "Event",
                 EntityId = ev.Id,
                 ArchiveYear = ev.EndUtc.Year,

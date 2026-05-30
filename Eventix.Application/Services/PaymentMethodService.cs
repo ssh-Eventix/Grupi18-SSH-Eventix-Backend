@@ -5,6 +5,7 @@ using Eventix.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -116,7 +117,7 @@ namespace Eventix.Application.Services
             return new PaymentMethodDto
             {
                 Id = method.Id,
-                Name = method.Name,
+                Name = method.Name ?? string.Empty,
                 Description = method.Description,
                 Provider = method.Provider.ToString(),
                 IsActive = method.IsActive

@@ -57,7 +57,7 @@ public class ImpersonationController : ControllerBase
 
             return Ok(result);
         }
-        catch (UnauthorizedAccessException ex)
+        catch (UnauthorizedAccessException)
         {
             return Forbid();
         }

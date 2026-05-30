@@ -1,11 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Eventix.Application.DTOs.AuditLog;
-using Eventix.Application.DTOs.Booking;
 using Eventix.Application.DTOs.Payment;
 using Eventix.Application.Interfaces.Common;
 using Eventix.Application.Interfaces.Repositories;
