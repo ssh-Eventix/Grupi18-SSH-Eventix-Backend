@@ -20,8 +20,8 @@ public class TenantSchemaProvisioner : ITenantSchemaProvisioner
     }
 
     public async Task ProvisionTenantSchemaAsync(
-        string schemaName,
-        CancellationToken cancellationToken = default)
+    string schemaName,
+    CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(schemaName))
             throw new ArgumentException("Schema name is required.", nameof(schemaName));
@@ -50,9 +50,7 @@ public class TenantSchemaProvisioner : ITenantSchemaProvisioner
 
         await db.Database.ExecuteSqlRawAsync(
             $@"SET search_path TO ""{schemaName}"";
-{createScript}",
+       {createScript}",
             cancellationToken);
-
-#pragma warning restore EF1002
     }
 }
