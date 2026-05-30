@@ -109,6 +109,9 @@ The platform supports multiple organizations while ensuring that each tenant's d
 * OpenAI API
 * Background Services
 * Distributed Caching
+* Mailtrap
+* Expo Go
+* React Native / Expo
 
 ## Frontend
 
@@ -159,7 +162,7 @@ The platform supports multiple organizations while ensuring that each tenant's d
 
 ## Authentication & Authorization
 
-The authentication module secures the entire platform using JWT tokens and role-based access control. Users can register, log in, reset passwords, and access protected resources according to their assigned roles. Authorization policies ensure that only permitted users can perform administrative actions. Middleware validates tokens on every protected request. Multiple roles are supported including Super Admin, Tenant Admin, Staff, and Buyer. Security is enforced throughout both the frontend and backend layers.
+The authentication module secures the entire platform using JWT tokens and role-based access control. Users can register, log in, reset passwords, and access protected resources according to their assigned roles. Authorization policies ensure that only permitted users can perform administrative actions. Middleware validates tokens on every protected request. Multiple roles are supported including Super Admin, Tenant Admin, Staff, and Buyer. Security is enforced throughout both the frontend and backend layers. Forgot password functionality is implemented using secure reset tokens and email delivery through Mailtrap. When a buyer requests a password reset, the system generates a temporary reset token and sends a reset link to the user's email in the Mailtrap sandbox environment. This keeps the reset flow secure and prevents users from changing another user's password without access to their email inbox.
 
 ### Included Functionality
 
@@ -351,6 +354,19 @@ The OpenAI module demonstrates integration with external AI services. The platfo
 * AI Analytics
 
 ---
+
+### Mobile Ticket Scanner
+
+A separate mobile scanner application was developed using React Native and Expo Go. The mobile app is intended for staff users and allows them to scan ticket QR codes at the event entrance. After scanning a ticket, the app communicates with the backend API to validate the ticket and perform check-in.
+
+*Included Functionality
+*Staff Login
+*QR Code Scanning
+*Ticket Validation
+*Ticket Check-In
+*Already Used Ticket Detection
+*Invalid Ticket Handling
+*Mobile API Communication
 
 # Folder Structure
 
