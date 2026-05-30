@@ -10,5 +10,11 @@ public interface IDiscountCouponService
     Task<DiscountCouponResponseDTO> CreateAsync(CreateDiscountCouponDTO dto, Guid tenantId, CancellationToken cancellationToken = default);
     Task<bool> UpdateAsync(Guid id, UpdateDiscountCouponDTO dto, CancellationToken cancellationToken = default);
     Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<ValidateDiscountCouponResponseDTO> ValidateAsync(
+    ValidateDiscountCouponDTO dto,
+    CancellationToken cancellationToken = default);
+    Task<bool> RedeemAsync(
+        RedeemDiscountCouponDTO dto,
+        CancellationToken cancellationToken = default);
 }
 

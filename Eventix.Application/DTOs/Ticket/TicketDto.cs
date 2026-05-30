@@ -14,5 +14,11 @@ namespace Eventix.Application.DTOs.Ticket
         public int Status { get; set; }
         public DateTime IssuedAt { get; set; }
         public DateTime? UsedAt { get; set; }
+        public Guid? BookingId { get; set; }
+        public Guid? EventId { get; set; }
+        public string? EventTitle { get; set; }
+        public string? BuyerEmail { get; set; }
+        public string? ReferenceNumber { get; set; }
+        public string? BookingStatus { get; set; }
     }
 }

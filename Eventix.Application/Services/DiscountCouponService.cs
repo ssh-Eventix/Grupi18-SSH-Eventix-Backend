@@ -115,5 +115,95 @@ public class DiscountCouponService : IDiscountCouponService
         CreatedAtUtc = x.CreatedAtUtc,
         UpdatedAtUtc = x.UpdatedAtUtc
     };
+
+    public async Task<ValidateDiscountCouponResponseDTO> ValidateAsync(
+    ValidateDiscountCouponDTO dto,
+    CancellationToken cancellationToken = default)
+    {
+        var coupons = await _repository.GetByEventIdAsync(dto.EventId, cancellationToken);
+
+        var coupon = coupons.FirstOrDefault(x =>
+            !x.IsDeleted &&
+            x.Code.Equals(dto.Code.Trim(), StringComparison.OrdinalIgnoreCase));
+
+        if (coupon is null)
+        {
+            return new ValidateDiscountCouponResponseDTO
+            {
+                IsValid = false,
+                Message = "Coupon not valid.",
+                DiscountAmount = 0,
+                Total = dto.Subtotal
+            };
+        }
+
+        var now = DateTime.UtcNow;
+
+        if (coupon.ValidFrom > now || coupon.ValidTo < now)
+        {
+            return new ValidateDiscountCouponResponseDTO
+            {
+                IsValid = false,
+                Message = "Coupon is expired or not active yet.",
+                DiscountAmount = 0,
+                Total = dto.Subtotal
+            };
+        }
+
+        if (coupon.UsageLimit.HasValue && coupon.UsageCount >= coupon.UsageLimit.Value)
+        {
+            return new ValidateDiscountCouponResponseDTO
+            {
+                IsValid = false,
+                Message = "Coupon usage limit reached.",
+                DiscountAmount = 0,
+                Total = dto.Subtotal
+            };
+        }
+
+        decimal discountAmount = coupon.Type.ToString() == "Percentage"
+            ? Math.Round(dto.Subtotal * coupon.DiscountValue / 100, 2)
+            : coupon.DiscountValue;
+
+        discountAmount = Math.Min(discountAmount, dto.Subtotal);
+
+        return new ValidateDiscountCouponResponseDTO
+        {
+            IsValid = true,
+            Message = "Coupon applied.",
+            DiscountAmount = discountAmount,
+            Total = Math.Max(0, dto.Subtotal - discountAmount)
+        };
+    }
+
+    public async Task<bool> RedeemAsync(
+        RedeemDiscountCouponDTO dto,
+        CancellationToken cancellationToken = default)
+    {
+        var coupons = await _repository.GetByEventIdAsync(dto.EventId, cancellationToken);
+
+        var coupon = coupons.FirstOrDefault(x =>
+            !x.IsDeleted &&
+            x.Code.Equals(dto.Code.Trim(), StringComparison.OrdinalIgnoreCase));
+
+        if (coupon is null)
+            return false;
+
+        var now = DateTime.UtcNow;
+
+        if (coupon.ValidFrom > now || coupon.ValidTo < now)
+            return false;
+
+        if (coupon.UsageLimit.HasValue && coupon.UsageCount >= coupon.UsageLimit.Value)
+            return false;
+
+        coupon.UsageCount += 1;
+        coupon.UpdatedAtUtc = DateTime.UtcNow;
+
+        await _repository.UpdateAsync(coupon);
+        await _repository.SaveChangesAsync(cancellationToken);
+
+        return true;
+    }
 }
 
