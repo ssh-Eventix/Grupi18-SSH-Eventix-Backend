@@ -20,9 +20,7 @@ public class EventRepository : TenantBaseRepository<Event>, IEventRepository
     CancellationToken ct = default)
     {
         IQueryable<Event> query = Query()
-            .AsNoTracking()
-            .Include(x => x.Venue)
-            .Include(x => x.EventCategory);
+            .AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -32,8 +30,9 @@ public class EventRepository : TenantBaseRepository<Event>, IEventRepository
                 x.Title.ToLower().Contains(normalizedSearch) ||
                 (x.Description != null &&
                  x.Description.ToLower().Contains(normalizedSearch)) ||
-                x.EventCategory.Name.ToLower().Contains(normalizedSearch) ||
-                x.Venue.Name.ToLower().Contains(normalizedSearch));
+                (x.OrganizerName != null &&
+                 x.OrganizerName.ToLower().Contains(normalizedSearch)) ||
+                x.Slug.ToLower().Contains(normalizedSearch));
         }
 
         return await query
@@ -45,8 +44,6 @@ public class EventRepository : TenantBaseRepository<Event>, IEventRepository
 CancellationToken ct = default)
     {
         return Query()
-            .Include(x => x.Venue)
-            .Include(x => x.EventCategory)
             .Include(x => x.EventSections)
             .FirstOrDefaultAsync(x => x.Id == id, ct);
     }

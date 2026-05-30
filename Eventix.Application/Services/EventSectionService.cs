@@ -10,18 +10,27 @@ public class EventSectionService : IEventSectionService
 {
     private readonly IEventSectionRepository _repository;
     private readonly IEventRepository _eventRepository;
+    private readonly IVenueRepository _venueRepository;
     private readonly IVenueSectionRepository _venueSectionRepository;
+    private readonly IPublicVenueRepository _publicVenueRepository;
+    private readonly IPublicVenueSectionRepository _publicVenueSectionRepository;
     private readonly ITenantContext _tenantContext;
 
     public EventSectionService(
        IEventSectionRepository repository,
        IEventRepository eventRepository,
+       IVenueRepository venueRepository,
        IVenueSectionRepository venueSectionRepository,
+       IPublicVenueRepository publicVenueRepository,
+       IPublicVenueSectionRepository publicVenueSectionRepository,
        ITenantContext tenantContext)
     {
         _repository = repository;
         _eventRepository = eventRepository;
+        _venueRepository = venueRepository;
         _venueSectionRepository = venueSectionRepository;
+        _publicVenueRepository = publicVenueRepository;
+        _publicVenueSectionRepository = publicVenueSectionRepository;
         _tenantContext = tenantContext;
     }
 
@@ -53,7 +62,7 @@ public class EventSectionService : IEventSectionService
         if (eventEntity == null)
             throw new InvalidOperationException("Event not found.");
 
-        var venueSection = await _venueSectionRepository.GetByIdAsync(dto.VenueSectionId);
+        var venueSection = await ResolveVenueSectionAsync(dto.VenueSectionId);
 
         if (venueSection == null)
             throw new InvalidOperationException("Venue section not found.");
@@ -138,6 +147,77 @@ public class EventSectionService : IEventSectionService
         await _repository.SaveChangesAsync();
 
         return true;
+    }
+
+    private async Task<VenueSection?> ResolveVenueSectionAsync(Guid venueSectionId)
+    {
+        var venueSection = await _venueSectionRepository.GetByIdAsync(venueSectionId);
+
+        if (venueSection != null)
+            return venueSection;
+
+        var publicVenueSection = await _publicVenueSectionRepository.GetByIdAsync(venueSectionId);
+
+        if (publicVenueSection == null)
+            return null;
+
+        var tenantVenue = await _venueRepository.GetByIdAsync(publicVenueSection.VenueId);
+
+        if (tenantVenue == null)
+        {
+            var publicVenue = publicVenueSection.Venue
+                ?? await _publicVenueRepository.GetByIdAsync(publicVenueSection.VenueId);
+
+            if (publicVenue == null)
+                return null;
+
+            tenantVenue = new Venue
+            {
+                Id = publicVenue.Id,
+                TenantId = _tenantContext.TenantId,
+                Name = publicVenue.Name,
+                Code = publicVenue.Code,
+                AddressLine1 = publicVenue.AddressLine1,
+                City = publicVenue.City,
+                Country = publicVenue.Country,
+                TotalCapacity = publicVenue.TotalCapacity,
+                IsIndoor = publicVenue.IsIndoor,
+                IsAccessible = publicVenue.IsAccessible,
+                CreatedAtUtc = DateTime.UtcNow,
+                IsDeleted = false
+            };
+
+            await _venueRepository.AddAsync(tenantVenue);
+            await _venueRepository.SaveChangesAsync();
+        }
+
+        var existingVenueSection = await _venueSectionRepository.GetByVenueIdAndCodeAsync(
+            tenantVenue.Id,
+            publicVenueSection.Code);
+
+        if (existingVenueSection != null)
+            return existingVenueSection;
+
+        venueSection = new VenueSection
+        {
+            Id = publicVenueSection.Id,
+            TenantId = _tenantContext.TenantId,
+            VenueId = tenantVenue.Id,
+            Name = publicVenueSection.Name,
+            Code = publicVenueSection.Code,
+            Capacity = publicVenueSection.Capacity,
+            SeatType = publicVenueSection.SeatType,
+            DisplayOrder = publicVenueSection.DisplayOrder,
+            IsActive = publicVenueSection.IsActive,
+            DefaultBasePrice = publicVenueSection.DefaultBasePrice,
+            CreatedAtUtc = DateTime.UtcNow,
+            IsDeleted = false
+        };
+
+        await _venueSectionRepository.AddAsync(venueSection);
+        await _venueSectionRepository.SaveChangesAsync();
+
+        return venueSection;
     }
 
     private static EventSectionResponseDTO Map(EventSection x) => new()
