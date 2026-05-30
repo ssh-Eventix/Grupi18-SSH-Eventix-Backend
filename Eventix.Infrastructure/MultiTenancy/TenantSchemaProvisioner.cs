@@ -16,8 +16,8 @@ public class TenantSchemaProvisioner : ITenantSchemaProvisioner
     }
 
     public async Task ProvisionTenantSchemaAsync(
-        string schemaName,
-        CancellationToken cancellationToken = default)
+    string schemaName,
+    CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(schemaName))
             throw new ArgumentException("Schema name is required.", nameof(schemaName));
@@ -30,19 +30,18 @@ public class TenantSchemaProvisioner : ITenantSchemaProvisioner
         var db = scope.ServiceProvider.GetRequiredService<TenantDbContext>();
 
         await db.Database.ExecuteSqlRawAsync(
-            $@"CREATE SCHEMA IF NOT EXISTS ""{schemaName}"";",
+            $@"DROP SCHEMA IF EXISTS ""{schemaName}"" CASCADE;",
+            cancellationToken);
+
+        await db.Database.ExecuteSqlRawAsync(
+            $@"CREATE SCHEMA ""{schemaName}"";",
             cancellationToken);
 
         var createScript = db.Database.GenerateCreateScript();
 
-        await db.Database.ExecuteSqlRawAsync(createScript, cancellationToken);
-
-        var roleTableExists = await db.Database
-            .SqlQueryRaw<int>(
-                $@"SELECT CASE WHEN to_regclass('""{schemaName}"".""Role""') IS NULL THEN 0 ELSE 1 END AS ""Value""")
-            .SingleAsync(cancellationToken);
-
-        if (roleTableExists == 0)
-            throw new InvalidOperationException($@"Tenant schema was created, but ""{schemaName}"".""Role"" table was not created.");
+        await db.Database.ExecuteSqlRawAsync(
+            $@"SET search_path TO ""{schemaName}"";
+       {createScript}",
+            cancellationToken);
     }
 }
