@@ -41,4 +41,19 @@ public class VenueSectionRepository : TenantBaseRepository<VenueSection>, IVenue
             .Include(x => x.Venue)
             .FirstOrDefaultAsync(x => x.Id == id, ct);
     }
+
+    public Task<VenueSection?> GetByVenueIdAndCodeAsync(
+        Guid venueId,
+        string code,
+        CancellationToken ct = default)
+    {
+        var normalizedCode = code.Trim().ToLower();
+
+        return Query()
+            .Include(x => x.Venue)
+            .FirstOrDefaultAsync(
+                x => x.VenueId == venueId &&
+                     x.Code.ToLower() == normalizedCode,
+                ct);
+    }
 }

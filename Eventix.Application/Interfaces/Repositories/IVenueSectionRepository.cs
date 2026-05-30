@@ -10,6 +10,11 @@ public interface IVenueSectionRepository
 
     Task<VenueSection?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
+    Task<VenueSection?> GetByVenueIdAndCodeAsync(
+        Guid venueId,
+        string code,
+        CancellationToken cancellationToken = default);
+
     Task AddAsync(VenueSection entity, CancellationToken cancellationToken = default);
 
     Task UpdateAsync(VenueSection entity);

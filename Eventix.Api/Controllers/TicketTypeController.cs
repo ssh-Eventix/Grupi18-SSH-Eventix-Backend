@@ -41,7 +41,7 @@ namespace Eventix.Api.Controllers
                 await _cache.RemoveAsync(
                     $"tenant:{_tenantContext.TenantId}:tickettypes:event:{result.EventId}:available");
 
-                return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+                return CreatedAtAction(nameof(GetById), new { id = result.Id }, Map(result));
             }
             catch (InvalidOperationException ex)
             {
@@ -62,18 +62,7 @@ namespace Eventix.Api.Controllers
                 {
                     var ticketTypes = await _ticketTypeService.GetByEventIdAsync(eventId);
 
-                    return ticketTypes.Select(t => new TicketTypeDto
-                    {
-                        Id = t.Id,
-                        EventId = t.EventId,
-                        EventSectionId = t.EventSectionId,
-                        Name = t.Name,
-                        Price = t.Price,
-                        QuantityAvailable = t.QuantityAvailable,
-                        SoldQuantity = t.SoldQuantity,
-                        SaleStartDate = t.SaleStartDate,
-                        SaleEndDate = t.SaleEndDate
-                    }).ToList();
+                    return ticketTypes.Select(Map).ToList();
                 },
                 TimeSpan.FromMinutes(5));
 
@@ -93,18 +82,7 @@ namespace Eventix.Api.Controllers
                 {
                     var ticketTypes = await _ticketTypeService.GetAvailableByEventIdAsync(eventId);
 
-                    return ticketTypes.Select(t => new TicketTypeDto
-                    {
-                        Id = t.Id,
-                        EventId = t.EventId,
-                        EventSectionId = t.EventSectionId,
-                        Name = t.Name,
-                        Price = t.Price,
-                        QuantityAvailable = t.QuantityAvailable,
-                        SoldQuantity = t.SoldQuantity,
-                        SaleStartDate = t.SaleStartDate,
-                        SaleEndDate = t.SaleEndDate
-                    }).ToList();
+                    return ticketTypes.Select(Map).ToList();
                 },
                 TimeSpan.FromMinutes(2));
 
@@ -127,18 +105,7 @@ namespace Eventix.Api.Controllers
                     if (ticketType == null)
                         return null;
 
-                    return new TicketTypeDto
-                    {
-                        Id = ticketType.Id,
-                        EventId = ticketType.EventId,
-                        EventSectionId = ticketType.EventSectionId,
-                        Name = ticketType.Name,
-                        Price = ticketType.Price,
-                        QuantityAvailable = ticketType.QuantityAvailable,
-                        SoldQuantity = ticketType.SoldQuantity,
-                        SaleStartDate = ticketType.SaleStartDate,
-                        SaleEndDate = ticketType.SaleEndDate
-                    };
+                    return Map(ticketType);
                 },
                 TimeSpan.FromMinutes(5));
 
@@ -151,21 +118,23 @@ namespace Eventix.Api.Controllers
         {
             var ticketTypes = await _ticketTypeService.GetAvailableByEventIdAsync(eventId);
 
-            var result = ticketTypes.Select(t => new TicketTypeDto
-            {
-                Id = t.Id,
-                EventId = t.EventId,
-                EventSectionId = t.EventSectionId,
-                Name = t.Name,
-                Price = t.Price,
-                QuantityAvailable = t.QuantityAvailable,
-                SoldQuantity = t.SoldQuantity,
-                SaleStartDate = t.SaleStartDate,
-                SaleEndDate = t.SaleEndDate
-            }).ToList();
+            var result = ticketTypes.Select(Map).ToList();
 
             return Ok(result);
         }
+
+        private static TicketTypeDto Map(Domain.Entities.TicketType ticketType) => new()
+        {
+            Id = ticketType.Id,
+            EventId = ticketType.EventId,
+            EventSectionId = ticketType.EventSectionId,
+            Name = ticketType.Name,
+            Price = ticketType.Price,
+            QuantityAvailable = ticketType.QuantityAvailable,
+            SoldQuantity = ticketType.SoldQuantity,
+            SaleStartDate = ticketType.SaleStartDate,
+            SaleEndDate = ticketType.SaleEndDate
+        };
     }
 
 
