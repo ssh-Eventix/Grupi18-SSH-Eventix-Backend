@@ -89,35 +89,32 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
 
                     b.Property<string>("EntityName")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
                     b.Property<string>("NewValues")
-                        .HasColumnType("text");
+                        .HasColumnType("jsonb");
 
                     b.Property<string>("OldValues")
-                        .HasColumnType("text");
+                        .HasColumnType("jsonb");
 
-                    b.Property<Guid?>("TenantId")
+                    b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
-
-                    b.Property<string>("TenantName")
-                        .HasColumnType("text");
 
                     b.Property<DateTime?>("UpdatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("UserEmail")
-                        .HasColumnType("text");
-
-                    b.Property<Guid?>("UserId")
+                    b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
                     b.HasIndex("UserId");
+
+                    b.HasIndex("TenantId", "EntityName", "EntityId");
 
                     b.ToTable("AuditLog", "public");
                 });
@@ -1217,9 +1214,13 @@ namespace Eventix.Infrastructure.Migrations.TenantDb
 
             modelBuilder.Entity("Eventix.Domain.Entities.AuditLog", b =>
                 {
-                    b.HasOne("Eventix.Domain.Entities.User", null)
+                    b.HasOne("Eventix.Domain.Entities.User", "User")
                         .WithMany("AuditLogs")
-                        .HasForeignKey("UserId");
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Eventix.Domain.Entities.Booking", b =>

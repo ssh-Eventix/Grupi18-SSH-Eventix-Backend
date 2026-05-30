@@ -729,8 +729,7 @@ namespace Eventix.Infrastructure.Migrations.Public
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasColumnType("text");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
@@ -739,9 +738,7 @@ namespace Eventix.Infrastructure.Migrations.Public
                         .HasColumnType("boolean");
 
                     b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("text");
 
                     b.Property<int>("Provider")
                         .HasColumnType("integer");
@@ -753,9 +750,6 @@ namespace Eventix.Infrastructure.Migrations.Public
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("Name")
-                        .IsUnique();
 
                     b.ToTable("PaymentMethod", "public");
                 });
