@@ -359,14 +359,14 @@ The OpenAI module demonstrates integration with external AI services. The platfo
 
 A separate mobile scanner application was developed using React Native and Expo Go. The mobile app is intended for staff users and allows them to scan ticket QR codes at the event entrance. After scanning a ticket, the app communicates with the backend API to validate the ticket and perform check-in.
 
-*Included Functionality
-*Staff Login
-*QR Code Scanning
-*Ticket Validation
-*Ticket Check-In
-*Already Used Ticket Detection
-*Invalid Ticket Handling
-*Mobile API Communication
+* Included Functionality
+* Staff Login
+* QR Code Scanning
+* Ticket Validation
+* Ticket Check-In
+* Already Used Ticket Detection
+* Invalid Ticket Handling
+* Mobile API Communication
 
 # Folder Structure
 
